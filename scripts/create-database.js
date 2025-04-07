@@ -1,5 +1,5 @@
-require('dotenv').config({ path: '.env.local' });
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -8,9 +8,10 @@ const supabase = createClient(
 
 const createTables = async () => {
   try {
-    const { data, error } = await supabase.rpc('exec_sql', {
-      sql_query: `
-        -- Profiles (extension de la table auth.users)
+    // Création des tables
+    const { error: profilesError } = await supabase.rpc('create_tables_and_policies', {
+      sql_commands: `
+        -- Profiles table
         create table if not exists public.profiles (
           id uuid references auth.users on delete cascade not null primary key,
           full_name text,
@@ -19,7 +20,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Espaces de travail
+        -- Workspaces table
         create table if not exists public.workspaces (
           id uuid default uuid_generate_v4() primary key,
           name text not null,
@@ -30,7 +31,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Membres des espaces de travail
+        -- Workspace members
         create table if not exists public.workspace_members (
           workspace_id uuid references public.workspaces(id) on delete cascade,
           user_id uuid references public.profiles(id) on delete cascade,
@@ -39,7 +40,7 @@ const createTables = async () => {
           primary key (workspace_id, user_id)
         );
 
-        -- Projets
+        -- Projects
         create table if not exists public.projects (
           id uuid default uuid_generate_v4() primary key,
           workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -50,7 +51,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Tâches
+        -- Tasks
         create table if not exists public.tasks (
           id uuid default uuid_generate_v4() primary key,
           project_id uuid references public.projects(id) on delete cascade not null,
@@ -66,7 +67,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Sous-tâches
+        -- Subtasks
         create table if not exists public.subtasks (
           id uuid default uuid_generate_v4() primary key,
           task_id uuid references public.tasks(id) on delete cascade not null,
@@ -76,7 +77,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Commentaires
+        -- Comments
         create table if not exists public.comments (
           id uuid default uuid_generate_v4() primary key,
           task_id uuid references public.tasks(id) on delete cascade not null,
@@ -86,7 +87,7 @@ const createTables = async () => {
           updated_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Pièces jointes
+        -- Attachments
         create table if not exists public.attachments (
           id uuid default uuid_generate_v4() primary key,
           task_id uuid references public.tasks(id) on delete cascade not null,
@@ -107,7 +108,7 @@ const createTables = async () => {
           created_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Association Tags-Tâches
+        -- Task tags
         create table if not exists public.task_tags (
           task_id uuid references public.tasks(id) on delete cascade,
           tag_id uuid references public.tags(id) on delete cascade,
@@ -125,7 +126,7 @@ const createTables = async () => {
           created_at timestamp with time zone default timezone('utc'::text, now()) not null
         );
 
-        -- Dépendances entre tâches
+        -- Task dependencies
         create table if not exists public.task_dependencies (
           id uuid default uuid_generate_v4() primary key,
           predecessor_id uuid references public.tasks(id) on delete cascade not null,
@@ -134,17 +135,84 @@ const createTables = async () => {
           created_at timestamp with time zone default timezone('utc'::text, now()) not null,
           constraint different_tasks check (predecessor_id != successor_id)
         );
+
+        -- RLS Policies
+        
+        -- Profiles policies
+        alter table public.profiles enable row level security;
+        create policy "Users can view their own profile"
+          on public.profiles for select
+          using (auth.uid() = id);
+        create policy "Users can update their own profile"
+          on public.profiles for update
+          using (auth.uid() = id);
+
+        -- Workspaces policies
+        alter table public.workspaces enable row level security;
+        create policy "Members can view workspace"
+          on public.workspaces for select
+          using (
+            exists (
+              select 1 from public.workspace_members
+              where workspace_id = id
+              and user_id = auth.uid()
+            )
+          );
+        create policy "Admins can update workspace"
+          on public.workspaces for update
+          using (
+            exists (
+              select 1 from public.workspace_members
+              where workspace_id = id
+              and user_id = auth.uid()
+              and role in ('admin', 'owner')
+            )
+          );
+
+        -- Projects policies
+        alter table public.projects enable row level security;
+        create policy "Members can view projects"
+          on public.projects for select
+          using (
+            exists (
+              select 1 from public.workspace_members
+              where workspace_id = workspace_id
+              and user_id = auth.uid()
+            )
+          );
+
+        -- Tasks policies
+        alter table public.tasks enable row level security;
+        create policy "Members can view tasks"
+          on public.tasks for select
+          using (
+            exists (
+              select 1 from public.workspace_members wm
+              join public.projects p on p.workspace_id = wm.workspace_id
+              where p.id = project_id
+              and wm.user_id = auth.uid()
+            )
+          );
+
+        -- Enable realtime for all tables
+        alter publication supabase_realtime add table public.profiles;
+        alter publication supabase_realtime add table public.workspaces;
+        alter publication supabase_realtime add table public.workspace_members;
+        alter publication supabase_realtime add table public.projects;
+        alter publication supabase_realtime add table public.tasks;
+        alter publication supabase_realtime add table public.subtasks;
+        alter publication supabase_realtime add table public.comments;
+        alter publication supabase_realtime add table public.notifications;
       `
     });
 
-    if (error) {
-      console.error('Error creating tables:', error);
-      throw error;
+    if (profilesError) {
+      throw profilesError;
     }
 
-    console.log('Tables created successfully:', data);
+    console.log('Base de données configurée avec succès !');
   } catch (error) {
-    console.error('Failed:', error);
+    console.error('Erreur lors de la configuration de la base de données:', error);
   }
 };
 

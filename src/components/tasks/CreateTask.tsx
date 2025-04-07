@@ -4,12 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useAuth } from '@/lib/auth/useAuth'
 import { createClient } from '@supabase/supabase-js'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Alert } from '@/components/ui/alert'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,9 +12,9 @@ const supabase = createClient(
 )
 
 const taskSchema = z.object({
-  title: z.string().min(1, 'Le titre est requis'),
+  title: z.string().min(1, { message: 'Le titre est requis' }),
   description: z.string().optional(),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   due_date: z.string().optional()
 })
 
@@ -29,10 +24,10 @@ interface CreateTaskProps {
   projectId: string
 }
 
-export const CreateTask = ({ projectId }: CreateTaskProps) => {
+export function CreateTask({ projectId }: CreateTaskProps) {
   const { user } = useAuth()
-  const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
 
   const {
     register,
@@ -40,36 +35,29 @@ export const CreateTask = ({ projectId }: CreateTaskProps) => {
     reset,
     formState: { errors }
   } = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
-    defaultValues: {
-      priority: 'medium'
-    }
+    resolver: zodResolver(taskSchema)
   })
 
   const onSubmit = async (data: TaskFormData) => {
-    if (!user) return
-
-    setIsSubmitting(true)
-    setError(null)
-
     try {
-      const { error: insertError } = await supabase
-        .from('tasks')
-        .insert({
-          project_id: projectId,
-          title: data.title,
-          description: data.description,
-          priority: data.priority,
-          due_date: data.due_date,
-          status: 'todo',
-          created_by: user.id
-        })
+      setIsSubmitting(true)
+      setError(null)
+
+      const { error: insertError } = await supabase.from('tasks').insert({
+        project_id: projectId,
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        due_date: data.due_date,
+        status: 'todo',
+        created_by: user?.id
+      })
 
       if (insertError) throw insertError
 
       reset()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      setError(err as Error)
     } finally {
       setIsSubmitting(false)
     }
@@ -79,57 +67,61 @@ export const CreateTask = ({ projectId }: CreateTaskProps) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <Label htmlFor="title">Titre</Label>
-        <Input
+        <input
           id="title"
+          type="text"
           {...register('title')}
-          placeholder="Titre de la tâche"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
         />
         {errors.title && (
-          <p className="text-sm text-red-500">{errors.title.message}</p>
+          <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
         )}
       </div>
 
       <div>
         <Label htmlFor="description">Description</Label>
-        <Textarea
+        <textarea
           id="description"
           {...register('description')}
-          placeholder="Description de la tâche"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
         />
       </div>
 
       <div>
         <Label htmlFor="priority">Priorité</Label>
-        <Select id="priority" {...register('priority')}>
+        <select
+          id="priority"
+          {...register('priority')}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+        >
           <option value="low">Basse</option>
           <option value="medium">Moyenne</option>
           <option value="high">Haute</option>
           <option value="urgent">Urgente</option>
-        </Select>
+        </select>
       </div>
 
       <div>
         <Label htmlFor="due_date">Date d'échéance</Label>
-        <Input
+        <input
           id="due_date"
           type="date"
           {...register('due_date')}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
         />
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          {error}
-        </Alert>
+        <p className="text-sm text-red-600">{error.message}</p>
       )}
 
-      <Button
+      <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full"
+        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
       >
         {isSubmitting ? 'Création...' : 'Créer'}
-      </Button>
+      </button>
     </form>
   )
 } 

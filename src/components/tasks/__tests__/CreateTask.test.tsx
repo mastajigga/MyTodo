@@ -1,36 +1,25 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { CreateTask } from '../CreateTask'
-import { useAuth } from '@/lib/auth/useAuth'
-import { createClient } from '@supabase/supabase-js'
+import { mockSupabaseClient, resetSupabaseMocks } from '@/test/mocks/supabase'
 
-// Mock du hook d'authentification
 vi.mock('@/lib/auth/useAuth', () => ({
-  useAuth: vi.fn(() => ({
-    user: { id: 'test-user-id', email: 'test@test.com' }
-  }))
-}))
-
-// Mock du client Supabase
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      insert: vi.fn(),
-      select: vi.fn()
-    }))
-  }))
+  useAuth: () => ({
+    user: { id: 'test-user-id' }
+  })
 }))
 
 describe('CreateTask', () => {
-  const mockProjectId = 'test-project-id'
-  const mockSupabase = createClient('mock-url', 'mock-key')
+  const projectId = 'test-project-id'
+  const consoleSpy = vi.spyOn(console, 'error')
   
   beforeEach(() => {
-    vi.clearAllMocks()
+    resetSupabaseMocks()
+    consoleSpy.mockReset()
   })
 
   it('devrait afficher le formulaire de création de tâche', () => {
-    render(<CreateTask projectId={mockProjectId} />)
+    render(<CreateTask projectId={projectId} />)
     
     expect(screen.getByLabelText(/titre/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument()
@@ -40,20 +29,9 @@ describe('CreateTask', () => {
   })
 
   it('devrait créer une tâche avec succès', async () => {
-    const mockInsert = vi.fn().mockResolvedValue({
-      data: [{
-        id: 'new-task-id',
-        title: 'Nouvelle tâche',
-        description: 'Description de la tâche',
-        priority: 'medium',
-        due_date: '2024-12-31'
-      }],
-      error: null
-    })
+    mockSupabaseClient.from('tasks').insert.mockResolvedValue({ error: null })
 
-    mockSupabase.from().insert = mockInsert
-
-    render(<CreateTask projectId={mockProjectId} />)
+    render(<CreateTask projectId={projectId} />)
 
     fireEvent.change(screen.getByLabelText(/titre/i), {
       target: { value: 'Nouvelle tâche' }
@@ -62,7 +40,7 @@ describe('CreateTask', () => {
       target: { value: 'Description de la tâche' }
     })
     fireEvent.change(screen.getByLabelText(/priorité/i), {
-      target: { value: 'medium' }
+      target: { value: 'high' }
     })
     fireEvent.change(screen.getByLabelText(/date d'échéance/i), {
       target: { value: '2024-12-31' }
@@ -71,60 +49,83 @@ describe('CreateTask', () => {
     fireEvent.click(screen.getByRole('button', { name: /créer/i }))
 
     await waitFor(() => {
-      expect(mockInsert).toHaveBeenCalledWith({
-        project_id: mockProjectId,
+      expect(mockSupabaseClient.from('tasks').insert).toHaveBeenCalledWith({
+        project_id: projectId,
         title: 'Nouvelle tâche',
         description: 'Description de la tâche',
-        priority: 'medium',
+        priority: 'high',
         due_date: '2024-12-31',
         status: 'todo',
         created_by: 'test-user-id'
       })
     })
+
+    expect(consoleSpy).not.toHaveBeenCalled()
   })
 
   it('devrait afficher une erreur en cas d\'échec de création', async () => {
-    const mockError = new Error('Erreur de création')
-    mockSupabase.from().insert = vi.fn().mockResolvedValue({
-      data: null,
-      error: mockError
-    })
+    const mockError = new Error('Failed to create task')
+    mockSupabaseClient.from('tasks').insert.mockResolvedValue({ error: mockError })
 
-    render(<CreateTask projectId={mockProjectId} />)
+    render(<CreateTask projectId={projectId} />)
 
     fireEvent.change(screen.getByLabelText(/titre/i), {
       target: { value: 'Nouvelle tâche' }
     })
+
     fireEvent.click(screen.getByRole('button', { name: /créer/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/erreur de création/i)).toBeInTheDocument()
+      expect(screen.getByText(/failed to create task/i)).toBeInTheDocument()
     })
+
+    expect(consoleSpy).not.toHaveBeenCalled()
   })
 
   it('devrait valider les champs requis', async () => {
-    render(<CreateTask projectId={mockProjectId} />)
+    render(<CreateTask projectId={projectId} />)
 
     fireEvent.click(screen.getByRole('button', { name: /créer/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/le titre est requis/i)).toBeInTheDocument()
     })
+
+    expect(consoleSpy).not.toHaveBeenCalled()
+  })
+
+  it('devrait désactiver le bouton pendant la soumission', async () => {
+    mockSupabaseClient.from('tasks').insert.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({ error: null }), 100))
+    )
+
+    render(<CreateTask projectId={projectId} />)
+
+    fireEvent.change(screen.getByLabelText(/titre/i), {
+      target: { value: 'Nouvelle tâche' }
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /créer/i }))
+
+    expect(screen.getByRole('button', { name: /création/i })).toBeDisabled()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /créer/i })).toBeEnabled()
+    })
+
+    expect(consoleSpy).not.toHaveBeenCalled()
   })
 
   it('devrait réinitialiser le formulaire après une création réussie', async () => {
-    mockSupabase.from().insert = vi.fn().mockResolvedValue({
-      data: [{ id: 'new-task-id' }],
-      error: null
-    })
+    mockSupabaseClient.from('tasks').insert.mockResolvedValue({ error: null })
 
-    render(<CreateTask projectId={mockProjectId} />)
+    render(<CreateTask projectId={projectId} />)
 
     fireEvent.change(screen.getByLabelText(/titre/i), {
       target: { value: 'Nouvelle tâche' }
     })
     fireEvent.change(screen.getByLabelText(/description/i), {
-      target: { value: 'Description' }
+      target: { value: 'Description de la tâche' }
     })
 
     fireEvent.click(screen.getByRole('button', { name: /créer/i }))
@@ -133,5 +134,7 @@ describe('CreateTask', () => {
       expect(screen.getByLabelText(/titre/i)).toHaveValue('')
       expect(screen.getByLabelText(/description/i)).toHaveValue('')
     })
+
+    expect(consoleSpy).not.toHaveBeenCalled()
   })
 }) 
