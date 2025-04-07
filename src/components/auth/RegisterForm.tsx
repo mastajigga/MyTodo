@@ -1,25 +1,31 @@
+'use client';
+
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useAuth } from '@/lib/auth/useAuth'
-import { Label } from '@/components/ui/label'
+import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 
 const registerSchema = z.object({
-  email: z.string().email({ message: "L'email est requis" }),
-  password: z.string().min(1, { message: 'Le mot de passe est requis' }),
-  confirmPassword: z.string().min(1, { message: 'La confirmation du mot de passe est requise' })
+  fullName: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
+  email: z.string().email('Email invalide'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword']
+  path: ['confirmPassword'],
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export function RegisterForm() {
-  const { signUp } = useAuth()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   const {
     register,
@@ -31,68 +37,106 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      setIsSubmitting(true)
-      setError(null)
-      await signUp(data.email, data.password)
-    } catch (err) {
-      setError(err as Error)
+      setIsLoading(true)
+      
+      // Inscription avec Supabase
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName,
+          },
+        },
+      })
+
+      if (signUpError) {
+        throw signUpError
+      }
+
+      // Création du profil utilisateur
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: (await supabase.auth.getUser()).data.user?.id,
+            full_name: data.fullName,
+          },
+        ])
+
+      if (profileError) {
+        throw profileError
+      }
+
+      toast.success('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.')
+      router.push('/auth/login')
+    } catch (error) {
+      toast.error('Erreur lors de l\'inscription')
+      console.error(error)
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <input
-          id="email"
-          type="email"
-          {...register('email')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-        />
-        {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-        )}
-      </div>
+    <div className="w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-lg">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Input
+            {...register('fullName')}
+            type="text"
+            placeholder="Nom complet"
+            disabled={isLoading}
+          />
+          {errors.fullName && (
+            <p className="text-sm text-red-500">{errors.fullName.message}</p>
+          )}
+        </div>
 
-      <div>
-        <Label htmlFor="password">Mot de passe</Label>
-        <input
-          id="password"
-          type="password"
-          {...register('password')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-        />
-        {errors.password && (
-          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-        )}
-      </div>
+        <div className="space-y-2">
+          <Input
+            {...register('email')}
+            type="email"
+            placeholder="Email"
+            disabled={isLoading}
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
 
-      <div>
-        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-        <input
-          id="confirmPassword"
-          type="password"
-          {...register('confirmPassword')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-        />
-        {errors.confirmPassword && (
-          <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-        )}
-      </div>
+        <div className="space-y-2">
+          <Input
+            {...register('password')}
+            type="password"
+            placeholder="Mot de passe"
+            disabled={isLoading}
+          />
+          {errors.password && (
+            <p className="text-sm text-red-500">{errors.password.message}</p>
+          )}
+        </div>
 
-      {error && (
-        <p className="text-sm text-red-600">{error.message}</p>
-      )}
+        <div className="space-y-2">
+          <Input
+            {...register('confirmPassword')}
+            type="password"
+            placeholder="Confirmer le mot de passe"
+            disabled={isLoading}
+          />
+          {errors.confirmPassword && (
+            <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+          )}
+        </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-      >
-        {isSubmitting ? 'Inscription...' : "S'inscrire"}
-      </button>
-    </form>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Inscription...' : 'S\'inscrire'}
+        </Button>
+      </form>
+    </div>
   )
 } 
