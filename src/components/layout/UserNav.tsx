@@ -59,27 +59,44 @@ export function UserNav() {
     .toUpperCase() || '?';
 
   return (
-    <div className="flex items-center gap-4">
-      <button
-        className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        onClick={() => {/* TODO: Implement dropdown menu */}}
-      >
-        <Avatar>
-          <img
-            src={profile?.avatar_url || 'https://github.com/shadcn.png'}
-            alt={profile?.full_name || 'Avatar'}
-            className="rounded-full"
-          />
-        </Avatar>
-        <span className="text-sm font-medium">
-          {profile?.full_name || 'John Doe'}
-        </span>
-      </button>
-      {/* TODO: Implement dropdown menu with these items
-        - Profile
-        - Settings
-        - Logout
-      */}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+          <Avatar className="h-10 w-10">
+            <AvatarImage 
+              src={profile?.avatar_url || 'https://github.com/shadcn.png'} 
+              alt={profile?.full_name || 'Avatar'} 
+            />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {profile?.full_name || 'Utilisateur'}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push('/profile')}>
+          <User className="mr-2 h-4 w-4" />
+          <span>Profil</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push('/settings')}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Paramètres</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={handleSignOut}
+          className="text-red-600 focus:text-red-600"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Se déconnecter</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 } 

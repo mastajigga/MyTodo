@@ -1,6 +1,7 @@
-import { Home, Plus, Settings } from "lucide-react"
+import { Home, Settings } from "lucide-react"
 import Link from "next/link"
 import { WorkspaceList } from "@/components/workspace/WorkspaceList"
+import { CreateWorkspaceDialog } from "@/components/workspace/CreateWorkspaceDialog"
 
 export function Sidebar() {
   return (
@@ -34,12 +35,7 @@ export function Sidebar() {
       <div className="p-4 border-t">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold text-sm">Espaces de travail</h2>
-          <button
-            className="p-1 hover:bg-gray-100 rounded"
-            onClick={() => {/* TODO: Implement workspace creation */}}
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          <CreateWorkspaceDialog />
         </div>
         <WorkspaceList />
       </div>
