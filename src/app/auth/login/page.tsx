@@ -8,12 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Connexion | MyTodo',
-  description: 'Connectez-vous à votre compte MyTodo',
-};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,22 +21,32 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Soumission du formulaire...');
+    console.log('Email:', email);
+    console.log('Password:', password);
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Tentative de connexion avec Supabase...');
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      console.log('Réponse de Supabase:', { data, error });
 
       if (error) {
         throw error;
       }
 
-      router.push(redirectTo);
-      router.refresh();
-    } catch (error) {
-      toast.error('Une erreur est survenue lors de la connexion');
+      if (data?.user) {
+        toast.success('Connexion réussie !');
+        router.refresh();
+        router.push(redirectTo);
+      }
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      toast.error(error?.message || 'Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);
     }
