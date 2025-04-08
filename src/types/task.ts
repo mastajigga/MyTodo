@@ -1,29 +1,29 @@
-export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
 
-export interface Task {
+export type Subtask = {
   id: string;
-  title: string;
-  description?: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  project_id: string;
-  created_by: string;
-  assigned_to?: string;
-  due_date?: string;
-  due_time?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Subtask {
-  id: string;
-  task_id: string;
   title: string;
   completed: boolean;
   created_at: string;
   updated_at: string;
-}
+};
+
+export type Task = {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date?: string;
+  due_time?: string;
+  created_by: string;
+  assigned_to?: string;
+  created_at: string;
+  updated_at: string;
+  subtasks?: Subtask[];
+};
 
 export interface Comment {
   id: string;

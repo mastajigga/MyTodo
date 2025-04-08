@@ -1,55 +1,77 @@
-import { Task, TASK_PRIORITY_MAP } from '@/types/task';
-import { cn } from '@/lib/utils';
+'use client';
+
+import { Task } from '@/types/task';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Calendar, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-interface TaskCardProps {
+type TaskCardProps = {
   task: Task;
-}
-
-const priorityColors = {
-  low: 'bg-green-100 text-green-800',
-  medium: 'bg-blue-100 text-blue-800',
-  high: 'bg-orange-100 text-orange-800',
-  urgent: 'bg-red-100 text-red-800'
 };
 
-export const TaskCard = ({ task }: TaskCardProps) => {
+const priorityColors = {
+  low: 'bg-blue-100 text-blue-800',
+  medium: 'bg-yellow-100 text-yellow-800',
+  high: 'bg-orange-100 text-orange-800',
+  urgent: 'bg-red-100 text-red-800',
+};
+
+export function TaskCard({ task }: TaskCardProps) {
+  const dueDate = task.due_date ? new Date(task.due_date) : null;
+
   return (
-    <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-      <h4 className="font-medium mb-2 line-clamp-2">{task.title}</h4>
-      
-      {task.description && (
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-
-      <div className="flex flex-wrap gap-2 mt-2">
-        <span className={cn(
-          'px-2 py-1 rounded-full text-xs font-medium',
-          priorityColors[task.priority]
-        )}>
-          {TASK_PRIORITY_MAP[task.priority]}
-        </span>
-
-        {task.due_date && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="w-3 h-3" />
+    <div className="rounded-lg border bg-white p-4 shadow-sm">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium">{task.title}</h4>
+          <Badge
+            variant="secondary"
+            className={priorityColors[task.priority]}
+          >
+            {task.priority}
+          </Badge>
+        </div>
+        {task.description && (
+          <p className="text-sm text-gray-500">{task.description}</p>
+        )}
+        {dueDate && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Calendar className="h-4 w-4" />
             <span>
-              {format(new Date(task.due_date), 'dd MMM', { locale: fr })}
+              {formatDistanceToNow(dueDate, {
+                addSuffix: true,
+                locale: fr,
+              })}
             </span>
           </div>
         )}
-
         {task.due_time && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Clock className="h-4 w-4" />
             <span>{task.due_time}</span>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        {task.assigned_to ? (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-gray-200" />
+            <span className="text-sm">Assigné</span>
+          </div>
+        ) : (
+          <Button variant="outline" size="sm">
+            Assigner
+          </Button>
+        )}
+        {task.subtasks?.length > 0 && (
+          <div className="text-sm text-gray-500">
+            {task.subtasks.filter((st) => st.completed).length}/
+            {task.subtasks.length} sous-tâches
           </div>
         )}
       </div>
     </div>
   );
-}; 
+} 
