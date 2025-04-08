@@ -7,6 +7,7 @@ alwaysApply: true
 # Your rule content
 
 – Always prefer simple solutions  
+- Always use sequential thinking
 – Avoid duplication of code whenever possible, which means checking for other areas of the codebase that might already have similar code and functionality  
 – Write code that takes into account the different environments: dev, test, and prod  
 - everytime you add a new feature to te code use git

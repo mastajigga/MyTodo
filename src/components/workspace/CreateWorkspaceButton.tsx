@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -21,7 +23,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { workspaceService } from '@/services/workspace';
 import { WorkspaceType } from '@/types/workspace';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export function CreateWorkspaceButton() {
   const [open, setOpen] = useState(false);
@@ -122,8 +124,8 @@ export function CreateWorkspaceButton() {
               >
                 Annuler
               </Button>
-              <Button type="submit" loading={loading}>
-                Créer
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Création...' : 'Créer'}
               </Button>
             </DialogFooter>
           </form>
