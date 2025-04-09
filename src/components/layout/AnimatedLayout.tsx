@@ -18,6 +18,7 @@ export function AnimatedLayout({ children }: AnimatedLayoutProps) {
         key={pathname}
         {...pageTransition}
         className="min-h-screen"
+        data-testid="animated-layout"
       >
         {children}
       </motion.div>
