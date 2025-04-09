@@ -35,9 +35,9 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900">
+    <div className="flex h-full w-64 flex-col bg-gray-900" data-testid="sidebar">
       <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold text-white">MyTodo</h1>
+        <h1 className="text-xl font-bold text-white" data-testid="sidebar-title">MyTodo</h1>
       </div>
       <div className="flex flex-1 flex-col space-y-1 p-3">
         {navigation.map((item) => {
@@ -46,6 +46,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              data-testid={`nav-link-${item.name.toLowerCase()}`}
               className={cn(
                 'group flex items-center rounded-lg px-3 py-2 text-sm font-medium',
                 isActive
@@ -71,6 +72,7 @@ export function Sidebar() {
           variant="ghost"
           className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
           onClick={handleLogout}
+          data-testid="logout-button"
         >
           <LogOut className="mr-3 h-5 w-5" />
           Déconnexion
