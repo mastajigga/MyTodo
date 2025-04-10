@@ -1,19 +1,35 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { workspaceService } from '@/services/workspace';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { InviteWorkspaceMemberData } from '@/types/workspace';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import {
+  createMockSupabaseClient,
+  createMockSupabaseResponse,
+  type MockSupabaseClient
+} from '@/types/mocks/supabase';
+import { WorkspaceService } from '@/services/workspace';
 
 // Mock Supabase
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
   createClientComponentClient: vi.fn(),
 }));
 
+vi.mock('@/services/workspace', () => {
+  const actual = vi.importActual('@/services/workspace');
+  return {
+    ...actual,
+    workspaceService: {
+      ...actual.workspaceService,
+    },
+  };
+});
+
 describe('Workspace Service', () => {
   const mockWorkspace = {
     id: 'test-workspace-id',
     name: 'Test Workspace',
-    type: 'professional',
+    type: 'professional' as const,
     created_by: 'test-user-id',
     created_at: '2025-04-09T17:39:23.341Z',
     updated_at: '2025-04-09T17:39:23.341Z',
@@ -22,58 +38,27 @@ describe('Workspace Service', () => {
   const mockMember = {
     workspace_id: 'test-workspace-id',
     user_id: 'test-user-id',
-    role: 'member',
+    role: 'member' as const,
     joined_at: '2025-04-09T17:39:23.341Z',
     profile: {
       full_name: 'Test User',
     },
   };
 
-  const createMockSupabase = () => ({
-    from: vi.fn().mockReturnValue({
-      insert: vi.fn().mockImplementation(() => ({
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: null, error: null }),
-      })),
-      select: vi.fn().mockImplementation(() => ({
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: null, error: null }),
-      })),
-      update: vi.fn().mockImplementation(() => ({
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: null, error: null }),
-      })),
-      delete: vi.fn().mockImplementation(() => ({
-        eq: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: null, error: null }),
-      })),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockReturnThis(),
-    }),
-  });
-
-  let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let mockSupabase: MockSupabaseClient;
+  let workspaceService: WorkspaceService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase = createMockSupabase();
-    (createClientComponentClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    mockSupabase = createMockSupabaseClient();
+    vi.mocked(createClientComponentClient).mockReturnValue(mockSupabase);
+    workspaceService = new WorkspaceService(mockSupabase);
   });
 
   describe('createWorkspace', () => {
     it('should create a new workspace', async () => {
-      const mockInsert = vi.fn().mockResolvedValue({
-        data: mockWorkspace,
-        error: null,
-      });
-
-      mockSupabase.from.mockReturnValue({
-        ...mockSupabase.from(),
-        insert: mockInsert,
-      });
+      const response = createMockSupabaseResponse(mockWorkspace);
+      mockSupabase.from('workspaces').insert.mockResolvedValueOnce(response);
 
       const result = await workspaceService.createWorkspace({
         name: 'Test Workspace',
@@ -82,19 +67,12 @@ describe('Workspace Service', () => {
 
       expect(result).toEqual(mockWorkspace);
       expect(mockSupabase.from).toHaveBeenCalledWith('workspaces');
-      expect(mockInsert).toHaveBeenCalled();
+      expect(mockSupabase.from('workspaces').insert).toHaveBeenCalled();
     });
 
     it('should throw an error if creation fails', async () => {
-      const mockInsert = vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Creation failed' },
-      });
-
-      mockSupabase.from.mockReturnValue({
-        ...mockSupabase.from(),
-        insert: mockInsert,
-      });
+      const response = createMockSupabaseResponse(null, { message: 'Creation failed' });
+      mockSupabase.from('workspaces').insert.mockResolvedValueOnce(response);
 
       await expect(
         workspaceService.createWorkspace({
