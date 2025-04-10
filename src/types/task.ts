@@ -9,21 +9,18 @@ export type Subtask = {
   updated_at: string;
 };
 
-export type Task = {
+export interface Task {
   id: string;
-  project_id: string;
   title: string;
   description?: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
   due_date?: string;
-  due_time?: string;
-  created_by: string;
-  assigned_to?: string;
+  user_id: string;
+  workspace_id?: string;
   created_at: string;
   updated_at: string;
-  subtasks?: Subtask[];
-};
+}
 
 export interface Comment {
   id: string;

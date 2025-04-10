@@ -3,9 +3,9 @@ import '@testing-library/jest-dom'
 import { Sidebar } from '../Sidebar'
 import { describe, it, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
+import { toast } from 'sonner'
 
 const mockPathname = vi.fn()
-const mockToast = { success: vi.fn(), error: vi.fn() }
 
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname(),
@@ -26,8 +26,13 @@ vi.mock('@/hooks/useSupabase', () => ({
 }))
 
 vi.mock('sonner', () => ({
-  toast: mockToast
+  toast: {
+    success: vi.fn(),
+    error: vi.fn()
+  }
 }))
+
+const mockToast = vi.mocked(toast)
 
 describe('Sidebar', () => {
   beforeEach(() => {

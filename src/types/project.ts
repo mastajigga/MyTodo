@@ -4,6 +4,7 @@ export interface Project {
   name: string
   description?: string
   color?: string
+  completed: boolean
   created_at: string
   updated_at: string
 }
@@ -13,12 +14,14 @@ export interface CreateProjectInput {
   name: string
   description?: string
   color?: string
+  completed: boolean
 }
 
 export interface UpdateProjectInput {
   name?: string
   description?: string
   color?: string
+  completed?: boolean
 }
 
 export const PROJECT_COLORS = {

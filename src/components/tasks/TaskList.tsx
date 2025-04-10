@@ -1,43 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Task } from '@/types/task';
 import { TaskCard } from './TaskCard';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { cn } from '@/lib/utils';
-
-const statusColumns = [
-  { id: 'todo', label: 'À faire' },
-  { id: 'in_progress', label: 'En cours' },
-  { id: 'completed', label: 'Terminé' },
-];
+import { STATUS_COLUMNS } from '@/lib/constants/task';
+import { useTasksByStatus } from '@/hooks/useTasksByStatus';
 
 type TaskListProps = {
   tasks: Task[];
-  onTaskMove?: (result: any) => void;
+  onTaskMove: (result: DropResult) => void;
 };
 
+/**
+ * TaskList component displays tasks in a kanban board layout with drag and drop functionality
+ * @component
+ * @param {TaskListProps} props - Component props
+ * @param {Task[]} props.tasks - Array of tasks to display
+ * @param {Function} props.onTaskMove - Callback function when a task is moved
+ * @returns {JSX.Element | null} Rendered task list or null if not enabled
+ */
 export function TaskList({ tasks, onTaskMove }: TaskListProps) {
   const [enabled, setEnabled] = useState(false);
+  const tasksByStatus = useTasksByStatus(tasks);
 
-  // Activer le drag and drop côté client uniquement
-  useState(() => {
+  // Enable drag and drop only on client side
+  useEffect(() => {
     setEnabled(true);
-  });
-
-  const tasksByStatus = statusColumns.reduce((acc, column) => {
-    acc[column.id] = tasks.filter((task) => task.status === column.id);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  }, []);
 
   if (!enabled) {
     return null;
   }
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    onTaskMove(result);
+  };
+
   return (
-    <DragDropContext onDragEnd={onTaskMove}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {statusColumns.map((column) => (
+        {STATUS_COLUMNS.map((column) => (
           <div
             key={column.id}
             className="flex flex-col rounded-lg border bg-gray-50/50 p-4"

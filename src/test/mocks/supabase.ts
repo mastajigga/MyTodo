@@ -1,21 +1,93 @@
 import { vi } from 'vitest'
+import { SupabaseClient } from '@supabase/supabase-js'
 
-export const mockSupabaseClient = {
-  from: vi.fn().mockReturnValue({
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: null, error: null }),
-  }),
-  rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-  channel: vi.fn().mockReturnValue({
-    on: vi.fn().mockReturnThis(),
-    subscribe: vi.fn().mockReturnValue({
-      unsubscribe: vi.fn()
-    })
+type MockSupabaseClient = {
+  from: (table: string) => {
+    select: (query?: string) => {
+      eq: (column: string, value: any) => {
+        single: () => Promise<{ data: any; error: null | Error }>
+        data: any[]
+        error: null | Error
+      }
+      data: any[]
+      error: null | Error
+    }
+    insert: (data: any) => {
+      select: (query?: string) => {
+        single: () => Promise<{ data: any; error: null | Error }>
+      }
+    }
+    update: (data: any) => {
+      eq: (column: string, value: any) => {
+        single: () => Promise<{ data: any; error: null | Error }>
+      }
+    }
+    delete: () => {
+      eq: (column: string, value: any) => {
+        data: any
+        error: null | Error
+      }
+    }
+  }
+  auth: {
+    getUser: () => Promise<{ data: { user: any }; error: null | Error }>
+    signInWithPassword: (credentials: { email: string; password: string }) => Promise<{ data: any; error: null | Error }>
+    signInWithOAuth: (options: any) => Promise<{ data: any; error: null | Error }>
+    signOut: () => Promise<{ error: null | Error }>
+  }
+}
+
+export const mockSupabaseClient: MockSupabaseClient = {
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({
+          data: null,
+          error: null
+        })),
+        data: null,
+        error: null
+      })),
+      data: null,
+      error: null
+    })),
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({
+          data: null,
+          error: null
+        }))
+      }))
+    })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({
+          data: null,
+          error: null
+        }))
+      }))
+    })),
+    delete: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        data: null,
+        error: null
+      }))
+    }))
+  })),
+  auth: {
+    getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    signInWithPassword: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    signInWithOAuth: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    signOut: vi.fn(() => Promise.resolve({ error: null }))
+  }
+}
+
+export const resetSupabaseMocks = () => {
+  vi.clearAllMocks()
+  Object.values(mockSupabaseClient).forEach(mock => {
+    if (typeof mock === 'function') {
+      mock.mockClear()
+    }
   })
 }
 
@@ -29,6 +101,7 @@ export const mockProject = {
   name: 'Test Project',
   description: 'A test project',
   color: '#FF0000',
+  completed: false,
   created_at: '2024-04-07T12:00:00Z',
   updated_at: '2024-04-07T12:00:00Z'
 }
@@ -41,13 +114,4 @@ export const mockNotification = {
   read: false,
   task_id: 'task-1',
   created_at: '2024-04-07T12:00:00Z'
-}
-
-export function resetSupabaseMocks() {
-  vi.clearAllMocks()
-  Object.values(mockSupabaseClient).forEach(mock => {
-    if (typeof mock === 'function') {
-      mock.mockClear()
-    }
-  })
 } 

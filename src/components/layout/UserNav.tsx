@@ -61,38 +61,49 @@ export function UserNav() {
     .toUpperCase() || '?';
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4" data-testid="user-nav">
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Button 
+            variant="ghost" 
+            className="relative h-8 w-8 rounded-full"
+            data-testid="user-menu-button"
+          >
             <Avatar className="h-8 w-8">
               <AvatarImage 
                 src={profile?.avatar_url || 'https://github.com/shadcn.png'} 
                 alt={profile?.full_name || 'Avatar'} 
+                data-testid="user-avatar"
               />
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarFallback data-testid="user-avatar-fallback">{initials}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
+              <p className="text-sm font-medium leading-none" data-testid="user-full-name">
                 {profile?.full_name || 'Utilisateur'}
               </p>
-              <p className="text-xs leading-none text-muted-foreground">
+              <p className="text-xs leading-none text-muted-foreground" data-testid="user-email">
                 {profile?.full_name ? 'user@example.com' : ''}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push('/profile')}>
+            <DropdownMenuItem 
+              onClick={() => router.push('/profile')}
+              data-testid="profile-menu-item"
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Profil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/settings')}>
+            <DropdownMenuItem 
+              onClick={() => router.push('/settings')}
+              data-testid="settings-menu-item"
+            >
               <Settings className="mr-2 h-4 w-4" />
               <span>Paramètres</span>
             </DropdownMenuItem>
@@ -101,6 +112,7 @@ export function UserNav() {
           <DropdownMenuItem 
             onClick={handleSignOut}
             className="text-red-600 focus:text-red-600"
+            data-testid="logout-menu-item"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Se déconnecter</span>

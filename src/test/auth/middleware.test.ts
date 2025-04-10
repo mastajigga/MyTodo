@@ -2,17 +2,50 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { middleware } from '@/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { Session, User } from '@supabase/supabase-js';
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
   createMiddlewareClient: vi.fn(() => ({
     auth: {
       getSession: vi.fn(),
+      getUser: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(),
     },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+    })),
   })),
 }));
 
 describe('Auth Middleware', () => {
   let mockReq: NextRequest;
+  const mockUser: User = {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    role: 'authenticated',
+    email: 'test@example.com',
+    phone: '',
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const mockSession: Session = {
+    access_token: 'mock-access-token',
+    refresh_token: 'mock-refresh-token',
+    expires_in: 3600,
+    token_type: 'bearer',
+    user: mockUser,
+  };
   
   beforeEach(() => {
     mockReq = new NextRequest(new URL('http://localhost:3000'));
@@ -20,7 +53,13 @@ describe('Auth Middleware', () => {
 
   it('should redirect to login for protected routes when not authenticated', async () => {
     const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null });
+    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: null
+      },
+      error: null
+    });
 
     mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
     const response = await middleware(mockReq);
@@ -31,7 +70,13 @@ describe('Auth Middleware', () => {
 
   it('should allow access to public routes when not authenticated', async () => {
     const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null });
+    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: null
+      },
+      error: null
+    });
 
     mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
     const response = await middleware(mockReq);
@@ -42,9 +87,12 @@ describe('Auth Middleware', () => {
 
   it('should redirect to dashboard when accessing auth routes while authenticated', async () => {
     const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { id: '123' } } },
-      error: null,
+    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: mockSession
+      },
+      error: null
     });
 
     mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
@@ -56,9 +104,12 @@ describe('Auth Middleware', () => {
 
   it('should allow access to protected routes when authenticated', async () => {
     const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: { id: '123' } } },
-      error: null,
+    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: mockSession
+      },
+      error: null
     });
 
     mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
