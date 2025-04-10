@@ -5,14 +5,18 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { ClipboardList, CalendarDays, CheckCircle2, Activity, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense } from 'react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { TaskCounter } from '@/components/dashboard/TaskCounter';
+import { RecentActivities } from '@/components/dashboard/RecentActivities';
 
 export const metadata: Metadata = {
   title: 'Tableau de bord | MyTodo',
@@ -53,47 +57,118 @@ function LoadingCard() {
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies });
   
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!session) {
-    redirect('/auth/signin');
-  }
+    if (!user) {
+      redirect('/auth/login');
+    }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id);
 
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('user_id', session.user.id);
+    if (tasksError) throw tasksError;
 
-  const stats = {
-    total: tasks?.length || 0,
-    completed: tasks?.filter((task) => task.status === 'completed').length || 0,
-    inProgress: tasks?.filter((task) => task.status === 'in-progress').length || 0,
-    pending: tasks?.filter((task) => task.status === 'pending').length || 0,
-  };
+    const now = new Date();
+    const currentTasks = tasks?.filter(
+      (task) =>
+        !task.completed &&
+        new Date(task.due_date) <= now
+    ).length || 0;
 
-  const recentTasks = tasks
-    ?.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, 5);
+    const upcomingTasks = tasks?.filter(
+      (task) =>
+        !task.completed &&
+        new Date(task.due_date) > now
+    ).length || 0;
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardHeader profile={profile} />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <DashboardStats stats={stats} />
-          <div className="md:col-span-2 lg:col-span-3">
-            <RecentActivity tasks={recentTasks} />
-          </div>
+    const completedTasks = tasks?.filter((task) => task.completed).length || 0;
+
+    const { data: recentActivities, error: activitiesError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(5);
+
+    if (activitiesError) throw activitiesError;
+
+    const stats = {
+      total: tasks?.length || 0,
+      completed: tasks?.filter((task) => task.status === 'completed').length || 0,
+      inProgress: tasks?.filter((task) => task.status === 'in-progress').length || 0,
+      pending: tasks?.filter((task) => task.status === 'pending').length || 0,
+    };
+
+    const recentTasks = tasks
+      ?.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, 5);
+
+    return (
+      <div className="container mx-auto py-6">
+        <PageHeader
+          heading="Tableau de bord"
+          text="Bienvenue sur votre tableau de bord personnel"
+        />
+
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
+          <TaskCounter
+            title="Tâches actuelles"
+            value={currentTasks}
+            description="Tâches en cours ou en retard"
+          />
+          <TaskCounter
+            title="Tâches à venir"
+            value={upcomingTasks}
+            description="Tâches prévues pour plus tard"
+          />
+          <TaskCounter
+            title="Tâches terminées"
+            value={completedTasks}
+            description="Tâches accomplies"
+          />
         </div>
-      </Suspense>
-    </div>
-  );
+
+        <div className="mt-6">
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-4">Activités récentes</h2>
+            {recentActivities && recentActivities.length > 0 ? (
+              <RecentActivities
+                activities={recentActivities.map((activity) => ({
+                  id: activity.id,
+                  title: activity.title,
+                  status: activity.status,
+                  date: format(new Date(activity.updated_at), 'PPP', {
+                    locale: fr,
+                  }),
+                }))}
+              />
+            ) : (
+              <p className="text-muted-foreground">
+                Aucune activité récente à afficher
+              </p>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  } catch (error) {
+    console.error('Erreur lors du chargement du tableau de bord:', error);
+    return (
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erreur</AlertTitle>
+          <AlertDescription>
+            Une erreur est survenue lors du chargement du tableau de bord. Veuillez
+            réessayer plus tard.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 } 
