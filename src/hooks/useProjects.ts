@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { projectService } from '@/services/projectService'
+import { ProjectService } from '@/services/project.service'
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project'
 
 export function useProjects(workspaceId: string) {
@@ -13,11 +13,11 @@ export function useProjects(workspaceId: string) {
     error
   } = useQuery({
     queryKey: ['projects', workspaceId],
-    queryFn: () => projectService.getProjects(workspaceId)
+    queryFn: () => ProjectService.getWorkspaceProjects(workspaceId)
   })
 
   const createProject = useMutation({
-    mutationFn: (data: CreateProjectData) => projectService.createProject(data),
+    mutationFn: (data: CreateProjectData) => ProjectService.createProject(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     }
@@ -25,21 +25,21 @@ export function useProjects(workspaceId: string) {
 
   const updateProject = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProjectData }) =>
-      projectService.updateProject(id, data),
+      ProjectService.updateProject(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     }
   })
 
   const deleteProject = useMutation({
-    mutationFn: (id: string) => projectService.deleteProject(id),
+    mutationFn: (id: string) => ProjectService.deleteProject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     }
   })
 
   const reorderProjects = useMutation({
-    mutationFn: (projects: Project[]) => projectService.reorderProjects(projects),
+    mutationFn: (projects: Project[]) => ProjectService.reorderProjects(projects),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     }
@@ -48,7 +48,7 @@ export function useProjects(workspaceId: string) {
   useEffect(() => {
     if (!realtimeEnabled) return
 
-    const subscription = projectService.subscribeToProjects(workspaceId, () => {
+    const subscription = ProjectService.subscribeToProjects(workspaceId, () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     })
 

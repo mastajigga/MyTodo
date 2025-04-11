@@ -1,5 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectInput, UpdateProjectInput } from '@/types/project';
+import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
 
 const supabase = createClientComponentClient();
 
@@ -78,5 +79,27 @@ export const ProjectService = {
       todo,
       progress: total > 0 ? Math.round((completed / total) * 100) : 0
     };
+  },
+
+  async reorderProjects(projects: Project[]): Promise<void> {
+    const { error } = await supabase.rpc('reorder_projects', {
+      project_ids: projects.map(p => p.id)
+    });
+
+    if (error) throw error;
+  },
+
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription {
+    return supabase
+      .channel(`projects:${workspaceId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'projects',
+        filter: `workspace_id=eq.${workspaceId}`
+      }, (payload: SupabasePayload) => {
+        callback(payload.new as Project);
+      })
+      .subscribe();
   }
 }; 
