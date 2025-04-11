@@ -1,24 +1,16 @@
-export interface Project {
-  id: string
-  workspace_id: string
-  name: string
-  description?: string
-  color?: string
-  created_at: string
-  updated_at: string
-}
+import { Database } from './supabase';
+
+export type Project = Database['public']['Tables']['projects']['Row'];
 
 export interface CreateProjectInput {
-  workspace_id: string
-  name: string
-  description?: string
-  color?: string
+  workspace_id: string;
+  name: string;
+  description?: string | null;
 }
 
 export interface UpdateProjectInput {
-  name?: string
-  description?: string
-  color?: string
+  name?: string;
+  description?: string | null;
 }
 
 export const PROJECT_COLORS = {

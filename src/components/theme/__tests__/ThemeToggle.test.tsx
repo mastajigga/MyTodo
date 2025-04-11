@@ -1,47 +1,54 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { ThemeToggle } from '../ThemeToggle'
 import { ThemeProvider } from '../ThemeProvider'
+import { ThemeToggle } from '../ThemeToggle'
+import { vi } from 'vitest'
+import { useTheme } from 'next-themes'
 
-const renderWithTheme = (component: React.ReactNode) => {
-  return render(<ThemeProvider>{component}</ThemeProvider>)
-}
+vi.mock('next-themes', () => ({
+  useTheme: vi.fn(() => ({
+    theme: 'light',
+    setTheme: vi.fn(),
+  })),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
 
 describe('ThemeToggle', () => {
-  it('renders theme toggle button', () => {
-    renderWithTheme(<ThemeToggle />)
-    
-    expect(screen.getByRole('button')).toBeInTheDocument()
-    expect(screen.getByLabelText('Basculer le thème')).toBeInTheDocument()
+  it('devrait rendre le bouton de thème', () => {
+    render(<ThemeToggle />)
+    expect(screen.getByRole('button', { name: /basculer le thème/i })).toBeInTheDocument()
   })
 
-  it('shows theme options when clicked', () => {
-    renderWithTheme(<ThemeToggle />)
+  it('devrait ouvrir le menu au clic', async () => {
+    render(<ThemeToggle />)
     
-    fireEvent.click(screen.getByRole('button'))
-    
-    expect(screen.getByText('Clair')).toBeInTheDocument()
-    expect(screen.getByText('Sombre')).toBeInTheDocument()
+    // Cliquer sur le bouton de thème
+    const toggleButton = screen.getByRole('button', { name: /basculer le thème/i })
+    fireEvent.click(toggleButton)
+
+    // Vérifier que les options sont disponibles
+    expect(screen.getByRole('menuitem', { name: /clair/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /sombre/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /système/i })).toBeInTheDocument()
   })
 
-  it('changes theme when option is selected', () => {
-    renderWithTheme(<ThemeToggle />)
-    
-    fireEvent.click(screen.getByRole('button'))
-    fireEvent.click(screen.getByText('Sombre'))
-    
-    expect(document.documentElement).toHaveClass('dark')
-  })
+  it('devrait changer le thème au clic sur une option', async () => {
+    const mockSetTheme = vi.fn()
+    (useTheme as jest.Mock).mockReturnValue({
+      theme: 'light',
+      setTheme: mockSetTheme,
+    })
 
-  it('shows correct icon based on theme', () => {
-    renderWithTheme(<ThemeToggle />)
+    render(<ThemeToggle />)
     
-    // Initial state (light theme)
-    expect(screen.getByLabelText('Basculer le thème')).toBeInTheDocument()
-    
-    // Change to dark theme
-    fireEvent.click(screen.getByRole('button'))
-    fireEvent.click(screen.getByText('Sombre'))
-    
-    expect(screen.getByLabelText('Basculer le thème')).toBeInTheDocument()
+    // Ouvrir le menu
+    const toggleButton = screen.getByRole('button', { name: /basculer le thème/i })
+    fireEvent.click(toggleButton)
+
+    // Cliquer sur l'option sombre
+    const darkOption = screen.getByRole('menuitem', { name: /sombre/i })
+    fireEvent.click(darkOption)
+
+    // Vérifier que setTheme a été appelé avec 'dark'
+    expect(mockSetTheme).toHaveBeenCalledWith('dark')
   })
 }) 

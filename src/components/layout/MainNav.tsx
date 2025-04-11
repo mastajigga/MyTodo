@@ -3,44 +3,57 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { LayoutDashboard, Users2, ListTodo } from 'lucide-react';
 
 const navItems = [
   {
     href: '/dashboard',
     label: 'Tableau de bord',
+    icon: LayoutDashboard,
   },
   {
     href: '/workspaces',
     label: 'Espaces de travail',
+    icon: Users2,
   },
   {
     href: '/tasks',
     label: 'Mes tâches',
+    icon: ListTodo,
   },
 ];
 
-export function MainNav() {
+interface MainNavProps {
+  className?: string;
+}
+
+export function MainNav({ className }: MainNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center space-x-6 text-sm font-medium">
-      <Link href="/dashboard" className="font-bold text-xl">
-        MyTodo
+    <nav className={cn("flex items-center space-x-4 lg:space-x-6", className)}>
+      <Link
+        href="/workspaces"
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          pathname === "/workspaces"
+            ? "text-primary"
+            : "text-muted-foreground"
+        )}
+      >
+        Espaces de travail
       </Link>
-      {navItems.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            'transition-colors hover:text-primary',
-            pathname === item.href
-              ? 'text-primary'
-              : 'text-muted-foreground'
-          )}
-        >
-          {item.label}
-        </Link>
-      ))}
+      <Link
+        href="/tasks"
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          pathname === "/tasks"
+            ? "text-primary"
+            : "text-muted-foreground"
+        )}
+      >
+        Tâches
+      </Link>
     </nav>
   );
 } 

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Task, KanbanColumn, DEFAULT_KANBAN_COLUMNS, TaskStatus } from '@/types/task';
 import { TaskService } from '@/services/task.service';
 import { KanbanColumn as Column } from './KanbanColumn';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface KanbanBoardProps {
   projectId: string;
@@ -12,7 +12,6 @@ interface KanbanBoardProps {
 export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
   const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_KANBAN_COLUMNS);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   const loadTasks = useCallback(async () => {
     try {
@@ -24,15 +23,13 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
       }));
       setColumns(updatedColumns);
     } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les tâches',
-        variant: 'destructive'
+      toast.error('Erreur lors du chargement des tâches', {
+        description: 'Impossible de charger les tâches du projet'
       });
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, toast]);
+  }, [projectId]);
 
   useEffect(() => {
     loadTasks();
@@ -85,11 +82,12 @@ export const KanbanBoard = ({ projectId }: KanbanBoardProps) => {
 
       try {
         await TaskService.updateTaskStatus(moved.id, destination.droppableId as TaskStatus);
+        toast.success('Tâche mise à jour', {
+          description: 'La tâche a été déplacée avec succès'
+        });
       } catch (error) {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de mettre à jour le statut de la tâche',
-          variant: 'destructive'
+        toast.error('Erreur lors de la mise à jour', {
+          description: 'Impossible de mettre à jour la tâche'
         });
         loadTasks(); // Recharge l'état initial en cas d'erreur
       }

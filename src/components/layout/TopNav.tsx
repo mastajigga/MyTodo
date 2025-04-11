@@ -19,7 +19,7 @@ export function TopNav() {
   const user = supabase.auth.getUser();
 
   return (
-    <div className="h-16 border-b bg-white px-6 flex items-center justify-between">
+    <div className="h-16 border-b bg-white px-6 flex items-center justify-between" data-testid="top-nav">
       <div className="flex items-center flex-1 gap-4">
         <div className="w-72">
           <div className="relative">
@@ -27,6 +27,7 @@ export function TopNav() {
             <Input
               placeholder="Rechercher..."
               className="pl-8"
+              data-testid="search-input"
             />
           </div>
         </div>
@@ -38,9 +39,10 @@ export function TopNav() {
           size="icon"
           className="relative"
           aria-label="Notifications"
+          data-testid="notifications-button"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white" data-testid="notifications-count">
             2
           </span>
         </Button>
@@ -50,6 +52,7 @@ export function TopNav() {
             <Button
               variant="ghost"
               className="relative h-8 w-8 rounded-full"
+              data-testid="user-menu-button"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/avatars/01.png" alt="Avatar" />
@@ -60,17 +63,17 @@ export function TopNav() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Utilisateur</p>
-                <p className="text-xs leading-none text-muted-foreground">
+                <p className="text-sm font-medium leading-none" data-testid="user-name">Utilisateur</p>
+                <p className="text-xs leading-none text-muted-foreground" data-testid="user-email">
                   user@example.com
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem data-testid="profile-menu-item">
               Profil
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem data-testid="settings-menu-item">
               Paramètres
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -11,20 +11,41 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import { MoreVertical, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { ProjectService } from '@/services/project.service'
 
 interface ProjectCardProps {
-  project: Project
-  index: number
-  onDelete: () => void
+  project: {
+    id: string;
+    name: string;
+    description: string | null;
+    workspace_id: string;
+    created_at: string;
+    updated_at: string;
+  };
 }
 
-export function ProjectCard({ project, index, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project }: ProjectCardProps) {
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    try {
+      await ProjectService.deleteProject(project.id)
+      toast.success('Projet supprimé avec succès')
+      router.refresh()
+    } catch (error) {
+      toast.error('Erreur lors de la suppression du projet')
+    }
+  }
+
   return (
-    <Draggable draggableId={project.id} index={index}>
+    <Draggable draggableId={project.id} index={0}>
       {(provided) => (
         <div
           ref={provided.innerRef}
@@ -32,61 +53,62 @@ export function ProjectCard({ project, index, onDelete }: ProjectCardProps) {
           {...provided.dragHandleProps}
         >
           <Card className="mb-4 hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Link
-                href={`/project/${project.id}`}
-                className="font-semibold hover:underline"
-              >
-                {project.name}
-              </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Menu du projet</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={onDelete}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <CardHeader className="relative">
+              <div className="flex items-center justify-between">
+                <Link
+                  href={`/projects/${project.id}`}
+                  className="font-semibold hover:underline"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-semibold">{project.name}</span>
+                    </div>
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground">{project.description}</p>
+                    )}
+                  </div>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-8 w-8 p-0"
+                    >
+                      <span className="sr-only">Ouvrir le menu</span>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/projects/${project.id}`)}
+                    >
+                      Voir le projet
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/projects/${project.id}/edit`)}
+                    >
+                      Modifier
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={handleDelete}
+                    >
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {project.description || 'Aucune description'}
-              </p>
               <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>
                   {format(new Date(project.created_at), 'PPP', { locale: fr })}
                 </span>
               </div>
-              {project.color && (
-                <Badge 
-                  variant="outline" 
-                  className="mt-2"
-                  style={{ borderColor: project.color }}
-                >
-                  {project.color}
-                </Badge>
-              )}
             </CardContent>
             <CardFooter>
-              <div
-                data-testid="project-color"
-                className="w-3 h-3 rounded-full mr-2"
-                style={{
-                  backgroundColor: project.color
-                    ? PROJECT_COLORS[project.color as keyof typeof PROJECT_COLORS]
-                    : PROJECT_COLORS.indigo
-                }}
-              />
               <span className="text-xs text-muted-foreground">
                 Créé le {new Date(project.created_at).toLocaleDateString('fr-FR')}
               </span>

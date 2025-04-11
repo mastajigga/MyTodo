@@ -1,18 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuGroup,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth/useAuth";
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { LogOut, Settings, User } from "lucide-react";
@@ -26,6 +27,7 @@ interface Profile {
 export function UserNav() {
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -44,6 +46,8 @@ export function UserNav() {
     getProfile();
   }, [supabase]);
 
+  if (!user) return null;
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -61,28 +65,23 @@ export function UserNav() {
     .toUpperCase() || '?';
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4" data-testid="user-nav">
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage 
-                src={profile?.avatar_url || 'https://github.com/shadcn.png'} 
-                alt={profile?.full_name || 'Avatar'} 
-              />
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email || ""} />
+              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {profile?.full_name || 'Utilisateur'}
-              </p>
+              <p className="text-sm font-medium leading-none">{user.email}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {profile?.full_name ? 'user@example.com' : ''}
+                {user.email}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -90,20 +89,17 @@ export function UserNav() {
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => router.push('/profile')}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
+              Profil
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Paramètres</span>
+              Configuration
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={handleSignOut}
-            className="text-red-600 focus:text-red-600"
-          >
+          <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Se déconnecter</span>
+            Se déconnecter
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

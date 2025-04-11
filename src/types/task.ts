@@ -1,29 +1,27 @@
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 
 export type Subtask = {
   id: string;
+  task_id: string;
   title: string;
   completed: boolean;
   created_at: string;
   updated_at: string;
 };
 
-export type Task = {
+export interface Task {
   id: string;
-  project_id: string;
   title: string;
   description?: string;
   status: TaskStatus;
-  priority: TaskPriority;
+  priority: 'low' | 'medium' | 'high';
   due_date?: string;
-  due_time?: string;
-  created_by: string;
-  assigned_to?: string;
+  user_id: string;
+  workspace_id?: string;
   created_at: string;
   updated_at: string;
-  subtasks?: Subtask[];
-};
+}
 
 export interface Comment {
   id: string;
@@ -41,10 +39,9 @@ export interface KanbanColumn {
 }
 
 export const TASK_STATUS_MAP: Record<TaskStatus, string> = {
-  todo: 'À faire',
-  in_progress: 'En cours',
-  completed: 'Terminé',
-  cancelled: 'Annulé'
+  'pending': 'À faire',
+  'in-progress': 'En cours',
+  'completed': 'Terminé'
 };
 
 export const TASK_PRIORITY_MAP: Record<TaskPriority, string> = {
@@ -54,20 +51,20 @@ export const TASK_PRIORITY_MAP: Record<TaskPriority, string> = {
   urgent: 'Urgente'
 };
 
-export const DEFAULT_KANBAN_COLUMNS: KanbanColumn[] = [
+export const DEFAULT_KANBAN_COLUMNS = [
   {
-    id: 'todo',
-    title: TASK_STATUS_MAP.todo,
+    id: 'pending',
+    title: 'À faire',
     tasks: []
   },
   {
-    id: 'in_progress',
-    title: TASK_STATUS_MAP.in_progress,
+    id: 'in-progress',
+    title: 'En cours',
     tasks: []
   },
   {
     id: 'completed',
-    title: TASK_STATUS_MAP.completed,
+    title: 'Terminé',
     tasks: []
   }
 ]; 

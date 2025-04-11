@@ -1,82 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Task } from '@/types/task';
 import { TaskCard } from './TaskCard';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { cn } from '@/lib/utils';
+import { STATUS_COLUMNS } from '@/lib/constants/task';
+import { useTasksByStatus } from '@/hooks/useTasksByStatus';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
-const statusColumns = [
-  { id: 'todo', label: 'À faire' },
-  { id: 'in_progress', label: 'En cours' },
-  { id: 'completed', label: 'Terminé' },
-];
-
-type TaskListProps = {
+export interface TaskListProps {
   tasks: Task[];
-  onTaskMove?: (result: any) => void;
-};
+  onTaskMove?: (taskId: string, completed: boolean) => void;
+}
 
-export function TaskList({ tasks, onTaskMove }: TaskListProps) {
+/**
+ * TaskList component displays tasks in a kanban board layout with drag and drop functionality
+ * @component
+ * @param {TaskListProps} props - Component props
+ * @param {Task[]} props.tasks - Array of tasks to display
+ * @param {Function} props.onTaskMove - Callback function when a task is moved
+ * @returns {JSX.Element | null} Rendered task list or null if not enabled
+ */
+export const TaskList = ({ tasks, onTaskMove }: TaskListProps) => {
   const [enabled, setEnabled] = useState(false);
+  const tasksByStatus = useTasksByStatus(tasks);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  // Activer le drag and drop côté client uniquement
-  useState(() => {
+  // Enable drag and drop only on client side
+  useEffect(() => {
     setEnabled(true);
-  });
-
-  const tasksByStatus = statusColumns.reduce((acc, column) => {
-    acc[column.id] = tasks.filter((task) => task.status === column.id);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  }, []);
 
   if (!enabled) {
     return null;
   }
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    onTaskMove?.(result.draggableId, false);
+  };
+
+  const handleTaskToggle = (taskId: string) => {
+    const newCompletedTasks = new Set(completedTasks);
+    if (completedTasks.has(taskId)) {
+      newCompletedTasks.delete(taskId);
+    } else {
+      newCompletedTasks.add(taskId);
+    }
+    setCompletedTasks(newCompletedTasks);
+    onTaskMove?.(taskId, !completedTasks.has(taskId));
+  };
+
   return (
-    <DragDropContext onDragEnd={onTaskMove}>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {statusColumns.map((column) => (
-          <div
-            key={column.id}
-            className="flex flex-col rounded-lg border bg-gray-50/50 p-4"
-          >
-            <h3 className="mb-4 font-semibold">{column.label}</h3>
-            <Droppable droppableId={column.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={cn(
-                    'flex flex-1 flex-col gap-2',
-                    snapshot.isDraggingOver && 'bg-gray-100'
-                  )}
-                >
-                  {tasksByStatus[column.id]?.map((task, index) => (
-                    <Draggable
-                      key={task.id}
-                      draggableId={task.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <TaskCard task={task} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
+    <div className="space-y-4">
+      {tasks.map((task) => (
+        <Card key={task.id} className="p-4">
+          <div className="flex items-center space-x-4">
+            <Checkbox
+              checked={completedTasks.has(task.id)}
+              onCheckedChange={() => handleTaskToggle(task.id)}
+              aria-label={`Marquer la tâche "${task.title}" comme ${completedTasks.has(task.id) ? 'non terminée' : 'terminée'}`}
+            />
+            <div className="flex-1">
+              <h3 className={`font-medium ${completedTasks.has(task.id) ? 'line-through text-muted-foreground' : ''}`}>
+                {task.title}
+              </h3>
+              {task.description && (
+                <p className={`text-sm ${completedTasks.has(task.id) ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>
+                  {task.description}
+                </p>
               )}
-            </Droppable>
+            </div>
           </div>
-        ))}
-      </div>
-    </DragDropContext>
+        </Card>
+      ))}
+      {tasks.length === 0 && (
+        <div className="text-center text-muted-foreground py-8">
+          Aucune tâche à afficher
+        </div>
+      )}
+    </div>
   );
-} 
+}; 
