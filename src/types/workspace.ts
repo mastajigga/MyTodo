@@ -1,10 +1,10 @@
-export type WorkspaceType = 'family' | 'professional' | 'private';
+export type WorkspaceType = 'personal' | 'team';
 export type WorkspaceMemberRole = 'owner' | 'admin' | 'member';
 
 export interface Workspace {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   type: WorkspaceType;
   created_by: string;
   created_at: string;

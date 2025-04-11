@@ -1,0 +1,5 @@
+[33m98fe1a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/dashboard-implementation[m[33m)[m fix: amélioration de la sécurité en remplaçant getSession par getUser et ajout des composants dashboard
+[33md67f257[m feat: amélioration de la configuration TypeScript pour les tests
+[33m3aa2ee3[m feat: ajout des types pour Supabase et les mocks
+[33me6b5c53[m feat: Implémentation du tableau de bord avec tests
+[33m7efaf13[m[33m ([m[1;32mfeature/add-task-tests[m[33m)[m test: ajout des tests pour le composant AnimatedLayout avec data-testid

@@ -2,83 +2,66 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { middleware } from '@/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, SupabaseClient } from '@supabase/supabase-js';
+import { createMockSupabaseClient } from '@/types/mocks/supabase';
+import { Database } from '@/types/supabase';
+
+const mockUser: User = {
+  id: 'user-123',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+  role: 'authenticated',
+  email: 'test@example.com',
+  phone: '',
+  confirmed_at: new Date().toISOString(),
+  last_sign_in_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+const mockSession: Session = {
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: mockUser,
+};
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
   createMiddlewareClient: vi.fn(() => ({
     auth: {
-      getSession: vi.fn(),
       getUser: vi.fn(),
-      signOut: vi.fn(),
-      onAuthStateChange: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn(),
-    })),
   })),
 }));
 
 describe('Auth Middleware', () => {
   let mockReq: NextRequest;
-  const mockUser: User = {
-    id: 'user-123',
-    app_metadata: {},
-    user_metadata: {},
-    aud: 'authenticated',
-    created_at: new Date().toISOString(),
-    role: 'authenticated',
-    email: 'test@example.com',
-    phone: '',
-    confirmed_at: new Date().toISOString(),
-    last_sign_in_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  let mockSupabase: ReturnType<typeof createMiddlewareClient>;
 
-  const mockSession: Session = {
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    token_type: 'bearer',
-    user: mockUser,
-  };
-  
   beforeEach(() => {
     mockReq = new NextRequest(new URL('http://localhost:3000'));
+    mockSupabase = createMockSupabaseClient() as unknown as ReturnType<typeof createMiddlewareClient>;
+    vi.mocked(createMiddlewareClient).mockReturnValue(mockSupabase);
   });
 
   it('should redirect to login for protected routes when not authenticated', async () => {
-    const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
-    mockGetSession.mockResolvedValue({
-      data: {
-        session: null
-      },
-      error: null
-    });
-
     mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
+    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
+
     const response = await middleware(mockReq);
 
     expect(response).toBeInstanceOf(NextResponse);
-    expect(response?.url).toBe('http://localhost:3000/auth/login?redirectTo=/dashboard');
+    const redirectUrl = new URL('/auth/login', 'http://localhost:3000');
+    redirectUrl.searchParams.set('redirectTo', '/dashboard');
+    expect(response?.url).toBe(redirectUrl.toString());
   });
 
   it('should allow access to public routes when not authenticated', async () => {
-    const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
-    mockGetSession.mockResolvedValue({
-      data: {
-        session: null
-      },
-      error: null
-    });
-
     mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
+    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
+
     const response = await middleware(mockReq);
 
     expect(response).toBeInstanceOf(NextResponse);
@@ -86,16 +69,9 @@ describe('Auth Middleware', () => {
   });
 
   it('should redirect to dashboard when accessing auth routes while authenticated', async () => {
-    const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
-    mockGetSession.mockResolvedValue({
-      data: {
-        session: mockSession
-      },
-      error: null
-    });
-
     mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
+    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null });
+
     const response = await middleware(mockReq);
 
     expect(response).toBeInstanceOf(NextResponse);
@@ -103,16 +79,9 @@ describe('Auth Middleware', () => {
   });
 
   it('should allow access to protected routes when authenticated', async () => {
-    const mockSupabase = createMiddlewareClient({ req: mockReq, res: NextResponse.next() });
-    const mockGetSession = vi.mocked(mockSupabase.auth.getSession);
-    mockGetSession.mockResolvedValue({
-      data: {
-        session: mockSession
-      },
-      error: null
-    });
-
     mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
+    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null });
+
     const response = await middleware(mockReq);
 
     expect(response).toBeInstanceOf(NextResponse);

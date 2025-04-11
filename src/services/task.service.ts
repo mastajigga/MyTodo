@@ -1,5 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Task, TaskStatus } from '@/types/task';
+import { Database } from '@/types/supabase';
 
 const supabase = createClientComponentClient();
 
@@ -120,6 +121,20 @@ export const TaskService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    return data;
+  },
+
+  async getTasks(): Promise<Task[]> {
+    const supabase = createClientComponentClient<Database>();
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
     return data;
   }
 }; 

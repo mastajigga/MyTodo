@@ -1,8 +1,12 @@
-import { createContext, useContext, useState } from 'react'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+'use client'
+
+import { createContext, useContext } from 'react'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getSupabaseClient } from '@/lib/supabase'
+import type { Database } from '@/types/supabase'
 
 type SupabaseContext = {
-  supabase: SupabaseClient
+  supabase: SupabaseClient<Database>
 }
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
@@ -12,12 +16,7 @@ export default function SupabaseProvider({
 }: {
   children: React.ReactNode
 }) {
-  const [supabase] = useState(() =>
-    createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  )
+  const supabase = getSupabaseClient()
 
   return (
     <Context.Provider value={{ supabase }}>

@@ -58,6 +58,20 @@ export function SearchBar({ ...props }: DialogProps) {
             </div>
             <CommandPrimitive.List>
               <CommandPrimitive.Empty data-testid="search-empty">Aucun résultat trouvé.</CommandPrimitive.Empty>
+              {value === "" && (
+                <CommandPrimitive.Group heading="Suggestions">
+                  <CommandPrimitive.Item
+                    onSelect={() => runCommand(() => router.push('/projects'))}
+                  >
+                    Projets
+                  </CommandPrimitive.Item>
+                  <CommandPrimitive.Item
+                    onSelect={() => runCommand(() => router.push('/workspaces'))}
+                  >
+                    Espaces de travail
+                  </CommandPrimitive.Item>
+                </CommandPrimitive.Group>
+              )}
             </CommandPrimitive.List>
           </CommandPrimitive>
         </DialogContent>

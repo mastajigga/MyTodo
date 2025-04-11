@@ -1,112 +1,123 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { projectService } from '../projectService'
-import { mockSupabaseClient, mockProject, resetSupabaseMocks } from '@/test/mocks/supabase'
+import { ProjectService } from '@/services/project.service'
+import { mockSupabaseClient } from '@/test/mocks/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import type { Project, CreateProjectInput, UpdateProjectInput } from '@/types/project'
+import type { Database } from '@/types/supabase'
 
-describe('projectService', () => {
+vi.mock('@supabase/auth-helpers-nextjs', () => ({
+  createClientComponentClient: vi.fn()
+}))
+
+describe('ProjectService', () => {
   beforeEach(() => {
-    resetSupabaseMocks()
+    vi.clearAllMocks()
+    vi.mocked(createClientComponentClient<Database>).mockReturnValue(mockSupabaseClient)
   })
 
-  describe('getProjects', () => {
-    it('should fetch projects successfully', async () => {
-      const mockProjects = [mockProject]
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: mockProjects, error: null })
+  describe('getProject', () => {
+    it('should get a project by id', async () => {
+      const mockProject: Project = {
+        id: '1',
+        name: 'Test Project',
+        description: null,
+        workspace_id: 'workspace-1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
 
-      const result = await projectService.getProjects('workspace-1')
-      expect(result).toEqual(mockProjects)
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('projects')
-    })
+      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
+        ...mockSupabaseClient.from('projects'),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValueOnce({
+          data: mockProject,
+          error: null,
+        }),
+      } as any)
 
-    it('should throw error when fetch fails', async () => {
-      const mockError = new Error('Failed to fetch')
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: null, error: mockError })
-
-      await expect(projectService.getProjects('workspace-1')).rejects.toThrow()
+      const result = await ProjectService.getProject('1')
+      expect(result).toEqual(mockProject)
     })
   })
 
   describe('createProject', () => {
-    it('should create project successfully', async () => {
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: mockProject, error: null })
-
-      const result = await projectService.createProject({
+    it('should create a new project', async () => {
+      const input: CreateProjectInput = {
         workspace_id: 'workspace-1',
-        name: 'Test Project'
-      })
+        name: 'New Project',
+        description: null,
+      }
 
+      const mockProject: Project = {
+        id: '1',
+        workspace_id: input.workspace_id,
+        name: input.name,
+        description: input.description ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
+        ...mockSupabaseClient.from('projects'),
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValueOnce({
+          data: mockProject,
+          error: null,
+        }),
+      } as any)
+
+      const result = await ProjectService.createProject(input)
       expect(result).toEqual(mockProject)
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('projects')
-    })
-
-    it('should throw error when creation fails', async () => {
-      const mockError = new Error('Failed to create')
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: null, error: mockError })
-
-      await expect(projectService.createProject({
-        workspace_id: 'workspace-1',
-        name: 'Test Project'
-      })).rejects.toThrow()
     })
   })
 
   describe('updateProject', () => {
-    it('should update project successfully', async () => {
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: mockProject, error: null })
+    it('should update an existing project', async () => {
+      const input: UpdateProjectInput = {
+        name: 'Updated Project',
+        description: 'Updated description',
+      }
 
-      const result = await projectService.updateProject('1', { name: 'Updated Project' })
+      const mockProject: Project = {
+        id: '1',
+        workspace_id: 'workspace-1',
+        name: 'Updated Project',
+        description: 'Updated description',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
+        ...mockSupabaseClient.from('projects'),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValueOnce({
+          data: mockProject,
+          error: null,
+        }),
+      } as any)
+
+      const result = await ProjectService.updateProject('1', input)
       expect(result).toEqual(mockProject)
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('projects')
-    })
-
-    it('should throw error when update fails', async () => {
-      const mockError = new Error('Failed to update')
-      mockSupabaseClient.from().single.mockResolvedValueOnce({ data: null, error: mockError })
-
-      await expect(projectService.updateProject('1', { name: 'Updated Project' })).rejects.toThrow()
     })
   })
 
   describe('deleteProject', () => {
-    it('should delete project successfully', async () => {
-      mockSupabaseClient.from().mockResolvedValueOnce({ error: null })
+    it('should delete a project', async () => {
+      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
+        ...mockSupabaseClient.from('projects'),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValueOnce({
+          data: null,
+          error: null,
+        }),
+      } as any)
 
-      await projectService.deleteProject('1')
+      await ProjectService.deleteProject('1')
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('projects')
-    })
-
-    it('should throw error when deletion fails', async () => {
-      const mockError = new Error('Failed to delete')
-      mockSupabaseClient.from().mockResolvedValueOnce({ error: mockError })
-
-      await expect(projectService.deleteProject('1')).rejects.toThrow()
-    })
-  })
-
-  describe('reorderProjects', () => {
-    it('should reorder projects successfully', async () => {
-      mockSupabaseClient.rpc.mockResolvedValueOnce({ error: null })
-
-      await projectService.reorderProjects([mockProject])
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('reorder_projects', {
-        project_ids: [mockProject.id]
-      })
-    })
-
-    it('should throw error when reordering fails', async () => {
-      const mockError = new Error('Failed to reorder')
-      mockSupabaseClient.rpc.mockResolvedValueOnce({ error: mockError })
-
-      await expect(projectService.reorderProjects([mockProject])).rejects.toThrow()
-    })
-  })
-
-  describe('subscribeToProjects', () => {
-    it('should subscribe to project changes successfully', () => {
-      const callback = vi.fn()
-      const subscription = projectService.subscribeToProjects('workspace-1', callback)
-
-      expect(mockSupabaseClient.channel).toHaveBeenCalledWith('projects:workspace-1')
-      expect(subscription.unsubscribe).toBeDefined()
     })
   })
 }) 

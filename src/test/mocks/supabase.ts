@@ -1,86 +1,29 @@
-import { vi } from 'vitest'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { vi } from 'vitest'
 
-type MockSupabaseClient = {
-  from: (table: string) => {
-    select: (query?: string) => {
-      eq: (column: string, value: any) => {
-        single: () => Promise<{ data: any; error: null | Error }>
-        data: any[]
-        error: null | Error
-      }
-      data: any[]
-      error: null | Error
-    }
-    insert: (data: any) => {
-      select: (query?: string) => {
-        single: () => Promise<{ data: any; error: null | Error }>
-      }
-    }
-    update: (data: any) => {
-      eq: (column: string, value: any) => {
-        single: () => Promise<{ data: any; error: null | Error }>
-      }
-    }
-    delete: () => {
-      eq: (column: string, value: any) => {
-        data: any
-        error: null | Error
-      }
-    }
-  }
+export const mockSupabaseClient = {
+  supabaseUrl: 'http://localhost:54321',
+  supabaseKey: 'dummy-key',
+  from: vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue({ data: [], error: null }),
+  }),
   auth: {
-    getUser: () => Promise<{ data: { user: any }; error: null | Error }>
-    signInWithPassword: (credentials: { email: string; password: string }) => Promise<{ data: any; error: null | Error }>
-    signInWithOAuth: (options: any) => Promise<{ data: any; error: null | Error }>
-    signOut: () => Promise<{ error: null | Error }>
-  }
-}
-
-export const mockSupabaseClient: MockSupabaseClient = {
-  from: vi.fn(() => ({
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: null,
-          error: null
-        })),
-        data: null,
-        error: null
-      })),
-      data: null,
-      error: null
-    })),
-    insert: vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: null,
-          error: null
-        }))
-      }))
-    })),
-    update: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: null,
-          error: null
-        }))
-      }))
-    })),
-    delete: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        data: null,
-        error: null
-      }))
-    }))
-  })),
-  auth: {
-    getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-    signInWithPassword: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    signInWithOAuth: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    signOut: vi.fn(() => Promise.resolve({ error: null }))
-  }
-}
+    signInWithPassword: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signOut: vi.fn(),
+    getSession: vi.fn(),
+    onAuthStateChange: vi.fn(),
+  },
+  storage: {
+    from: vi.fn(),
+  },
+} as unknown as SupabaseClient
 
 export const resetSupabaseMocks = () => {
   vi.clearAllMocks()

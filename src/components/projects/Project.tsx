@@ -34,9 +34,11 @@ interface ProjectProps {
 export const Project = ({ project, tasks, onAddTask }: ProjectProps) => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-  const filteredTasks = statusFilter
-    ? tasks.filter((task) => task.status === statusFilter)
-    : tasks;
+  const filteredTasks = tasks.map(task => ({
+    ...task,
+    status: task.status as "todo" | "completed" | "in_progress" | "cancelled",
+    priority: task.priority as "low" | "medium" | "high" | "urgent"
+  }));
 
   return (
     <Card className="w-full">

@@ -11,6 +11,16 @@ export type Database = {
           updated_at: string;
         };
       };
+      projects: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          workspace_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+      };
       tasks: {
         Row: {
           id: string;
@@ -29,7 +39,8 @@ export type Database = {
         Row: {
           id: string;
           name: string;
-          type: 'personal' | 'professional';
+          description: string | null;
+          type: 'family' | 'professional' | 'private';
           created_by: string;
           created_at: string;
           updated_at: string;

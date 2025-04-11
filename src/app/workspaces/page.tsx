@@ -1,20 +1,20 @@
-import { Suspense } from 'react';
-import { WorkspaceList } from '@/components/workspace/WorkspaceList';
+'use client';
+
+import { PageHeader } from '@/components/shared/PageHeader';
 import { CreateWorkspaceButton } from '@/components/workspace/CreateWorkspaceButton';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { WorkspaceList } from '@/components/workspace/WorkspaceList';
 
 export default function WorkspacesPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        title="Espaces de travail"
-        description="Gérez vos espaces de travail et leurs membres."
-        action={<CreateWorkspaceButton />}
-      />
-      
-      <Suspense fallback={<div>Chargement des espaces de travail...</div>}>
-        <WorkspaceList />
-      </Suspense>
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="Espaces de travail"
+          description="Gérez vos espaces de travail et leurs membres."
+        />
+        <CreateWorkspaceButton />
+      </div>
+      <WorkspaceList />
     </div>
   );
 } 

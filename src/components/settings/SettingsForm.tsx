@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
+import * as z from "zod"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,12 +12,21 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 
 const settingsSchema = z.object({
-  emailNotifications: z.boolean().default(true),
-  theme: z.enum(["light", "dark", "system"]).default("system"),
-  language: z.enum(["fr", "en"]).default("fr"),
-  privacyEnabled: z.boolean().default(true),
+  theme: z.enum(["light", "dark", "system"]),
+  emailNotifications: z.boolean(),
+  language: z.enum(["fr", "en"]),
+  privacyEnabled: z.boolean(),
 })
 
 type SettingsFormData = z.infer<typeof settingsSchema>
@@ -66,89 +75,107 @@ export function SettingsForm() {
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Configuration</CardTitle>
-          <CardDescription>
-            Gérez vos préférences et paramètres de l'application
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Notifications par email</Label>
-              <CardDescription>
-                Recevez des notifications par email pour les tâches importantes
-              </CardDescription>
-            </div>
-            <Switch
-              checked={form.watch("emailNotifications")}
-              onCheckedChange={(checked) => form.setValue("emailNotifications", checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Thème</Label>
-              <CardDescription>
-                Choisissez votre thème préféré
-              </CardDescription>
-            </div>
-            <Select
-              value={form.watch("theme")}
-              onValueChange={(value) => form.setValue("theme", value as "light" | "dark" | "system")}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Clair</SelectItem>
-                <SelectItem value="dark">Sombre</SelectItem>
-                <SelectItem value="system">Système</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Langue</Label>
-              <CardDescription>
-                Choisissez votre langue préférée
-              </CardDescription>
-            </div>
-            <Select
-              value={form.watch("language")}
-              onValueChange={(value) => form.setValue("language", value as "fr" | "en")}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>Confidentialité</Label>
-              <CardDescription>
-                Activer les paramètres de confidentialité avancés
-              </CardDescription>
-            </div>
-            <Switch
-              checked={form.watch("privacyEnabled")}
-              onCheckedChange={(checked) => form.setValue("privacyEnabled", checked)}
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
-          </Button>
-        </CardContent>
-      </Card>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="theme"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="theme">Thème</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger id="theme">
+                    <SelectValue placeholder="Sélectionnez un thème" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="light">Clair</SelectItem>
+                  <SelectItem value="dark">Sombre</SelectItem>
+                  <SelectItem value="system">Système</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choisissez le thème de l'application
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="language"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="language">Langue</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger id="language">
+                    <SelectValue placeholder="Sélectionnez une langue" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choisissez la langue de l'application
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="emailNotifications"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel htmlFor="emailNotifications" className="text-base">
+                  Notifications par email
+                </FormLabel>
+                <FormDescription>
+                  Recevez des notifications par email pour les mises à jour importantes
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  id="emailNotifications"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="privacyEnabled"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel htmlFor="privacyEnabled" className="text-base">
+                  Mode privé
+                </FormLabel>
+                <FormDescription>
+                  Masquez vos informations personnelles aux autres utilisateurs
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  id="privacyEnabled"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+        </Button>
+      </form>
+    </Form>
   )
 } 

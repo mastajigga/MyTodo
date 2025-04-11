@@ -1,18 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuGroup,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/auth/useAuth";
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { LogOut, Settings, User } from "lucide-react";
@@ -26,6 +27,7 @@ interface Profile {
 export function UserNav() {
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -43,6 +45,8 @@ export function UserNav() {
 
     getProfile();
   }, [supabase]);
+
+  if (!user) return null;
 
   const handleSignOut = async () => {
     try {
@@ -65,57 +69,37 @@ export function UserNav() {
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="relative h-8 w-8 rounded-full"
-            data-testid="user-menu-button"
-          >
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage 
-                src={profile?.avatar_url || 'https://github.com/shadcn.png'} 
-                alt={profile?.full_name || 'Avatar'} 
-                data-testid="user-avatar"
-              />
-              <AvatarFallback data-testid="user-avatar-fallback">{initials}</AvatarFallback>
+              <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email || ""} />
+              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none" data-testid="user-full-name">
-                {profile?.full_name || 'Utilisateur'}
-              </p>
-              <p className="text-xs leading-none text-muted-foreground" data-testid="user-email">
-                {profile?.full_name ? 'user@example.com' : ''}
+              <p className="text-sm font-medium leading-none">{user.email}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user.email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem 
-              onClick={() => router.push('/profile')}
-              data-testid="profile-menu-item"
-            >
+            <DropdownMenuItem onClick={() => router.push('/profile')}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
+              Profil
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => router.push('/settings')}
-              data-testid="settings-menu-item"
-            >
+            <DropdownMenuItem onClick={() => router.push('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Paramètres</span>
+              Configuration
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={handleSignOut}
-            className="text-red-600 focus:text-red-600"
-            data-testid="logout-menu-item"
-          >
+          <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Se déconnecter</span>
+            Se déconnecter
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

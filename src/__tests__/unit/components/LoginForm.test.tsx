@@ -1,30 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { LoginForm } from "@/components/auth/LoginForm"
+import { LoginForm } from '@/components/auth/LoginForm'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { mockRouter } from '../../../test/mocks/next'
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => mockRouter,
-}))
+import { mockSupabaseClient } from '@/test/mocks/supabase'
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createClientComponentClient: vi.fn(),
+  createClientComponentClient: vi.fn()
 }))
 
 describe('LoginForm', () => {
   const consoleSpy = vi.spyOn(console, 'error')
-  const mockSupabaseClient = {
-    auth: {
-      signInWithPassword: vi.fn(),
-      signInWithOAuth: vi.fn(),
-    },
-  }
   
   beforeEach(() => {
     vi.clearAllMocks()
     consoleSpy.mockReset()
-    (createClientComponentClient as jest.Mock).mockReturnValue(mockSupabaseClient)
+    vi.mocked(createClientComponentClient).mockReturnValue(mockSupabaseClient)
   })
 
   it('should render login form correctly', () => {

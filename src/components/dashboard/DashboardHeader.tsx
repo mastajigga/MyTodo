@@ -11,7 +11,7 @@ export const DashboardHeader = ({ profile }: DashboardHeaderProps) => {
     <Card className="mb-8 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10">
       <CardContent className="flex items-center space-x-4 p-6">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+          <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} role="img" />
           <AvatarFallback>{profile?.full_name?.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>

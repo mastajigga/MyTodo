@@ -1,13 +1,13 @@
 import { vi } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../supabase';
 
-export type MockSupabaseResponse<T = any> = {
-  data: T | null;
-  error: { message: string } | null;
+export type MockSupabaseResponse<T> = {
+  data: T;
+  error: null | Error;
 };
 
-export type MockSupabaseQueryBuilder = {
+export interface MockSupabaseQueryBuilder {
   select: ReturnType<typeof vi.fn>;
   insert: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
@@ -15,49 +15,65 @@ export type MockSupabaseQueryBuilder = {
   eq: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
+}
+
+export type MockSupabaseClient = Pick<SupabaseClient<Database>, 'from'> & {
+  from: (table: string) => MockSupabaseQueryBuilder;
+  auth: {
+    getUser: ReturnType<typeof vi.fn>;
+    signInWithOAuth: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
+    signInWithPassword: ReturnType<typeof vi.fn>;
+    signUp: ReturnType<typeof vi.fn>;
+    getSession: ReturnType<typeof vi.fn>;
+  };
 };
 
-export type MockSupabaseClient = {
-  from: ReturnType<typeof vi.fn>;
-  auth: {
-    getSession: ReturnType<typeof vi.fn>;
-    signOut: ReturnType<typeof vi.fn>;
-  };
-} & Partial<SupabaseClient<Database>>;
-
-export const createMockSupabaseResponse = <T>(
-  data: T | null = null,
-  error: { message: string } | null = null
-): MockSupabaseResponse<T> => ({
+export const createMockSupabaseResponse = <T>(data: T): MockSupabaseResponse<T> => ({
   data,
-  error,
+  error: null,
 });
 
-export const createMockQueryBuilder = (): MockSupabaseQueryBuilder => {
-  const mockSingle = vi.fn();
-  const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
-  const mockOrder = vi.fn().mockReturnValue({ single: mockSingle });
-  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq, order: mockOrder, single: mockSingle });
-  
-  return {
-    select: mockSelect,
-    insert: vi.fn().mockReturnValue({ select: mockSelect }),
-    update: vi.fn().mockReturnValue({ select: mockSelect }),
-    delete: vi.fn().mockReturnValue({ eq: mockEq }),
-    eq: mockEq,
-    order: mockOrder,
-    single: mockSingle,
-  };
-};
+export const createMockQueryBuilder = (): MockSupabaseQueryBuilder => ({
+  select: vi.fn().mockReturnThis(),
+  insert: vi.fn().mockResolvedValue(createMockSupabaseResponse([])),
+  update: vi.fn().mockResolvedValue(createMockSupabaseResponse([])),
+  delete: vi.fn().mockResolvedValue(createMockSupabaseResponse([])),
+  eq: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
+  single: vi.fn().mockReturnThis(),
+});
 
-export const createMockSupabaseClient = (): MockSupabaseClient => {
-  const queryBuilder = createMockQueryBuilder();
-  
-  return {
-    from: vi.fn().mockReturnValue(queryBuilder),
-    auth: {
-      getSession: vi.fn(),
-      signOut: vi.fn(),
-    },
-  } as MockSupabaseClient;
-}; 
+export const createMockSupabaseClient = () => ({
+  from: vi.fn().mockReturnValue(createMockQueryBuilder()),
+  auth: {
+    getUser: vi.fn().mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-123',
+          email: 'test@example.com'
+        }
+      },
+      error: null
+    }),
+    signInWithOAuth: vi.fn().mockResolvedValue({
+      data: { provider: 'github', url: 'http://localhost:3000/auth/callback' },
+      error: null
+    }),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    signInWithPassword: vi.fn().mockResolvedValue({
+      data: { user: { id: 'user-123', email: 'test@example.com' } },
+      error: null
+    }),
+    signUp: vi.fn().mockResolvedValue({
+      data: { user: { id: 'user-123', email: 'test@example.com' } },
+      error: null
+    }),
+    getSession: vi.fn().mockResolvedValue({
+      data: {
+        session: { user: { id: 'user-123', email: 'test@example.com' } }
+      },
+      error: null
+    })
+  }
+}) as MockSupabaseClient; 

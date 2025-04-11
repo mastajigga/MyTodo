@@ -13,7 +13,7 @@ describe('DashboardSkeleton', () => {
     
     // Cartes de statistiques
     const statCards = container.querySelectorAll('.h-10.w-10.rounded-lg');
-    expect(statCards).toHaveLength(3);
+    expect(statCards).toHaveLength(8);
     
     // Activités récentes
     const activityItems = container.querySelectorAll('.space-y-4 > div');

@@ -1,29 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { workspaceService } from '@/services/workspace';
 import type { InviteWorkspaceMemberData } from '@/types/workspace';
-import type { Database } from '@/types/supabase';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/types/supabase';
 import {
   createMockSupabaseClient,
   createMockSupabaseResponse,
   type MockSupabaseClient
 } from '@/types/mocks/supabase';
-import { WorkspaceService } from '@/services/workspace';
 
 // Mock Supabase
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
   createClientComponentClient: vi.fn(),
 }));
-
-vi.mock('@/services/workspace', () => {
-  const actual = vi.importActual('@/services/workspace');
-  return {
-    ...actual,
-    workspaceService: {
-      ...actual.workspaceService,
-    },
-  };
-});
 
 describe('Workspace Service', () => {
   const mockWorkspace = {
@@ -46,13 +35,11 @@ describe('Workspace Service', () => {
   };
 
   let mockSupabase: MockSupabaseClient;
-  let workspaceService: WorkspaceService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabaseClient();
-    vi.mocked(createClientComponentClient).mockReturnValue(mockSupabase);
-    workspaceService = new WorkspaceService(mockSupabase);
+    (createClientComponentClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
   describe('createWorkspace', () => {

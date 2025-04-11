@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,43 +21,37 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { workspaceService } from '@/services/workspace';
-import { WorkspaceType } from '@/types/workspace';
-import { useToast } from '@/hooks/use-toast';
+import { WorkspaceService } from '@/services/workspace.service';
+import { toast } from 'sonner';
 
 export function CreateWorkspaceButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
-  const [type, setType] = useState<WorkspaceType>('professional');
+  const [type, setType] = useState<'family' | 'professional' | 'private'>('professional');
   const [description, setDescription] = useState('');
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const workspace = await workspaceService.createWorkspace({
+      await WorkspaceService.createWorkspace({
         name,
         type,
         description,
       });
 
-      toast({
-        title: 'Espace de travail créé',
-        description: `L'espace de travail ${workspace.name} a été créé avec succès.`,
-      });
-
+      toast.success('Espace de travail créé avec succès');
       router.refresh();
       setOpen(false);
+      setName('');
+      setDescription('');
+      setType('professional');
     } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Une erreur est survenue lors de la création de l\'espace de travail.',
-        variant: 'destructive',
-      });
+      console.error('Erreur lors de la création:', error);
+      toast.error('Une erreur est survenue lors de la création de l\'espace de travail.');
     } finally {
       setLoading(false);
     }
@@ -66,8 +60,8 @@ export function CreateWorkspaceButton() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <PlusIcon className="h-4 w-4 mr-2" />
-        Nouveau workspace
+        <Plus className="h-4 w-4 mr-2" />
+        Nouvel espace de travail
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -93,9 +87,9 @@ export function CreateWorkspaceButton() {
 
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select value={type} onValueChange={(value: WorkspaceType) => setType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Select value={type} onValueChange={(value: 'family' | 'professional' | 'private') => setType(value)}>
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Sélectionnez un type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="professional">Professionnel</SelectItem>
@@ -124,7 +118,7 @@ export function CreateWorkspaceButton() {
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || !name.trim()}>
                 {loading ? 'Création...' : 'Créer'}
               </Button>
             </DialogFooter>

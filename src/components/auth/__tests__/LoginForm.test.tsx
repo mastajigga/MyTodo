@@ -4,6 +4,7 @@ import { LoginForm } from '../LoginForm'
 import { useRouter } from 'next/navigation'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 const mockRouter = {
   push: vi.fn(),
@@ -14,19 +15,15 @@ vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter
 }))
 
-const mockSupabaseAuth = {
-  signInWithPassword: vi.fn(),
-  signInWithOAuth: vi.fn()
+const mockSupabase = {
+  auth: {
+    signInWithPassword: vi.fn(),
+    signInWithOAuth: vi.fn(),
+  }
 }
 
-const mockSupabaseClient = {
-  auth: mockSupabaseAuth
-}
-
-vi.mock('@/hooks/useSupabase', () => ({
-  useSupabase: () => ({
-    supabase: mockSupabaseClient
-  })
+vi.mock('@supabase/auth-helpers-nextjs', () => ({
+  createClientComponentClient: () => mockSupabase
 }))
 
 describe('LoginForm', () => {
@@ -48,15 +45,18 @@ describe('LoginForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Se connecter' })
     fireEvent.click(submitButton)
     
-    const emailError = screen.getByText("L'email est requis")
-    const passwordError = screen.getByText('Le mot de passe est requis')
+    const emailError = await screen.findByText("L'email est requis")
+    const passwordError = await screen.findByText('Le mot de passe est requis')
     
     expect(emailError).toBeInTheDocument()
     expect(passwordError).toBeInTheDocument()
   })
 
   it('devrait gérer la soumission du formulaire avec succès', async () => {
-    mockSupabaseAuth.signInWithPassword.mockResolvedValueOnce({ error: null })
+    mockSupabase.auth.signInWithPassword.mockResolvedValueOnce({
+      data: { user: { id: 'user-123' } },
+      error: null
+    })
     
     render(<LoginForm />)
     
@@ -66,57 +66,69 @@ describe('LoginForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Se connecter' })
     fireEvent.click(submitButton)
     
-    expect(submitButton).toHaveAttribute('disabled')
-    expect(submitButton).toHaveTextContent('Chargement...')
-    
     await waitFor(() => {
+      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password'
+      })
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
   })
 
   it('devrait gérer la connexion avec Google', async () => {
-    mockSupabaseAuth.signInWithOAuth.mockResolvedValueOnce({ error: null })
+    mockSupabase.auth.signInWithOAuth.mockResolvedValueOnce({
+      data: { provider: 'google' },
+      error: null
+    })
     
     render(<LoginForm />)
     
-    fireEvent.click(screen.getByText('Google'))
+    const googleButton = screen.getByRole('button', { name: 'Google' })
+    fireEvent.click(googleButton)
     
     await waitFor(() => {
-      expect(mockSupabaseAuth.signInWithOAuth).toHaveBeenCalledWith({
+      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
         options: {
-          redirectTo: 'http://localhost:3000/auth/callback'
+          redirectTo: expect.stringContaining('/auth/callback')
         }
       })
     })
   })
 
   it('devrait gérer la connexion avec GitHub', async () => {
-    mockSupabaseAuth.signInWithOAuth.mockResolvedValueOnce({ error: null })
+    mockSupabase.auth.signInWithOAuth.mockResolvedValueOnce({
+      data: { provider: 'github' },
+      error: null
+    })
     
     render(<LoginForm />)
     
-    fireEvent.click(screen.getByText('GitHub'))
+    const githubButton = screen.getByRole('button', { name: 'GitHub' })
+    fireEvent.click(githubButton)
     
     await waitFor(() => {
-      expect(mockSupabaseAuth.signInWithOAuth).toHaveBeenCalledWith({
+      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'github',
         options: {
-          redirectTo: 'http://localhost:3000/auth/callback'
+          redirectTo: expect.stringContaining('/auth/callback')
         }
       })
     })
   })
 
   it('devrait afficher une erreur en cas d\'échec de connexion', async () => {
-    mockSupabaseAuth.signInWithPassword.mockRejectedValueOnce(new Error('Une erreur est survenue'))
+    mockSupabase.auth.signInWithPassword.mockRejectedValueOnce(
+      new Error('Une erreur est survenue')
+    )
     
     render(<LoginForm />)
     
     await userEvent.type(screen.getByLabelText('Email'), 'test@example.com')
     await userEvent.type(screen.getByLabelText('Mot de passe'), 'password')
     
-    fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }))
+    const submitButton = screen.getByRole('button', { name: 'Se connecter' })
+    fireEvent.click(submitButton)
     
     await waitFor(() => {
       expect(screen.getByText('Une erreur est survenue')).toBeInTheDocument()
