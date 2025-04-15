@@ -1,6 +1,17 @@
 import { Database } from './supabase';
 
-export type Project = Database['public']['Tables']['projects']['Row'];
+export type ProjectBase = Database['public']['Tables']['projects']['Row'];
+
+export interface Project extends ProjectBase {
+  description: string | null;
+  workspace?: {
+    id: string;
+    name: string;
+  };
+  members?: {
+    count: number;
+  };
+}
 
 export type CreateProjectData = {
   name: string;
