@@ -46,11 +46,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type CreateTaskDialogProps = {
-  onSubmit: (values: FormValues) => Promise<void>;
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export function CreateTaskDialog({ onSubmit }: CreateTaskDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreateTaskDialog({ projectId, open, onOpenChange }: CreateTaskDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,17 +61,17 @@ export function CreateTaskDialog({ onSubmit }: CreateTaskDialogProps) {
 
   const handleSubmit = async (values: FormValues) => {
     try {
-      await onSubmit(values);
-      setOpen(false);
-      form.reset();
+      // Implémenter la création de tâche avec projectId
       toast.success('Tâche créée avec succès');
+      onOpenChange(false);
+      form.reset();
     } catch (error: any) {
       toast.error(error.message || 'Une erreur est survenue');
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />

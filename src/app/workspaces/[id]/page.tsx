@@ -1,197 +1,98 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useWorkspace } from '@/lib/workspace/useWorkspace'
-import { Workspace } from '@/types/workspace'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { WorkspaceMembers } from '@/components/workspace/WorkspaceMembers'
-import { WorkspaceSettings } from '@/components/workspace/WorkspaceSettings'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState } from "react"
+import { WorkspaceMembers } from "@/components/workspace/WorkspaceMembers"
+import { WorkspaceInvite } from "@/components/workspace/WorkspaceInvite"
+import { Card } from "@/components/ui/card"
+import { useWorkspace } from "@/lib/workspace/useWorkspace"
+import { ProjectList } from "@/components/projects/ProjectList"
+import type { Workspace } from "@/types/workspace"
 
-type Tab = 'overview' | 'members' | 'settings'
-
-const tabVariants = {
-  enter: {
-    opacity: 0,
-    y: 20,
-  },
-  center: {
-    opacity: 1,
-    y: 0,
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-  },
-}
-
-export default function WorkspacePage() {
-  const params = useParams()
+export default function WorkspaceDetailPage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const { getWorkspaceById } = useWorkspace()
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
 
   useEffect(() => {
-    const fetchWorkspace = async () => {
+    async function loadWorkspace() {
       try {
-        setLoading(true)
-        setError(null)
-        const data = await getWorkspaceById(params.id as string)
+        const data = await getWorkspaceById(params.id)
         setWorkspace(data)
-      } catch (err) {
-        setError(err as Error)
+      } catch (error) {
+        console.error("Erreur lors du chargement de l'espace de travail:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    if (params.id) {
-      fetchWorkspace()
-    }
-  }, [params.id, getWorkspaceById])
+    loadWorkspace()
+  }, [getWorkspaceById, params.id])
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <Skeleton className="h-12 w-full mb-6" />
-        <Skeleton className="h-[200px] w-full" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card className="bg-destructive/10">
-          <CardContent className="p-6">
-            <p className="text-destructive">Erreur: {error.message}</p>
-          </CardContent>
-        </Card>
+      <div className="container py-8">
+        <div className="h-8 w-64 bg-muted animate-pulse rounded-lg mb-12" />
+        <div className="grid gap-6">
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+        </div>
       </div>
     )
   }
 
   if (!workspace) {
     return (
-      <div className="container mx-auto p-6">
-        <Card className="bg-muted">
-          <CardContent className="p-6">
-            <p>Espace de travail non trouvé</p>
-          </CardContent>
+      <div className="container py-8">
+        <Card className="p-6">
+          <h1 className="text-xl font-semibold text-destructive">Espace de travail non trouvé</h1>
+          <p className="text-muted-foreground">
+            L&apos;espace de travail que vous recherchez n&apos;existe pas ou vous n&apos;y avez pas accès.
+          </p>
         </Card>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{workspace.name}</CardTitle>
-          {workspace.description && (
-            <p className="text-muted-foreground">{workspace.description}</p>
-          )}
-        </CardHeader>
-      </Card>
+    <div className="container py-8">
+      <div className="relative mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent">
+          {workspace.name}
+        </h1>
+        <p className="mt-2 text-lg text-muted-foreground">{workspace.description}</p>
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm" />
+      </div>
 
-      <div className="space-y-4">
-        <div className="flex gap-2 border-b pb-2">
-          <Button
-            variant="ghost"
-            onClick={() => setActiveTab('overview')}
-            className={cn(
-              'rounded-none border-b-2 border-transparent transition-colors duration-200',
-              activeTab === 'overview' && 'border-primary'
-            )}
-          >
-            Vue d'ensemble
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setActiveTab('members')}
-            className={cn(
-              'rounded-none border-b-2 border-transparent transition-colors duration-200',
-              activeTab === 'members' && 'border-primary'
-            )}
-          >
-            Membres
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setActiveTab('settings')}
-            className={cn(
-              'rounded-none border-b-2 border-transparent transition-colors duration-200',
-              activeTab === 'settings' && 'border-primary'
-            )}
-          >
-            Paramètres
-          </Button>
-        </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="p-6 backdrop-blur-sm bg-card/50">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold">Membres</h2>
+              <p className="text-muted-foreground">
+                Gérez les membres de votre espace de travail
+              </p>
+            </div>
+            <WorkspaceMembers workspaceId={workspace.id} />
+            <WorkspaceInvite workspaceId={workspace.id} />
+          </div>
+        </Card>
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
-            <motion.div
-              key="overview"
-              initial="enter"
-              animate="center"
-              exit="exit"
-              variants={tabVariants}
-              transition={{ duration: 0.2 }}
-              className="space-y-4"
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Projets</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Liste des projets à implémenter */}
-                  <p className="text-muted-foreground">Aucun projet pour le moment</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Activité récente</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Aucune activité récente</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {activeTab === 'members' && (
-            <motion.div
-              key="members"
-              initial="enter"
-              animate="center"
-              exit="exit"
-              variants={tabVariants}
-              transition={{ duration: 0.2 }}
-            >
-              <WorkspaceMembers workspaceId={workspace.id} />
-            </motion.div>
-          )}
-
-          {activeTab === 'settings' && (
-            <motion.div
-              key="settings"
-              initial="enter"
-              animate="center"
-              exit="exit"
-              variants={tabVariants}
-              transition={{ duration: 0.2 }}
-            >
-              <WorkspaceSettings workspace={workspace} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Card className="p-6 backdrop-blur-sm bg-card/50">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold">Projets</h2>
+              <p className="text-muted-foreground">
+                Tous les projets de cet espace de travail
+              </p>
+            </div>
+            <ProjectList workspaceId={workspace.id} />
+          </div>
+        </Card>
       </div>
     </div>
   )

@@ -2,6 +2,17 @@ import { Database } from './supabase';
 
 export type Project = Database['public']['Tables']['projects']['Row'];
 
+export type CreateProjectData = {
+  name: string;
+  description?: string | null;
+  workspace_id: string;
+};
+
+export type UpdateProjectData = {
+  name?: string;
+  description?: string | null;
+};
+
 export interface CreateProjectInput {
   workspace_id: string;
   name: string;

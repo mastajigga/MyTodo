@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientWrapper } from '@/components/layout/ClientWrapper';
 import SupabaseProvider from '@/lib/supabase/supabase-provider';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: 'MyTodo - Gérez vos tâches efficacement',
@@ -26,9 +27,11 @@ export default function AppLayout({
     <html lang="fr" suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-background">
         <Suspense fallback={<Loading />}>
-          <SupabaseProvider>
-            <ClientWrapper>{children}</ClientWrapper>
-          </SupabaseProvider>
+          <QueryProvider>
+            <SupabaseProvider>
+              <ClientWrapper>{children}</ClientWrapper>
+            </SupabaseProvider>
+          </QueryProvider>
         </Suspense>
       </body>
     </html>
