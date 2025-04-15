@@ -32,11 +32,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { TaskPriority } from '@/types/task';
 import { toast } from 'sonner';
-import { taskService } from '@/lib/services/taskService';
+import { TaskService } from '@/services/task.service';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWorkspaceContext } from '@/contexts/workspace-context';
 import { useProjects } from '@/hooks/useProjects';
-import { useCreateTaskDialog } from '@/hooks/useCreateTaskDialog';
+import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider';
 import { supabase } from '@/lib/supabase/client';
 
 const formSchema = z.object({
@@ -76,7 +76,7 @@ export function CreateTaskDialog() {
         throw new Error('Utilisateur non connecté');
       }
 
-      await taskService.createTask({
+      await TaskService.createTask({
         title: values.title,
         description: values.description || '',
         priority: values.priority,
