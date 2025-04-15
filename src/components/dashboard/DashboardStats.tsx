@@ -1,53 +1,67 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
+import { TaskCounter } from '@/components/dashboard/TaskCounter';
+import { useWorkspaceContext } from '@/contexts/workspace-context';
+import { useEntries } from '@/hooks/useEntries';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Workspace } from '@/services/workspace.service';
 
-interface DashboardStatsProps {
-  stats: {
-    total: number;
-    completed: number;
-    inProgress: number;
-    pending: number;
-  };
-}
+export const DashboardStats = () => {
+  const { workspace, workspaces, setWorkspace } = useWorkspaceContext();
+  const { stats, isLoading, error } = useEntries(workspace?.id || '');
 
-export const DashboardStats = ({ stats }: DashboardStatsProps) => {
+  if (error) {
+    return (
+      <div className="bg-red-100 p-4 rounded">
+        <h3 className="font-bold text-red-800">Erreur de chargement</h3>
+        <p className="text-red-600">{error.message}</p>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
-        <CardHeader className="flex flex-row items-center space-x-4">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg group-hover:scale-110 transition-transform">
-            <ClipboardList className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h3 className="text-lg font-medium">Total des tâches</h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{stats.total}</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-4">
+        <Select
+          value={workspace?.id || ''}
+          onValueChange={(value) => {
+            const selectedWorkspace = workspaces?.find((w: Workspace) => w.id === value);
+            if (selectedWorkspace) {
+              setWorkspace(selectedWorkspace);
+            }
+          }}
+        >
+          <SelectTrigger className="w-[280px]">
+            <SelectValue placeholder="Sélectionner un workspace" />
+          </SelectTrigger>
+          <SelectContent>
+            {workspaces?.map((w: Workspace) => (
+              <SelectItem key={w.id} value={w.id}>
+                {w.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 to-white dark:from-green-950 dark:to-gray-900">
-        <CardHeader className="flex flex-row items-center space-x-4">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg group-hover:scale-110 transition-transform">
-            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
-          </div>
-          <h3 className="text-lg font-medium">Tâches terminées</h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold text-green-600 dark:text-green-400">{stats.completed}</p>
-        </CardContent>
-      </Card>
-
-      <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-gray-900">
-        <CardHeader className="flex flex-row items-center space-x-4">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg group-hover:scale-110 transition-transform">
-            <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h3 className="text-lg font-medium">Tâches en attente</h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</p>
-        </CardContent>
-      </Card>
-    </>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TaskCounter
+            title="Tâches en cours"
+            value={stats?.inProgress || 0}
+            description="Tâches actives nécessitant votre attention"
+            type="current"
+          />
+          <TaskCounter
+            title="Tâches à faire"
+            value={stats?.todo || 0}
+            description="Tâches en attente de traitement"
+            type="upcoming"
+          />
+          <TaskCounter
+            title="Tâches terminées"
+            value={stats?.done || 0}
+            description="Tâches accomplies avec succès"
+            type="completed"
+          />
+        </div>
+      </div>
+    </div>
   );
 }; 
