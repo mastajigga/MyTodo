@@ -22,6 +22,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider'
 
 type TasksProps = {
   listId: string
@@ -31,6 +32,7 @@ type TasksProps = {
 export function Tasks({ listId, workspaceId }: TasksProps) {
   const { loading, getTasks, createTask, updateTask, deleteTask, reorderTasks } = useTask()
   const [tasks, setTasks] = useState<Task[]>([])
+  const { openCreateTaskDialog } = useCreateTaskDialog()
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskDescription, setNewTaskDescription] = useState('')
   const [newTaskDueDate, setNewTaskDueDate] = useState<string>('')
@@ -46,13 +48,9 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
     setTasks(fetchedTasks)
   }
 
-  const handleCreateTask = async () => {
-    if (!newTaskTitle.trim()) return
-
+  const handleCreateTask = async (taskData: any) => {
     const newTask = await createTask({
-      title: newTaskTitle,
-      description: newTaskDescription || undefined,
-      due_date: newTaskDueDate || undefined,
+      ...taskData,
       list_id: listId,
       workspace_id: workspaceId,
       position: tasks.length,
@@ -61,10 +59,6 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
 
     if (newTask) {
       setTasks([...tasks, newTask])
-      setNewTaskTitle('')
-      setNewTaskDescription('')
-      setNewTaskDueDate('')
-      setIsCreateDialogOpen(false)
     }
   }
 
@@ -96,6 +90,8 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
   const handleToggleComplete = async (task: Task) => {
     const updatedTask = await updateTask(task.id, {
       ...task,
+      description: task.description ?? undefined,
+      due_date: task.due_date ?? undefined,
       completed: !task.completed,
     })
 
@@ -129,57 +125,10 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Tâches</h3>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle tâche
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Créer une nouvelle tâche</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium mb-1">
-                  Titre
-                </label>
-                <Input
-                  id="title"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Titre de la tâche"
-                />
-              </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium mb-1">
-                  Description
-                </label>
-                <Textarea
-                  id="description"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  placeholder="Description de la tâche"
-                />
-              </div>
-              <div>
-                <label htmlFor="dueDate" className="block text-sm font-medium mb-1">
-                  Date d'échéance
-                </label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={newTaskDueDate}
-                  onChange={(e) => setNewTaskDueDate(e.target.value)}
-                />
-              </div>
-              <Button onClick={handleCreateTask} disabled={!newTaskTitle.trim()}>
-                Créer
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" onClick={() => openCreateTaskDialog()}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nouvelle tâche
+        </Button>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>

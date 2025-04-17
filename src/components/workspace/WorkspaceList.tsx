@@ -5,15 +5,13 @@ import { WorkspaceType } from '@/types/workspace';
 import Link from 'next/link';
 
 const workspaceTypeLabels: Record<WorkspaceType, string> = {
-  professional: 'Professionnel',
-  family: 'Famille',
-  private: 'Privé',
+  personal: 'Personnel',
+  team: 'Équipe',
 };
 
 const workspaceTypeColors: Record<WorkspaceType, string> = {
-  professional: 'bg-blue-100 text-blue-800',
-  family: 'bg-green-100 text-green-800',
-  private: 'bg-purple-100 text-purple-800',
+  personal: 'bg-blue-100 text-blue-800',
+  team: 'bg-green-100 text-green-800',
 };
 
 async function getWorkspaces() {

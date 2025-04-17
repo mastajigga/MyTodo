@@ -42,7 +42,7 @@ CREATE POLICY "Users can insert their own settings"
     WITH CHECK (auth.uid() = user_id);
 
 -- Create function to initialize user settings on user creation
-CREATE OR REPLACE FUNCTION public.handle_new_user()
+CREATE OR REPLACE FUNCTION public.initialize_user_settings()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO public.user_settings (user_id)
@@ -52,7 +52,7 @@ END;
 $$ language 'plpgsql' SECURITY DEFINER;
 
 -- Create trigger to initialize user settings
-CREATE TRIGGER on_auth_user_created
+CREATE TRIGGER on_auth_user_created_initialize_settings
     AFTER INSERT ON auth.users
     FOR EACH ROW
-    EXECUTE FUNCTION public.handle_new_user(); 
+    EXECUTE FUNCTION public.initialize_user_settings(); 

@@ -4,7 +4,7 @@ import { Send, X, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 interface InviteMembersProps {
   workspaceId: string
@@ -14,7 +14,7 @@ interface InviteMembersProps {
 export function InviteMembers({ workspaceId, onClose }: InviteMembersProps) {
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
-  const supabase = createClient()
+  const supabase = getSupabaseClient()
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()

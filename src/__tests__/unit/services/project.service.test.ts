@@ -1,12 +1,12 @@
 import { ProjectService } from '@/services/project.service';
-import { Project, CreateProjectInput, UpdateProjectInput } from '@/types/project';
-import { createMockSupabaseClient } from '@/types/mocks/supabase';
+import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
+import { createMockSupabaseClient, createMockSupabaseResponse } from '@/types/mocks/supabase';
 import { vi } from 'vitest';
 
 const mockSupabaseClient = createMockSupabaseClient();
 
-vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createClientComponentClient: () => mockSupabaseClient,
+vi.mock('@/lib/supabase/client', () => ({
+  getSupabaseClient: () => mockSupabaseClient
 }));
 
 describe('ProjectService', () => {
@@ -22,13 +22,13 @@ describe('ProjectService', () => {
         description: null,
         workspace_id: 'workspace-1',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      mockSupabaseClient.from('projects').select('*').eq('id', '1').single.mockResolvedValueOnce({
-        data: mockProject,
-        error: null,
-      });
+      const queryBuilder = mockSupabaseClient.from('projects');
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.single.mockResolvedValue(createMockSupabaseResponse(mockProject));
 
       const result = await ProjectService.getProject('1');
       expect(result).toEqual(mockProject);
@@ -37,10 +37,10 @@ describe('ProjectService', () => {
 
   describe('createProject', () => {
     it('should create a new project', async () => {
-      const input: CreateProjectInput = {
+      const input: CreateProjectData = {
         workspace_id: 'workspace-1',
         name: 'New Project',
-        description: null,
+        description: null
       };
 
       const mockProject: Project = {
@@ -49,13 +49,13 @@ describe('ProjectService', () => {
         name: input.name,
         description: input.description,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      mockSupabaseClient.from('projects').insert(input).select('*').single.mockResolvedValueOnce({
-        data: mockProject,
-        error: null,
-      });
+      const queryBuilder = mockSupabaseClient.from('projects');
+      queryBuilder.insert.mockReturnThis();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.single.mockResolvedValue(createMockSupabaseResponse(mockProject));
 
       const result = await ProjectService.createProject(input);
       expect(result).toEqual(mockProject);
@@ -64,9 +64,9 @@ describe('ProjectService', () => {
 
   describe('updateProject', () => {
     it('should update an existing project', async () => {
-      const input: UpdateProjectInput = {
+      const input: UpdateProjectData = {
         name: 'Updated Project',
-        description: 'Updated description',
+        description: 'Updated description'
       };
 
       const mockProject: Project = {
@@ -75,13 +75,14 @@ describe('ProjectService', () => {
         name: 'Updated Project',
         description: 'Updated description',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      mockSupabaseClient.from('projects').update(input).eq('id', '1').select('*').single.mockResolvedValueOnce({
-        data: mockProject,
-        error: null,
-      });
+      const queryBuilder = mockSupabaseClient.from('projects');
+      queryBuilder.update.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.single.mockResolvedValue(createMockSupabaseResponse(mockProject));
 
       const result = await ProjectService.updateProject('1', input);
       expect(result).toEqual(mockProject);
@@ -90,13 +91,12 @@ describe('ProjectService', () => {
 
   describe('deleteProject', () => {
     it('should delete a project', async () => {
-      mockSupabaseClient.from('projects').delete().eq('id', '1').mockResolvedValueOnce({
-        data: null,
-        error: null,
-      });
+      const queryBuilder = mockSupabaseClient.from('projects');
+      queryBuilder.delete.mockReturnThis();
+      queryBuilder.eq.mockResolvedValue(createMockSupabaseResponse(null));
 
       await ProjectService.deleteProject('1');
-      expect(mockSupabaseClient.from('projects').delete().eq).toHaveBeenCalled();
+      expect(queryBuilder.eq).toHaveBeenCalledWith('id', '1');
     });
   });
 
@@ -109,7 +109,7 @@ describe('ProjectService', () => {
           description: null,
           workspace_id: 'workspace-1',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         },
         {
           id: '2',
@@ -117,15 +117,14 @@ describe('ProjectService', () => {
           description: null,
           workspace_id: 'workspace-1',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
+          updated_at: new Date().toISOString()
+        }
       ];
 
-      const mockSupabaseQuery = mockSupabaseClient.from('projects');
-      mockSupabaseQuery.select('*').eq('workspace_id', 'workspace-1').order('created_at', { ascending: false }).mockResolvedValueOnce({
-        data: mockProjects,
-        error: null,
-      });
+      const queryBuilder = mockSupabaseClient.from('projects');
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.order.mockResolvedValue(createMockSupabaseResponse(mockProjects));
 
       const result = await ProjectService.getWorkspaceProjects('workspace-1');
       expect(result).toEqual(mockProjects);
@@ -140,13 +139,19 @@ describe('ProjectService', () => {
         { status: 'DONE' }
       ];
 
-      mockSupabaseClient.from().select().eq.mockResolvedValueOnce({
-        data: mockStats,
-        error: null
-      });
+      const queryBuilder = mockSupabaseClient.from('tasks');
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.eq.mockResolvedValue(createMockSupabaseResponse(mockStats));
 
       const result = await ProjectService.getProjectStats('1');
       expect(result).toBeDefined();
+      expect(result).toEqual({
+        total: 3,
+        completed: 1,
+        inProgress: 1,
+        todo: 1,
+        progress: 33
+      });
     });
   });
 }); 

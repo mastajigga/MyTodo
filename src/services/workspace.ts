@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import {
   Workspace,
   WorkspaceMember,
@@ -7,7 +7,7 @@ import {
   InviteWorkspaceMemberData,
 } from '@/types/workspace';
 
-const supabase = createClientComponentClient();
+const supabase = getSupabaseClient();
 
 export const workspaceService = {
   async createWorkspace(data: CreateWorkspaceData): Promise<Workspace> {
@@ -132,5 +132,38 @@ export const workspaceService = {
       .eq('user_id', userId);
 
     if (error) throw error;
+  },
+
+  async checkWorkspaceAccess(workspaceId: string): Promise<{ exists: boolean; accessible: boolean; details: Workspace | null }> {
+    try {
+      const { data: workspace, error } = await supabase
+        .from('workspaces')
+        .select('*')
+        .eq('id', workspaceId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { exists: false, accessible: false, details: null };
+        }
+        throw error;
+      }
+
+      const { data: membership } = await supabase
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      return {
+        exists: true,
+        accessible: !!membership,
+        details: workspace
+      };
+    } catch (error) {
+      console.error('Erreur lors de la vérification du workspace:', error);
+      return { exists: false, accessible: false, details: null };
+    }
   },
 }; 

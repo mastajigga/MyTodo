@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ProjectList } from '../ProjectList';
+import { ProjectList } from '@/components/projects/ProjectList';
 import { ProjectService } from '@/services/project.service';
 import { Project } from '@/types/project';
 

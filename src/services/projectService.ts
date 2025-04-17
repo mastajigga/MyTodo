@@ -2,6 +2,17 @@ import { supabase, type SupabasePayload, type SupabaseSubscription } from '@/lib
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project'
 
 export const projectService = {
+  async getProject(id: string): Promise<Project> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   async getProjects(workspaceId: string): Promise<Project[]> {
     const { data, error } = await supabase
       .from('projects')

@@ -1,11 +1,11 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Project, CreateProjectInput, UpdateProjectInput } from '@/types/project';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
 
-const supabase = createClientComponentClient();
+const supabase = getSupabaseClient();
 
 export const ProjectService = {
-  async createProject(data: CreateProjectInput): Promise<Project> {
+  async createProject(data: CreateProjectData): Promise<Project> {
     const { data: project, error } = await supabase
       .from('projects')
       .insert(data)
@@ -16,7 +16,7 @@ export const ProjectService = {
     return project;
   },
 
-  async updateProject(id: string, data: UpdateProjectInput): Promise<Project> {
+  async updateProject(id: string, data: UpdateProjectData): Promise<Project> {
     const { data: project, error } = await supabase
       .from('projects')
       .update(data)

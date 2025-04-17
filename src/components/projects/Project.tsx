@@ -10,7 +10,8 @@ import { ProjectFilters } from './ProjectFilters';
 import { useProject } from '@/hooks/useProject';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import { useProjectMembers } from '@/hooks/useProjectMembers';
-import { Project as ProjectType } from '@/lib/types';
+import { Project as ProjectType } from '@/types/project';
+import { Task } from '@/types/task';
 
 interface ProjectProps {
   projectId: string;
@@ -28,20 +29,34 @@ export const Project = ({ projectId }: ProjectProps) => {
     dueDate: null
   });
 
+  // Vérification stricte de toutes les propriétés requises pour ProjectType
+  const isValidProject = (p: any): p is ProjectType =>
+    p &&
+    typeof p === 'object' &&
+    typeof p.id === 'string' &&
+    typeof p.name === 'string' &&
+    (typeof p.description === 'string' || p.description === null) &&
+    typeof p.created_at === 'string' &&
+    typeof p.updated_at === 'string' &&
+    typeof p.workspace_id === 'string';
+
   if (projectLoading || tasksLoading || membersLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (!project) {
+  if (!isValidProject(project)) {
     return <div className="text-center">Project not found</div>;
   }
+
+  // Correction : garantir que description est string ou null
+  const safeProject = { ...project, description: project.description ?? null };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      {showSidebar && project && typeof project === 'object' && 'id' in project && (
+      {showSidebar && (
         <ProjectSidebar
-          project={project as ProjectType}
+          project={safeProject}
           members={members}
           onClose={() => setShowSidebar(false)}
         />
@@ -57,7 +72,7 @@ export const Project = ({ projectId }: ProjectProps) => {
 
           {/* Metrics */}
           <div className="px-6 py-4">
-            <ProjectMetrics project={project} tasks={tasks} />
+            <ProjectMetrics project={safeProject} tasks={tasks} />
           </div>
 
           {/* Filters */}

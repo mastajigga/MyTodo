@@ -2,7 +2,7 @@ import { MainNav } from "@/components/layout/MainNav"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Workflow, ListTodo } from "lucide-react"
+import { LayoutDashboard, Workflow, ListTodo, Folder } from "lucide-react"
 import { motion } from "framer-motion"
 
 export function Navigation() {
@@ -34,6 +34,7 @@ export function Navigation() {
           {[
             { href: "/dashboard", icon: LayoutDashboard, label: "Tableau de bord" },
             { href: "/workspaces", icon: Workflow, label: "Espaces de travail" },
+            { href: "/projects", icon: Folder, label: "Projets" },
             { href: "/tasks", icon: ListTodo, label: "Tâches" }
           ].map((item, index) => (
             <motion.div

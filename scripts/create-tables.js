@@ -1,150 +1,91 @@
-require('dotenv').config({ path: '.env.local' });
-const { createClient } = require('@supabase/supabase-js');
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+
+// Charger les variables d'environnement de test
+dotenv.config({ path: '.env.test' });
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_API_KEY
 );
 
 const createTables = async () => {
   try {
-    const { data, error } = await supabase.rpc('exec_sql', {
-      sql_query: `
-        -- Profiles (extension de la table auth.users)
-        create table if not exists public.profiles (
-          id uuid references auth.users on delete cascade not null primary key,
-          full_name text,
-          avatar_url text,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Espaces de travail
-        create table if not exists public.workspaces (
-          id uuid default uuid_generate_v4() primary key,
-          name text not null,
-          description text,
-          type text check (type in ('family', 'professional', 'private')) not null,
-          created_by uuid references public.profiles(id) not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Membres des espaces de travail
-        create table if not exists public.workspace_members (
-          workspace_id uuid references public.workspaces(id) on delete cascade,
-          user_id uuid references public.profiles(id) on delete cascade,
-          role text check (role in ('owner', 'admin', 'member')) not null,
-          joined_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          primary key (workspace_id, user_id)
-        );
-
-        -- Projets
-        create table if not exists public.projects (
-          id uuid default uuid_generate_v4() primary key,
-          workspace_id uuid references public.workspaces(id) on delete cascade not null,
-          name text not null,
-          description text,
-          color text,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Tâches
-        create table if not exists public.tasks (
-          id uuid default uuid_generate_v4() primary key,
-          project_id uuid references public.projects(id) on delete cascade not null,
-          title text not null,
-          description text,
-          status text check (status in ('todo', 'in_progress', 'completed', 'cancelled')) not null,
-          priority text check (priority in ('low', 'medium', 'high', 'urgent')) not null,
-          due_date timestamp with time zone,
-          due_time time,
-          created_by uuid references public.profiles(id) not null,
-          assigned_to uuid references public.profiles(id),
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Sous-tâches
-        create table if not exists public.subtasks (
-          id uuid default uuid_generate_v4() primary key,
-          task_id uuid references public.tasks(id) on delete cascade not null,
-          title text not null,
-          completed boolean default false,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Commentaires
-        create table if not exists public.comments (
-          id uuid default uuid_generate_v4() primary key,
-          task_id uuid references public.tasks(id) on delete cascade not null,
-          user_id uuid references public.profiles(id) not null,
-          content text not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Pièces jointes
-        create table if not exists public.attachments (
-          id uuid default uuid_generate_v4() primary key,
-          task_id uuid references public.tasks(id) on delete cascade not null,
-          name text not null,
-          file_path text not null,
-          file_type text not null,
-          size integer not null,
-          uploaded_by uuid references public.profiles(id) not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Tags
-        create table if not exists public.tags (
-          id uuid default uuid_generate_v4() primary key,
-          workspace_id uuid references public.workspaces(id) on delete cascade not null,
-          name text not null,
-          color text not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Association Tags-Tâches
-        create table if not exists public.task_tags (
-          task_id uuid references public.tasks(id) on delete cascade,
-          tag_id uuid references public.tags(id) on delete cascade,
-          primary key (task_id, tag_id)
-        );
-
-        -- Notifications
-        create table if not exists public.notifications (
-          id uuid default uuid_generate_v4() primary key,
-          user_id uuid references public.profiles(id) not null,
-          type text check (type in ('mention', 'assignment', 'due_soon', 'comment')) not null,
-          content text not null,
-          read boolean default false,
-          task_id uuid references public.tasks(id) on delete cascade,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-
-        -- Dépendances entre tâches
-        create table if not exists public.task_dependencies (
-          id uuid default uuid_generate_v4() primary key,
-          predecessor_id uuid references public.tasks(id) on delete cascade not null,
-          successor_id uuid references public.tasks(id) on delete cascade not null,
-          offset_days integer default 0,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-          constraint different_tasks check (predecessor_id != successor_id)
-        );
-      `
+    console.log('Tentative de création d\'une entrée de test dans le workspace "bnp - api sas"...');
+    
+    // Création des tables
+    const { error } = await supabase.from('entries').insert({
+      title: 'Test Entry',
+      description: 'Test Description',
+      workspace_id: 'b5301a85-1fd2-418e-8755-2b4acb806796', // Workspace ID fourni
+      user_id: '00000000-0000-0000-0000-000000000000',
+      status: 'todo',
+      priority: 'medium'
     });
 
     if (error) {
-      console.error('Error creating tables:', error);
-      throw error;
+      if (error.code === '42P01') {
+        console.log('La table entries n\'existe pas, tentative de création...');
+        
+        const { error: createError } = await supabase
+          .query(`
+            create table if not exists public.entries (
+              id uuid default gen_random_uuid() primary key,
+              title varchar not null,
+              description text,
+              workspace_id uuid not null,
+              user_id uuid not null,
+              status varchar not null check (status in ('todo', 'in_progress', 'done')),
+              priority varchar not null check (priority in ('low', 'medium', 'high')),
+              due_date timestamp with time zone,
+              created_at timestamp with time zone default current_timestamp,
+              updated_at timestamp with time zone default current_timestamp
+            );
+
+            -- Index pour entries
+            create index if not exists idx_entries_workspace on public.entries(workspace_id);
+            create index if not exists idx_entries_user on public.entries(user_id);
+            create index if not exists idx_entries_status on public.entries(status);
+
+            -- Politique de sécurité pour permettre l'accès en lecture
+            create policy "Enable read access for all users" on public.entries
+              for select
+              using (true);
+
+            -- Activer RLS sur la table
+            alter table public.entries enable row level security;
+          `);
+
+        if (createError) {
+          console.error('Erreur lors de la création de la table:', createError);
+          throw createError;
+        } else {
+          console.log('Table entries créée avec succès, nouvelle tentative d\'insertion...');
+          return createTables(); // Réessayer l'insertion après la création de la table
+        }
+      } else {
+        console.error('Erreur lors de l\'insertion du test:', error);
+        throw error;
+      }
     }
 
-    console.log('Tables created successfully:', data);
+    console.log('Entrée de test créée avec succès dans le workspace "bnp - api sas"');
+
+    // Vérifier que l'entrée est accessible
+    const { data: checkData, error: checkError } = await supabase
+      .from('entries')
+      .select('*')
+      .eq('workspace_id', 'b5301a85-1fd2-418e-8755-2b4acb806796')
+      .single();
+
+    if (checkError) {
+      console.error('Erreur lors de la vérification de l\'entrée:', checkError);
+    } else {
+      console.log('Entrée vérifiée avec succès:', checkData);
+    }
   } catch (error) {
-    console.error('Failed:', error);
+    console.error('Échec:', error);
+    process.exit(1);
   }
 };
 

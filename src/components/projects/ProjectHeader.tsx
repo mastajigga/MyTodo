@@ -30,13 +30,13 @@ import { useQueryClient } from '@tanstack/react-query';
 const projectSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   description: z.string().optional(),
-  workspace_id: z.string(),
+  workspace_id: z.string().uuid('ID de l\'espace de travail invalide').optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface ProjectHeaderProps {
-  workspaceId: string;
+  workspaceId?: string;
 }
 
 export function ProjectHeader({ workspaceId }: ProjectHeaderProps) {
@@ -65,22 +65,21 @@ export function ProjectHeader({ workspaceId }: ProjectHeaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Projets</h1>
-        <p className="text-muted-foreground">
-          Gérez vos projets et suivez leur progression
-        </p>
-      </div>
-      <Button onClick={() => setOpen(true)}>
+    <div className="flex items-center justify-end">
+      <Button 
+        onClick={() => setOpen(true)}
+        className="bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+      >
         <Plus className="mr-2 h-4 w-4" />
         Nouveau projet
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] backdrop-blur-sm bg-card/50">
           <DialogHeader>
-            <DialogTitle>Créer un nouveau projet</DialogTitle>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+              Créer un nouveau projet
+            </DialogTitle>
             <DialogDescription>
               Remplissez les informations ci-dessous pour créer un nouveau projet.
             </DialogDescription>

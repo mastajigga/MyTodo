@@ -1,57 +1,33 @@
-'use client';
+'use client'
 
-import { PageHeader } from '@/components/shared/PageHeader';
-import { TaskList } from '@/components/tasks/TaskList';
-import { useEffect, useState } from 'react';
-import { Task } from '@/types/task';
-import { TaskService } from '@/services/task.service';
-import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
-  const loadTasks = async () => {
-    try {
-      const tasks = await TaskService.getTasks();
-      setTasks(tasks);
-    } catch (error) {
-      toast.error('Erreur lors du chargement des tâches');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTaskMove = async (taskId: string, completed: boolean) => {
-    try {
-      await TaskService.updateTask(taskId, {
-        status: completed ? 'completed' : 'pending'
-      });
-      await loadTasks();
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour de la tâche');
-    }
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Mes tâches"
-        description="Gérez et suivez vos tâches personnelles"
-      />
-      <div className="mt-8">
-        {isLoading ? (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <TaskList tasks={tasks} onTaskMove={handleTaskMove} />
-        )}
+    <div className="container py-8">
+      <div className="relative mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent">
+          Mes tâches
+        </h1>
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm" />
+      </div>
+
+      <div className="grid gap-6">
+        <Card className="backdrop-blur-sm bg-card/50">
+          <CardHeader>
+            <CardTitle>Tableau Kanban</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-[calc(100vh-16rem)] overflow-x-auto">
+              <div className="min-w-full p-6">
+                <KanbanBoard projectId="all" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
+  )
 } 

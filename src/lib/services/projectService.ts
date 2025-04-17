@@ -1,21 +1,24 @@
-import { Database } from '@/lib/types/supabase';
-import { createClient } from '@/lib/supabase/client';
+import { Database } from '@/types/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export type Project = Database['public']['Tables']['projects']['Row'];
-export type ProjectInsert = Database['public']['Tables']['projects']['Insert'];
+export type ProjectInsert = Omit<Database['public']['Tables']['projects']['Insert'], 'workspace_id'> & {
+  workspace_id?: string;
+};
 export type ProjectUpdate = Database['public']['Tables']['projects']['Update'];
-
-const supabase = createClient();
 
 export const projectService = {
   async getProjects(workspaceId?: string) {
-    const query = supabase
+    let query = supabase
       .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+      .select(`
+        *,
+        workspace:workspaces(id, name),
+        members:project_members(count)
+      `);
+    
     if (workspaceId) {
-      query.eq('workspace_id', workspaceId);
+      query = query.eq('workspace_id', workspaceId);
     }
 
     const { data, error } = await query;
@@ -27,11 +30,36 @@ export const projectService = {
     return data;
   },
 
-  async createProject(project: ProjectInsert) {
+  async getProject(id: string) {
     const { data, error } = await supabase
       .from('projects')
-      .insert(project)
-      .select()
+      .select(`
+        *,
+        workspace:workspaces(id, name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async createProject(project: ProjectInsert) {
+    const projectData = { ...project };
+    if (!projectData.workspace_id) {
+      delete projectData.workspace_id;
+    }
+
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(projectData)
+      .select(`
+        *,
+        workspace:workspaces(id, name)
+      `)
       .single();
 
     if (error) {
@@ -46,7 +74,10 @@ export const projectService = {
       .from('projects')
       .update(project)
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        workspace:workspaces(id, name)
+      `)
       .single();
 
     if (error) {
@@ -70,7 +101,10 @@ export const projectService = {
   async getProjectById(id: string) {
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select(`
+        *,
+        workspace:workspaces(id, name)
+      `)
       .eq('id', id)
       .single();
 

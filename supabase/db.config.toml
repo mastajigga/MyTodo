@@ -1,0 +1,23 @@
+[db]
+host = "db.eahjdvmpmqwnupsqnxjz.supabase.co"
+port = 5432
+user = "postgres"
+password = "OrionSirius13"
+database = "postgres"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "http://localhost:3000" 

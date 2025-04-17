@@ -1,33 +1,32 @@
-import { SupabaseClient } from '@supabase/supabase-js'
 import { vi } from 'vitest'
+import type { Database } from '@/@types/supabase'
 
-export const mockSupabaseClient = {
-  supabaseUrl: 'http://localhost:54321',
-  supabaseKey: 'dummy-key',
-  from: vi.fn().mockReturnValue({
+export const mockSupabase = {
+  from: vi.fn((table: string) => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue({ data: [], error: null }),
-  }),
+  })),
   auth: {
-    signInWithPassword: vi.fn(),
-    signInWithOAuth: vi.fn(),
-    signOut: vi.fn(),
-    getSession: vi.fn(),
-    onAuthStateChange: vi.fn(),
+    getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
+    signInWithPassword: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
+    signInWithOAuth: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    onAuthStateChange: vi.fn().mockImplementation((callback) => {
+      callback('SIGNED_IN', { user: { id: 'test-user' } });
+      return { data: { subscription: { unsubscribe: vi.fn() } }, error: null };
+    }),
   },
-  storage: {
-    from: vi.fn(),
-  },
-} as unknown as SupabaseClient
+  rpc: vi.fn().mockReturnThis(),
+} as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient<Database>>
 
 export const resetSupabaseMocks = () => {
   vi.clearAllMocks()
-  Object.values(mockSupabaseClient).forEach(mock => {
+  Object.values(mockSupabase).forEach(mock => {
     if (typeof mock === 'function') {
       mock.mockClear()
     }
@@ -35,7 +34,7 @@ export const resetSupabaseMocks = () => {
 }
 
 vi.mock('@/lib/supabase/client', () => ({
-  supabase: mockSupabaseClient
+  supabase: mockSupabase
 }))
 
 export const mockProject = {

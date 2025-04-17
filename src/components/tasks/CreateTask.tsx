@@ -33,10 +33,11 @@ type TaskFormData = z.infer<typeof taskSchema>;
 
 interface CreateTaskProps {
   projectId: string;
+  workspaceId: string;
   onSuccess: () => void;
 }
 
-export function CreateTask({ projectId, onSuccess }: CreateTaskProps) {
+export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProps) {
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -51,7 +52,8 @@ export function CreateTask({ projectId, onSuccess }: CreateTaskProps) {
       await TaskService.createTask({
         ...data,
         project_id: projectId,
-        status: "pending",
+        status: "todo",
+        workspace_id: workspaceId
       });
       onSuccess();
       toast.success("Tâche créée avec succès");
