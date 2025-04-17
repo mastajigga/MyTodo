@@ -148,8 +148,8 @@ importers:
         specifier: ^18
         version: 18.3.6(@types/react@18.3.20)
       '@vitejs/plugin-react':
-        specifier: ^4.3.4
-        version: 4.4.0(vite@6.3.1(@types/node@20.17.30)(jiti@1.21.7)(tsx@4.19.3)(yaml@2.7.1))
+        specifier: ^4.2.1
+        version: 4.2.1(vite@6.3.1(@types/node@20.17.30)(jiti@1.21.7)(tsx@4.19.3)(yaml@2.7.1))
       '@vitest/ui':
         specifier: ^3.1.1
         version: 3.1.1(vitest@3.1.1)
@@ -1841,11 +1841,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vitejs/plugin-react@4.4.0':
-    resolution: {integrity: sha512-x/EztcTKVj+TDeANY1WjNeYsvZjZdfWRMP/KXi5Yn8BoTzpa13ZltaQqKfvWYbX8CE10GOHHdC5v86jY9x8i/g==}
+  '@vitejs/plugin-react@4.2.1':
+    resolution: {integrity: sha512-oojO9IDc4nCUUi8qIR11KoQm0XFFLIwsRBwHRR4d/88IWghn1y6ckz/bJ8GHDCsYEJee8mDzqtJxh15/cisJNQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
-      vite: ^4.2.0 || ^5.0.0 || ^6.0.0
+      vite: ^4.2.0 || ^5.0.0
 
   '@vitest/expect@3.1.1':
     resolution: {integrity: sha512-q/zjrW9lgynctNbwvFtQkGK9+vvHA5UzVi2V8APrp1C6fG6/MuYYkmlx4FubuqLycCeSdHD5aadWfua/Vr0EUA==}
@@ -4207,8 +4207,8 @@ packages:
       redux:
         optional: true
 
-  react-refresh@0.17.0:
-    resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
+  react-refresh@0.14.2:
+    resolution: {integrity: sha512-jCvmsr+1IUSMUyzOkRcvnVbX3ZYC6g9TDrDbFuFmRDq7PD4yaGbLKNQL6k2jnArV8hjYxh7hVhAZB6s9HDGpZA==}
     engines: {node: '>=0.10.0'}
 
   react-remove-scroll-bar@2.3.8:
@@ -6793,13 +6793,13 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.5.0':
     optional: true
 
-  '@vitejs/plugin-react@4.4.0(vite@6.3.1(@types/node@20.17.30)(jiti@1.21.7)(tsx@4.19.3)(yaml@2.7.1))':
+  '@vitejs/plugin-react@4.2.1(vite@6.3.1(@types/node@20.17.30)(jiti@1.21.7)(tsx@4.19.3)(yaml@2.7.1))':
     dependencies:
       '@babel/core': 7.26.10
       '@babel/plugin-transform-react-jsx-self': 7.25.9(@babel/core@7.26.10)
       '@babel/plugin-transform-react-jsx-source': 7.25.9(@babel/core@7.26.10)
       '@types/babel__core': 7.20.5
-      react-refresh: 0.17.0
+      react-refresh: 0.14.2
       vite: 6.3.1(@types/node@20.17.30)(jiti@1.21.7)(tsx@4.19.3)(yaml@2.7.1)
     transitivePeerDependencies:
       - supports-color
@@ -9679,7 +9679,7 @@ snapshots:
       '@types/react': 18.3.20
       redux: 5.0.1
 
-  react-refresh@0.17.0: {}
+  react-refresh@0.14.2: {}
 
   react-remove-scroll-bar@2.3.8(@types/react@18.3.20)(react@18.3.1):
     dependencies:
