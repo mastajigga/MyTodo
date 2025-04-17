@@ -1,80 +1,106 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Task } from '@/components/tasks/Task';
-import { Plus } from 'lucide-react';
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from '@/components/ui/toggle-group';
+import { Card, CardContent } from '@/components/ui/card';
+import { KanbanBoard } from '@/components/tasks/KanbanBoard';
+import { ProjectMetrics } from './ProjectMetrics';
+import { ProjectSidebar } from './ProjectSidebar';
+import { ProjectHeader } from './ProjectHeader';
+import { ProjectTimeline } from './ProjectTimeline';
+import { ProjectFilters } from './ProjectFilters';
+import { useProject } from '@/hooks/useProject';
+import { useProjectTasks } from '@/hooks/useProjectTasks';
+import { useProjectMembers } from '@/hooks/useProjectMembers';
+import { Project as ProjectType } from '@/types/project';
+import { Task } from '@/types/task';
 
 interface ProjectProps {
-  project: {
-    id: string;
-    name: string;
-    description: string;
-    workspace_id: string;
-    color: string;
-    created_at: string;
-    updated_at: string;
-  };
-  tasks: Array<{
-    id: string;
-    title: string;
-    status: string;
-    priority: string;
-    project_id: string;
-    created_by: string;
-    created_at: string;
-    updated_at: string;
-  }>;
-  onAddTask?: () => void;
+  projectId: string;
 }
 
-export const Project = ({ project, tasks, onAddTask }: ProjectProps) => {
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+export const Project = ({ projectId }: ProjectProps) => {
+  const [showSidebar, setShowSidebar] = useState(true);
+  const { project, isLoading: projectLoading } = useProject(projectId);
+  const { tasks, isLoading: tasksLoading } = useProjectTasks(projectId);
+  const { members, isLoading: membersLoading } = useProjectMembers(projectId);
+  const [filters, setFilters] = useState({
+    status: null,
+    priority: null,
+    assignee: null,
+    dueDate: null
+  });
 
-  const filteredTasks = tasks.map(task => ({
-    ...task,
-    status: task.status as "todo" | "completed" | "in_progress" | "cancelled",
-    priority: task.priority as "low" | "medium" | "high" | "urgent"
-  }));
+  // Vérification stricte de toutes les propriétés requises pour ProjectType
+  const isValidProject = (p: any): p is ProjectType =>
+    p &&
+    typeof p === 'object' &&
+    typeof p.id === 'string' &&
+    typeof p.name === 'string' &&
+    (typeof p.description === 'string' || p.description === null) &&
+    typeof p.created_at === 'string' &&
+    typeof p.updated_at === 'string' &&
+    typeof p.workspace_id === 'string';
+
+  if (projectLoading || tasksLoading || membersLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (!isValidProject(project)) {
+    return <div className="text-center">Project not found</div>;
+  }
+
+  // Correction : garantir que description est string ou null
+  const safeProject = { ...project, description: project.description ?? null };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between p-6">
-        <div>
-          <h2 className="text-2xl font-bold">{project.name}</h2>
-          <p className="text-muted-foreground mt-1">{project.description}</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {tasks.length} tasks
-          </p>
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar */}
+      {showSidebar && (
+        <ProjectSidebar
+          project={safeProject}
+          members={members}
+          onClose={() => setShowSidebar(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <ProjectHeader
+            workspaceId={project.workspace_id}
+          />
+
+          {/* Metrics */}
+          <div className="px-6 py-4">
+            <ProjectMetrics project={safeProject} tasks={tasks} />
+          </div>
+
+          {/* Filters */}
+          <div className="px-6 py-2">
+            <ProjectFilters
+              filters={filters}
+              onChange={setFilters}
+              members={members}
+            />
+          </div>
+
+          {/* Kanban Board */}
+          <div className="flex-1 overflow-hidden px-6 py-4">
+            <Card>
+              <CardContent className="p-0">
+                <KanbanBoard
+                  projectId={projectId}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Timeline */}
+          <div className="px-6 py-4">
+            <ProjectTimeline projectId={projectId} />
+          </div>
         </div>
-        <Button onClick={onAddTask} aria-label="add task">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Task
-        </Button>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="mb-6">
-          <ToggleGroup type="single" onValueChange={setStatusFilter}>
-            <ToggleGroupItem value="todo" aria-label="todo">
-              To Do
-            </ToggleGroupItem>
-            <ToggleGroupItem value="in_progress" aria-label="in progress">
-              In Progress
-            </ToggleGroupItem>
-            <ToggleGroupItem value="completed" aria-label="completed">
-              Completed
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-        <div className="space-y-4">
-          {filteredTasks.map((task) => (
-            <Task key={task.id} task={task} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }; 

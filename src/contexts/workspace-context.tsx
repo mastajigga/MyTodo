@@ -1,17 +1,12 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { WorkspaceService } from '@/services/workspace.service';
-import { toast } from 'sonner';
+'use client';
 
-interface Workspace {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { WorkspaceService, Workspace } from '@/services/workspace.service';
+import { toast } from 'sonner';
 
 interface WorkspaceContextType {
   workspace: Workspace | null;
+  workspaces: Workspace[];
   setWorkspace: (workspace: Workspace | null) => void;
   isLoading: boolean;
 }
@@ -20,14 +15,16 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadWorkspace = async () => {
       try {
-        const workspaces = await WorkspaceService.getWorkspaces();
-        if (workspaces.length > 0) {
-          setWorkspace(workspaces[0]);
+        const workspacesList = await WorkspaceService.getWorkspaces();
+        setWorkspaces(workspacesList);
+        if (workspacesList.length > 0) {
+          setWorkspace(workspacesList[0]);
         }
       } catch (error) {
         toast.error('Erreur lors du chargement de l\'espace de travail');
@@ -40,7 +37,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <WorkspaceContext.Provider value={{ workspace, setWorkspace, isLoading }}>
+    <WorkspaceContext.Provider value={{ workspace, workspaces, setWorkspace, isLoading }}>
       {children}
     </WorkspaceContext.Provider>
   );

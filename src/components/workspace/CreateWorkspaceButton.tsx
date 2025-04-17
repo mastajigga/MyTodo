@@ -37,11 +37,7 @@ export function CreateWorkspaceButton() {
     setLoading(true);
 
     try {
-      await WorkspaceService.createWorkspace({
-        name,
-        type,
-        description,
-      });
+      await WorkspaceService.createWorkspace(name, description, type);
 
       toast.success('Espace de travail créé avec succès');
       router.refresh();

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 interface WorkspaceMember {
-  id: string
   user_id: string
   workspace_id: string
   role: 'owner' | 'admin' | 'member'
@@ -17,8 +16,14 @@ interface WorkspaceMember {
   }
 }
 
-export function WorkspaceMembers({ workspaceId }: { workspaceId: string }) {
-  const [members, setMembers] = useState<WorkspaceMember[]>([])
+interface WorkspaceMembersProps {
+  workspaceId: string
+  members?: WorkspaceMember[]
+  onMemberUpdate?: () => void
+}
+
+export function WorkspaceMembers({ workspaceId, members: initialMembers, onMemberUpdate }: WorkspaceMembersProps) {
+  const [members, setMembers] = useState<WorkspaceMember[]>(initialMembers || [])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const { supabase } = useSupabase()
@@ -30,16 +35,31 @@ export function WorkspaceMembers({ workspaceId }: { workspaceId: string }) {
         const { data, error } = await supabase
           .from('workspace_members')
           .select(`
-            *,
+            user_id,
+            workspace_id,
+            role,
             user:user_id (
               email,
               full_name
             )
           `)
           .eq('workspace_id', workspaceId)
+          .order('role', { ascending: false })
 
         if (error) throw error
-        setMembers(data || [])
+        
+        const formattedMembers = (data || []).map((member: any) => ({
+          user_id: member.user_id,
+          workspace_id: member.workspace_id,
+          role: member.role,
+          user: {
+            email: member.user?.email || 'Unknown',
+            full_name: member.user?.full_name || 'Unknown User'
+          }
+        }))
+        
+        setMembers(formattedMembers)
+        onMemberUpdate?.()
       } catch (err) {
         setError(err as Error)
       } finally {
@@ -47,8 +67,10 @@ export function WorkspaceMembers({ workspaceId }: { workspaceId: string }) {
       }
     }
 
-    fetchMembers()
-  }, [workspaceId, supabase])
+    if (!initialMembers?.length) {
+      fetchMembers()
+    }
+  }, [workspaceId, supabase, initialMembers, onMemberUpdate])
 
   if (loading) {
     return (
@@ -82,7 +104,7 @@ export function WorkspaceMembers({ workspaceId }: { workspaceId: string }) {
         <div className="space-y-4">
           {members.map((member) => (
             <div
-              key={member.id}
+              key={`${member.user_id}-${member.workspace_id}`}
               className="flex items-center justify-between p-4 border rounded-lg"
             >
               <div className="flex items-center space-x-4">

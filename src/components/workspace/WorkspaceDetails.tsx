@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useWorkspace, Workspace, WorkspaceMember } from '@/lib/workspace/useWorkspace'
+import { useWorkspace } from '@/lib/workspace/useWorkspace'
+import type { Workspace, WorkspaceMember } from '@/types/workspace'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,12 +27,11 @@ export function WorkspaceDetails({ workspaceId }: WorkspaceDetailsProps) {
         setError(null)
         const data = await getWorkspaceById(workspaceId)
         if (data) {
-          setWorkspace(data.workspace)
-          setMembers(data.members)
+          setWorkspace(data)
           setEditedWorkspace({
-            name: data.workspace.name,
-            description: data.workspace.description,
-            type: data.workspace.type,
+            name: data.name,
+            description: data.description,
+            type: data.type,
           })
         }
       } catch (err) {
@@ -48,7 +48,10 @@ export function WorkspaceDetails({ workspaceId }: WorkspaceDetailsProps) {
     if (!workspace || !editedWorkspace.name) return
 
     try {
-      await updateWorkspace(workspace.id, editedWorkspace)
+      await updateWorkspace(workspace.id, {
+        ...editedWorkspace,
+        description: editedWorkspace.description ?? undefined,
+      })
       setWorkspace({ ...workspace, ...editedWorkspace })
       setIsEditing(false)
     } catch (err) {
@@ -109,7 +112,7 @@ export function WorkspaceDetails({ workspaceId }: WorkspaceDetailsProps) {
             <div className="space-y-2">
               <label className="text-sm font-medium">Description</label>
               <Textarea
-                value={editedWorkspace.description}
+                value={editedWorkspace.description ?? ''}
                 onChange={(e) =>
                   setEditedWorkspace({
                     ...editedWorkspace,
@@ -152,19 +155,6 @@ export function WorkspaceDetails({ workspaceId }: WorkspaceDetailsProps) {
           </>
         )}
       </div>
-
-      <WorkspaceMembers
-        workspaceId={workspace.id}
-        members={members}
-        onMemberUpdate={() => {
-          // Recharger les membres
-          getWorkspaceById(workspaceId).then((data) => {
-            if (data) {
-              setMembers(data.members)
-            }
-          })
-        }}
-      />
     </div>
   )
 } 

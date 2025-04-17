@@ -25,8 +25,8 @@ export interface UpdateWorkspaceInput {
   type?: 'family' | 'professional' | 'private';
 }
 
-export class WorkspaceService {
-  static async getWorkspaces(): Promise<Workspace[]> {
+export const WorkspaceService = {
+  async getWorkspaces(): Promise<Workspace[]> {
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
@@ -37,9 +37,9 @@ export class WorkspaceService {
     }
 
     return data;
-  }
+  },
 
-  static async getWorkspace(id: string): Promise<Workspace | null> {
+  async getWorkspace(id: string): Promise<Workspace | null> {
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
@@ -51,32 +51,46 @@ export class WorkspaceService {
     }
 
     return data;
-  }
+  },
 
-  static async createWorkspace(input: CreateWorkspaceInput): Promise<Workspace> {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Non authentifié');
-    }
+  async createWorkspace(name: string, description?: string, type: string = 'private'): Promise<Workspace> {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
+    if (userError) throw userError;
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    // Créer le workspace
+    const { data: workspace, error: workspaceError } = await supabase
       .from('workspaces')
-      .insert([{
-        ...input,
+      .insert({
+        name,
+        description,
+        type,
         created_by: user.id,
-      }])
+      })
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (workspaceError) throw workspaceError;
 
-    return data;
-  }
+    // Ajouter le créateur comme propriétaire
+    const { error: memberError } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspace.id,
+        user_id: user.id,
+        role: 'owner',
+      });
 
-  static async updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace> {
+    if (memberError) throw memberError;
+
+    return workspace;
+  },
+
+  async updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace> {
     const { data, error } = await supabase
       .from('workspaces')
       .update(input)
@@ -89,9 +103,9 @@ export class WorkspaceService {
     }
 
     return data;
-  }
+  },
 
-  static async deleteWorkspace(id: string): Promise<void> {
+  async deleteWorkspace(id: string): Promise<void> {
     const { error } = await supabase
       .from('workspaces')
       .delete()
@@ -100,5 +114,23 @@ export class WorkspaceService {
     if (error) {
       throw error;
     }
+  },
+
+  async getWorkspaceMembers(workspaceId: string) {
+    const { data, error } = await supabase
+      .from('workspace_members')
+      .select(`
+        *,
+        user:user_id (
+          id,
+          email,
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('workspace_id', workspaceId);
+
+    if (error) throw error;
+    return data;
   }
-} 
+}; 

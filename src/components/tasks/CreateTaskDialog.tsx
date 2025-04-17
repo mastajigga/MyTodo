@@ -83,9 +83,10 @@ export function CreateTaskDialog() {
         due_date: values.due_date || null,
         project_id: values.project_id === 'none' ? null : values.project_id || null,
         status: 'todo',
-        position: 0, // Sera calculé par le service
+        position: 0,
         created_by: user.id,
         assigned_to: user.id,
+        workspace_id: values.workspace_id
       });
 
       // Invalider le cache pour recharger la liste des tâches
@@ -101,7 +102,7 @@ export function CreateTaskDialog() {
         priority: 'medium',
         due_date: '',
         workspace_id: workspace?.id || '',
-        project_id: 'none',
+        project_id: '',
       });
     } catch (error: any) {
       toast.error(error.message || 'Une erreur est survenue');

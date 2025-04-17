@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useWorkspace, WorkspaceType } from '@/lib/workspace/useWorkspace'
+import { useWorkspace } from '@/lib/workspace/useWorkspace'
+import { WorkspaceType } from '@/types/workspace'
 import { Label } from '@/components/ui/label'
 
 const workspaceSchema = z.object({
   name: z.string().min(1, { message: 'Le nom est requis' }),
   description: z.string().optional(),
-  type: z.enum(['family', 'professional', 'private'], {
+  type: z.enum(['personal', 'team'], {
     required_error: 'Le type est requis'
   })
 })
@@ -48,9 +49,8 @@ export function CreateWorkspace({ onSuccess }: CreateWorkspaceProps) {
   }
 
   const workspaceTypes: { value: WorkspaceType; label: string }[] = [
-    { value: 'family', label: 'Famille' },
-    { value: 'professional', label: 'Professionnel' },
-    { value: 'private', label: 'Privé' }
+    { value: 'personal', label: 'Personnel' },
+    { value: 'team', label: 'Équipe' }
   ]
 
   return (

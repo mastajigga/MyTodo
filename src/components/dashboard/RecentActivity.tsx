@@ -10,6 +10,7 @@ interface RecentActivityProps {
     type: "create" | "update" | "delete" | "complete" | "start"
     taskName: string
     timestamp: string
+    newStatus?: string
   }[]
 }
 
@@ -31,20 +32,22 @@ export function RecentActivity({ activities }: RecentActivityProps) {
     }
   }
 
-  const getActivityText = (type: string, taskName: string) => {
-    switch (type) {
+  const getActivityText = (activity: { type: string; taskName: string; newStatus?: string }) => {
+    if (activity.type === 'update' && activity.newStatus === 'done') {
+      return `Tâche terminée : ${activity.taskName}`;
+    }
+
+    switch (activity.type) {
       case "create":
-        return `Nouvelle tâche créée : ${taskName}`
+        return `Nouvelle tâche créée : ${activity.taskName}`;
       case "update":
-        return `Tâche modifiée : ${taskName}`
+        return `Tâche modifiée : ${activity.taskName}`;
       case "delete":
-        return `Tâche supprimée : ${taskName}`
-      case "complete":
-        return `Tâche terminée : ${taskName}`
+        return `Tâche supprimée : ${activity.taskName}`;
       case "start":
-        return `Tâche démarrée : ${taskName}`
+        return `Tâche démarrée : ${activity.taskName}`;
       default:
-        return `Action sur la tâche : ${taskName}`
+        return `Action sur la tâche : ${activity.taskName}`;
     }
   }
 
@@ -69,7 +72,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               {getIcon(activity.type)}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium">{getActivityText(activity.type, activity.taskName)}</p>
+              <p className="text-sm font-medium">{getActivityText(activity)}</p>
               <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
             </div>
           </motion.div>

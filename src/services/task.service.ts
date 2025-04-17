@@ -1,42 +1,66 @@
 import { supabase } from '@/lib/supabase/client';
-import { Task } from '@/types/task';
+import { Task, CreateTaskData, TaskStatus } from '@/types/task';
 
 export const TaskService = {
-  async getTasks(projectId: string) {
+  async getTasks(projectId: string): Promise<Task[]> {
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        created_by_user:created_by(id, email, full_name, avatar_url),
+        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
+        project:project_id(id, name),
+        subtasks(id, title, completed)
+      `)
       .eq('project_id', projectId)
       .order('position');
     
     if (error) throw error;
-    return data;
+    return data as Task[];
   },
 
-  async createTask(task: Partial<Task>) {
+  async createTask(task: CreateTaskData): Promise<Task> {
     const { data, error } = await supabase
       .from('tasks')
-      .insert([task])
-      .select()
+      .insert([{
+        ...task,
+        position: 0, // Position par défaut
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select(`
+        *,
+        created_by_user:created_by(id, email, full_name, avatar_url),
+        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
+        project:project_id(id, name)
+      `)
       .single();
     
     if (error) throw error;
-    return data;
+    return data as Task;
   },
 
-  async updateTask(id: string, task: Partial<Task>) {
+  async updateTask(id: string, task: Partial<Omit<Task, 'id' | 'created_at' | 'created_by'>>): Promise<Task> {
     const { data, error } = await supabase
       .from('tasks')
-      .update(task)
+      .update({
+        ...task,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        created_by_user:created_by(id, email, full_name, avatar_url),
+        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
+        project:project_id(id, name)
+      `)
       .single();
     
     if (error) throw error;
-    return data;
+    return data as Task;
   },
 
-  async deleteTask(id: string) {
+  async deleteTask(id: string): Promise<void> {
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -45,10 +69,11 @@ export const TaskService = {
     if (error) throw error;
   },
 
-  async reorderTasks(projectId: string, taskIds: string[]) {
+  async reorderTasks(projectId: string, taskIds: string[]): Promise<void> {
     const updates = taskIds.map((id, index) => ({
       id,
-      position: index
+      position: index,
+      updated_at: new Date().toISOString()
     }));
 
     const { error } = await supabase

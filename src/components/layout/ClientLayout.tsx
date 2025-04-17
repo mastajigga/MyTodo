@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/layout/SearchBar"
 import { Navigation } from "@/components/layout/Navigation"
 import { ToasterProvider } from "@/components/layout/ToasterProvider"
 import { UserNav } from "@/components/layout/UserNav"
+import { WorkspaceProvider } from "@/contexts/workspace-context"
 
 interface ClientLayoutProps {
   children: React.ReactNode
@@ -34,26 +35,28 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <div className="flex min-h-screen bg-background">
-          <div className="hidden border-r bg-background md:block md:w-64">
-            <Navigation />
-          </div>
-          <div className="flex w-full flex-1 flex-col">
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-14 items-center justify-between px-4">
-                <div className="flex flex-1">
-                  <SearchBar />
+        <WorkspaceProvider>
+          <div className="flex min-h-screen bg-background">
+            <div className="hidden border-r bg-background md:block md:w-64">
+              <Navigation />
+            </div>
+            <div className="flex w-full flex-1 flex-col">
+              <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex h-14 items-center justify-between px-4">
+                  <div className="flex flex-1">
+                    <SearchBar />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <UserNav />
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <UserNav />
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 overflow-y-auto p-6">
-              {children}
-            </main>
+              </header>
+              <main className="flex-1 overflow-y-auto p-6">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </WorkspaceProvider>
       </ThemeProvider>
       <ToasterProvider />
     </>

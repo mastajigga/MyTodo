@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ProjectService } from '@/services/project.service'
-import { mockSupabaseClient } from '@/test/mocks/supabase'
+import { projectService } from '@/services/projectService'
+import { supabase } from '@/lib/supabase/client'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { Project, CreateProjectInput, UpdateProjectInput } from '@/types/project'
+import type { Project, CreateProjectData, UpdateProjectData } from '@/types/project'
 import type { Database } from '@/types/supabase'
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
@@ -12,7 +12,7 @@ vi.mock('@supabase/auth-helpers-nextjs', () => ({
 describe('ProjectService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(createClientComponentClient<Database>).mockReturnValue(mockSupabaseClient)
+    vi.mocked(createClientComponentClient<Database>).mockReturnValue(supabase)
   })
 
   describe('getProject', () => {
@@ -24,10 +24,13 @@ describe('ProjectService', () => {
         workspace_id: 'workspace-1',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        position: 0,
+        created_by: '1',
+        is_archived: false
       }
 
-      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
-        ...mockSupabaseClient.from('projects'),
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        ...supabase.from('projects'),
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValueOnce({
@@ -36,14 +39,14 @@ describe('ProjectService', () => {
         }),
       } as any)
 
-      const result = await ProjectService.getProject('1')
+      const result = await projectService.getProject('1')
       expect(result).toEqual(mockProject)
     })
   })
 
   describe('createProject', () => {
     it('should create a new project', async () => {
-      const input: CreateProjectInput = {
+      const input: CreateProjectData = {
         workspace_id: 'workspace-1',
         name: 'New Project',
         description: null,
@@ -56,10 +59,13 @@ describe('ProjectService', () => {
         description: input.description ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        position: 0,
+        created_by: '1',
+        is_archived: false
       }
 
-      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
-        ...mockSupabaseClient.from('projects'),
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        ...supabase.from('projects'),
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValueOnce({
@@ -68,14 +74,14 @@ describe('ProjectService', () => {
         }),
       } as any)
 
-      const result = await ProjectService.createProject(input)
+      const result = await projectService.createProject(input)
       expect(result).toEqual(mockProject)
     })
   })
 
   describe('updateProject', () => {
     it('should update an existing project', async () => {
-      const input: UpdateProjectInput = {
+      const input: UpdateProjectData = {
         name: 'Updated Project',
         description: 'Updated description',
       }
@@ -87,10 +93,13 @@ describe('ProjectService', () => {
         description: 'Updated description',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        position: 0,
+        created_by: '1',
+        is_archived: false
       }
 
-      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
-        ...mockSupabaseClient.from('projects'),
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        ...supabase.from('projects'),
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -100,15 +109,15 @@ describe('ProjectService', () => {
         }),
       } as any)
 
-      const result = await ProjectService.updateProject('1', input)
+      const result = await projectService.updateProject('1', input)
       expect(result).toEqual(mockProject)
     })
   })
 
   describe('deleteProject', () => {
     it('should delete a project', async () => {
-      vi.mocked(mockSupabaseClient.from).mockReturnValueOnce({
-        ...mockSupabaseClient.from('projects'),
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        ...supabase.from('projects'),
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValueOnce({
           data: null,
@@ -116,8 +125,8 @@ describe('ProjectService', () => {
         }),
       } as any)
 
-      await ProjectService.deleteProject('1')
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('projects')
+      await projectService.deleteProject('1')
+      expect(supabase.from).toHaveBeenCalledWith('projects')
     })
   })
 }) 

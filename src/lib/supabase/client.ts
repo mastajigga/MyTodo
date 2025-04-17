@@ -1,13 +1,18 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import type { Database } from '@/@types/supabase';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+let supabaseInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null;
 
-export const createClient = () => {
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
-}
+export const getSupabaseClient = () => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClientComponentClient<Database>();
+  }
+  return supabaseInstance;
+};
+
+// Pour la compatibilité avec le code existant
+export const supabase = getSupabaseClient();
 
 export type SupabasePayload = {
   new: any;
@@ -15,6 +20,4 @@ export type SupabasePayload = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
 };
 
-export type SupabaseSubscription = RealtimeChannel;
-
-export const supabase = createClientComponentClient(); 
+export type SupabaseSubscription = RealtimeChannel; 

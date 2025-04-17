@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { CalendarIcon, Clock, Plus, Trash2 } from "lucide-react"
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
+import { DragDropContext, Draggable, Droppable, DropResult } from "@hello-pangea/dnd"
 import { toast } from "sonner"
 
 interface Task {
@@ -38,16 +38,24 @@ export function TaskManager() {
   const [showTimeInput, setShowTimeInput] = useState(false)
 
   const handleAddTask = () => {
-    if (!newTask.title) return
+    if (!newTask.title?.trim()) {
+      toast.error("Le titre de la tâche est requis")
+      return
+    }
+
+    if (typeof newTask.estimatedTime !== 'number' || newTask.estimatedTime < 0) {
+      toast.error("Le temps estimé doit être un nombre positif")
+      return
+    }
 
     const task: Task = {
       id: Date.now().toString(),
-      title: newTask.title!,
-      description: newTask.description || '',
-      dueDate: newTask.dueDate,
-      status: newTask.status as Task['status'],
-      priority: newTask.priority as Task['priority'],
-      estimatedTime: newTask.estimatedTime || 30
+      title: newTask.title,
+      description: newTask.description ?? '',
+      dueDate: newTask.dueDate ?? null,
+      status: newTask.status ?? 'todo',
+      priority: newTask.priority ?? 'medium',
+      estimatedTime: newTask.estimatedTime
     }
 
     setTasks([...tasks, task])
@@ -67,7 +75,7 @@ export function TaskManager() {
     toast.success("Tâche supprimée avec succès")
   }
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return
 
     const items = Array.from(tasks)

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ProjectCard } from '../ProjectCard';
+import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Project } from '@/types/project';
+import { PROJECT_COLORS } from '@/types/project';
 
 // Mock de next/link
 jest.mock('next/link', () => {
@@ -15,9 +16,9 @@ describe('ProjectCard', () => {
     workspace_id: '1',
     name: 'Projet Test',
     description: 'Description du projet test',
-    color: 'blue',
+    color: 'blue' as ProjectColor,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   const mockOnDelete = jest.fn();
@@ -58,7 +59,7 @@ describe('ProjectCard', () => {
   it('devrait afficher "Aucune description" si la description est vide', () => {
     const projectSansDescription = {
       ...mockProject,
-      description: undefined,
+      description: null
     };
 
     render(
@@ -77,7 +78,7 @@ describe('ProjectCard', () => {
 
     const colorIndicator = screen.getByTestId('project-color');
     expect(colorIndicator).toHaveStyle({
-      backgroundColor: expect.any(String),
+      backgroundColor: expect.any(String)
     });
   });
 }); 
