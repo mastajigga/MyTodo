@@ -1,10 +1,13 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { createRequire } from 'module'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
+const require = createRequire(import.meta.url)
+const react = require('@vitejs/plugin-react')
+
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react.default(), tsconfigPaths()],
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
