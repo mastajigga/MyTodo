@@ -1,9 +1,10 @@
 import { Metadata } from 'next'
-import { ClientLayout } from './ClientLayout'
+import ClientLayout from './ClientLayout'
+import '@/styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'MyTodo - Gérez vos tâches efficacement',
-  description: 'Application de gestion de tâches moderne et intuitive',
+  title: 'MyTodo App',
+  description: 'A simple todo app built with Next.js and Supabase',
 }
 
 export default function RootLayout({
@@ -12,11 +13,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <body>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   )

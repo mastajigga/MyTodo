@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { Database } from '@/@types/supabase'
+import type { Database } from '../../lib/database.types'
 
 export const mockSupabase = {
   from: vi.fn((table: string) => ({

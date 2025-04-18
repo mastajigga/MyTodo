@@ -33,7 +33,7 @@ export function Navigation() {
         <nav className="grid items-start gap-2 px-4 text-sm font-medium">
           {[
             { href: "/dashboard", icon: LayoutDashboard, label: "Tableau de bord" },
-            { href: "/workspaces", icon: Workflow, label: "Espaces de travail" },
+            { href: "/workspace", icon: Workflow, label: "Espace de travail" },
             { href: "/projects", icon: Folder, label: "Projets" },
             { href: "/tasks", icon: ListTodo, label: "Tâches" }
           ].map((item, index) => (

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSupabase } from '@/hooks/useSupabase';
+import { useSupabase } from '@/lib/supabase/supabase-provider';
 
 export function TopNav() {
   const { supabase } = useSupabase();

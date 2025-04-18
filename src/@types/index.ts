@@ -1,17 +1,8 @@
-import { Database } from './supabase';
+import { Database } from '../lib/database.types';
 
 export type ProjectBase = Database['public']['Tables']['projects']['Row'];
 
-export interface Project extends ProjectBase {
-  id: string;
-  name: string;
-  description: string | null;
-  workspace_id: string;
-  created_at: string;
-  updated_at: string;
-  position: number;
-  created_by: string;
-  is_archived: boolean;
+export interface Project extends Omit<ProjectBase, 'color'> {
   color?: ProjectColor;
   workspace?: {
     id: string;
@@ -52,6 +43,7 @@ export type CreateProjectData = {
   workspace_id: string;
   position?: number;
   created_by?: string;
+  color?: ProjectColor;
 };
 
 export type UpdateProjectData = Partial<Omit<Project, 'id' | 'created_at' | 'created_by'>>;

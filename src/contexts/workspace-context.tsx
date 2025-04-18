@@ -1,8 +1,11 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { WorkspaceService, Workspace } from '@/services/workspace.service';
+import { Database } from '../lib/database.types';
 import { toast } from 'sonner';
+import { WorkspaceService } from '@/services/workspace.service';
+
+type Workspace = Database['public']['Tables']['workspaces']['Row'];
 
 interface WorkspaceContextType {
   workspace: Workspace | null;

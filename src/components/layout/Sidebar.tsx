@@ -11,7 +11,7 @@ import {
   Users,
   LogOut,
 } from 'lucide-react';
-import { useSupabase } from '@/hooks/useSupabase';
+import { useSupabase } from '@/lib/supabase/supabase-provider';
 import { toast } from 'sonner';
 
 const navigation = [

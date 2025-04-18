@@ -1,22 +1,17 @@
-'use client'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { Database } from '@/lib/database.types'
+import ClientLayoutContent from './ClientLayoutContent'
 
-import { QueryProvider } from '@/components/providers/QueryProvider'
-import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider'
-import { WorkspaceProvider } from '@/contexts/workspace-context'
-import { initializeMocks } from '@/lib/mocks/initialize'
-
-export function ClientLayout({
+export default async function ClientLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <QueryProvider>
-      <WorkspaceProvider>
-        <CreateTaskDialogProvider>
-          {children}
-        </CreateTaskDialogProvider>
-      </WorkspaceProvider>
-    </QueryProvider>
-  )
+  const supabase = createServerComponentClient<Database>({ cookies })
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  return <ClientLayoutContent session={session}>{children}</ClientLayoutContent>
 } 

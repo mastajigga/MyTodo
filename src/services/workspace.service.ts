@@ -1,17 +1,11 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/supabase';
+import { Database } from '../lib/database.types';
 
 const supabase = createClientComponentClient<Database>();
 
-export interface Workspace {
-  id: string;
-  name: string;
-  description?: string;
-  type: 'family' | 'professional' | 'private';
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
+export type Workspace = Database['public']['Tables']['workspaces']['Row'];
+export type WorkspaceInsert = Database['public']['Tables']['workspaces']['Insert'];
+export type WorkspaceUpdate = Database['public']['Tables']['workspaces']['Update'];
 
 export interface CreateWorkspaceInput {
   name: string;
@@ -39,11 +33,26 @@ export const WorkspaceService = {
     return data;
   },
 
-  async getWorkspace(id: string): Promise<Workspace | null> {
+  async createWorkspace(input: CreateWorkspaceInput): Promise<Workspace> {
+    const user = await supabase.auth.getUser();
+    const userId = user.data.user?.id;
+
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const workspaceData: WorkspaceInsert = {
+      name: input.name,
+      description: input.description || null,
+      type: input.type,
+      owner_id: userId,
+      created_by: userId
+    };
+
     const { data, error } = await supabase
       .from('workspaces')
-      .select('*')
-      .eq('id', id)
+      .insert(workspaceData)
+      .select()
       .single();
 
     if (error) {
@@ -53,47 +62,16 @@ export const WorkspaceService = {
     return data;
   },
 
-  async createWorkspace(name: string, description?: string, type: string = 'private'): Promise<Workspace> {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) throw userError;
-    if (!user) throw new Error('Utilisateur non connecté');
-
-    // Créer le workspace
-    const { data: workspace, error: workspaceError } = await supabase
-      .from('workspaces')
-      .insert({
-        name,
-        description,
-        type,
-        created_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (workspaceError) throw workspaceError;
-
-    // Ajouter le créateur comme propriétaire
-    const { error: memberError } = await supabase
-      .from('workspace_members')
-      .insert({
-        workspace_id: workspace.id,
-        user_id: user.id,
-        role: 'owner',
-      });
-
-    if (memberError) throw memberError;
-
-    return workspace;
-  },
-
   async updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace> {
+    const updateData: WorkspaceUpdate = {
+      name: input.name,
+      description: input.description,
+      type: input.type
+    };
+
     const { data, error } = await supabase
       .from('workspaces')
-      .update(input)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -114,6 +92,20 @@ export const WorkspaceService = {
     if (error) {
       throw error;
     }
+  },
+
+  async getWorkspaceById(id: string): Promise<Workspace | null> {
+    const { data, error } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
   },
 
   async getWorkspaceMembers(workspaceId: string) {

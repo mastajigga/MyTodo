@@ -1,4 +1,4 @@
-import { Database } from '@/types/supabase';
+import { Database } from '../../lib/database.types';
 import { supabase } from '@/lib/supabase/client';
 import { Task, TaskStatus, TASK_STATUS_MAP, TaskActivity } from '@/types/task';
 

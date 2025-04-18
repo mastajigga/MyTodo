@@ -1,8 +1,10 @@
-import { Database } from '@/types/supabase';
+import { Database } from '../../lib/database.types';
 import { supabase } from '@/lib/supabase/client';
 
 export type Project = Database['public']['Tables']['projects']['Row'];
-export type ProjectInsert = Omit<Database['public']['Tables']['projects']['Insert'], 'workspace_id'> & {
+export type ProjectFormValues = {
+  name: string;
+  description?: string;
   workspace_id?: string;
 };
 export type ProjectUpdate = Database['public']['Tables']['projects']['Update'];
@@ -47,11 +49,21 @@ export const projectService = {
     return data;
   },
 
-  async createProject(project: ProjectInsert) {
-    const projectData = { ...project };
-    if (!projectData.workspace_id) {
-      delete projectData.workspace_id;
+  async createProject(project: ProjectFormValues) {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('Utilisateur non connecté');
     }
+
+    const projectData: Database['public']['Tables']['projects']['Insert'] = {
+      name: project.name,
+      description: project.description || null,
+      workspace_id: project.workspace_id!,
+      created_by: user.id,
+      status: null,
+      is_archived: false
+    };
 
     const { data, error } = await supabase
       .from('projects')

@@ -1,4 +1,4 @@
-import { Database } from '@/types/supabase';
+import { Database } from '../../lib/database.types';
 
 type Workspace = Database['public']['Tables']['workspaces']['Row'];
 
