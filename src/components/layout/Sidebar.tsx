@@ -139,8 +139,12 @@ export function Sidebar() {
     <>
       {/* Bouton du menu burger (visible uniquement sur mobile) */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 z-50 rounded-full bg-gray-900 p-2 text-white md:hidden"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="fixed top-4 right-4 z-[100] rounded-full bg-gray-900 p-2 text-white md:hidden focus:outline-none focus:ring-2 focus:ring-primary"
+        aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -160,8 +164,11 @@ export function Sidebar() {
               animate="open"
               exit="closed"
               variants={overlayVariants}
-              className="fixed inset-0 z-40 bg-black/50"
-              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-[90] bg-black/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }}
             />
 
             {/* Menu latéral */}
@@ -170,7 +177,7 @@ export function Sidebar() {
               animate="open"
               exit="closed"
               variants={sidebarVariants}
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900"
+              className="fixed inset-y-0 left-0 z-[95] w-64 bg-gray-900 shadow-xl"
             >
               <NavContent />
             </motion.div>
