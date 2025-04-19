@@ -1,86 +1,85 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Folder, Activity } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { Users, Briefcase, CheckSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface WorkspaceStatsProps {
-  stats: {
-    members: number;
-    projects: number;
-    tasks: number;
-    activities: number;
-  };
-  className?: string;
+  totalMembers: number;
+  totalProjects: number;
+  totalTasks: number;
 }
 
-export function WorkspaceStats({ stats, className }: WorkspaceStatsProps) {
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+
+export function WorkspaceStats({ totalMembers, totalProjects, totalTasks }: WorkspaceStatsProps) {
+  const stats = [
+    {
+      title: 'Membres',
+      value: totalMembers,
+      icon: Users,
+      color: 'bg-blue-100 dark:bg-blue-900/20',
+      iconColor: 'text-blue-600 dark:text-blue-400'
+    },
+    {
+      title: 'Projets',
+      value: totalProjects,
+      icon: Briefcase,
+      color: 'bg-purple-100 dark:bg-purple-900/20',
+      iconColor: 'text-purple-600 dark:text-purple-400'
+    },
+    {
+      title: 'Tâches',
+      value: totalTasks,
+      icon: CheckSquare,
+      color: 'bg-orange-100 dark:bg-orange-900/20',
+      iconColor: 'text-orange-600 dark:text-orange-400'
+    }
+  ];
+
   return (
-    <div className={cn("grid gap-6 md:grid-cols-2 lg:grid-cols-4", className)}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Membres</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.members}</div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projets</CardTitle>
-            <Folder className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.projects}</div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tâches</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.tasks}</div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Activités</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activities}</div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </div>
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 md:grid-cols-3 gap-6"
+    >
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <motion.div
+            key={stat.title}
+            variants={item}
+            className="bg-card rounded-xl border shadow-sm p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </p>
+                <p className="text-3xl font-bold mt-2">
+                  {stat.value}
+                </p>
+              </div>
+              <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${stat.color}`}>
+                <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
   );
 } 
