@@ -5,13 +5,41 @@ import { WorkspaceType, CreateWorkspaceData, UpdateWorkspaceData, Workspace } fr
 export class WorkspaceService {
   static async getWorkspaces(): Promise<Workspace[]> {
     const supabase = createClientComponentClient<Database>();
-    const { data, error } = await supabase
+    
+    // Récupérer l'ID de l'utilisateur connecté
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Non authentifié');
+    }
+
+    // Récupérer les espaces de travail personnels de l'utilisateur
+    const { data: personalWorkspaces, error: personalError } = await supabase
       .from('workspaces')
       .select('*')
+      .eq('type', 'personal')
+      .eq('created_by', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (personalError) throw personalError;
+
+    // Récupérer les espaces de travail d'équipe dont l'utilisateur est membre
+    const { data: teamWorkspaces, error: teamError } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('type', 'team')
+      .in('id', (
+        await supabase
+          .from('workspace_members')
+          .select('workspace_id')
+          .eq('user_id', user.id)
+      ).data?.map(wm => wm.workspace_id) || [])
+      .order('created_at', { ascending: false });
+
+    if (teamError) throw teamError;
+
+    // Combiner et trier les résultats
+    return [...(personalWorkspaces || []), ...(teamWorkspaces || [])]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
   static async createWorkspace(workspaceData: CreateWorkspaceData): Promise<Workspace> {
