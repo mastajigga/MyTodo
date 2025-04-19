@@ -4,6 +4,7 @@ import { useState } from "react"
 import { WorkspaceSelect } from "@/components/workspace/WorkspaceSelect"
 import { ProjectList } from "@/components/project/ProjectList"
 import { CreateProjectButton } from "@/components/project/CreateProjectButton"
+import ProjectStats from "@/components/project/ProjectStats"
 
 export default function ProjectsPage() {
   const [selectedWorkspace, setSelectedWorkspace] = useState('all')
@@ -17,6 +18,8 @@ export default function ProjectsPage() {
         <div className="absolute -bottom-2 left-0 w-24 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
         <div className="absolute -bottom-2 left-0 w-24 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm" />
       </div>
+
+      <ProjectStats />
 
       <div className="flex items-center justify-between mb-8">
         <WorkspaceSelect 
