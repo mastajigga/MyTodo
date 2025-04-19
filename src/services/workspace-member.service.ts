@@ -14,6 +14,11 @@ export interface WorkspaceMember {
   avatar_url?: string;
 }
 
+export interface InviteData {
+  workspaceId: string;
+  email: string;
+}
+
 export const WorkspaceMemberService = {
   async getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
     const { data: members, error } = await supabase
@@ -36,6 +41,42 @@ export const WorkspaceMemberService = {
       email: member.users?.email,
       avatar_url: member.users?.avatar_url
     }));
+  },
+
+  async inviteToWorkspace({ workspaceId, email }: InviteData): Promise<void> {
+    // Vérifier si l'utilisateur existe
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (userError) {
+      throw new Error("L'utilisateur n'existe pas");
+    }
+
+    // Vérifier si l'utilisateur est déjà membre
+    const { data: existingMember, error: memberError } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingMember) {
+      throw new Error("L'utilisateur est déjà membre de cet espace de travail");
+    }
+
+    // Ajouter l'utilisateur comme membre
+    const { error: addError } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        role: 'member'
+      });
+
+    if (addError) throw addError;
   },
 
   async addWorkspaceMember(workspaceId: string, email: string, role: WorkspaceMember['role']): Promise<WorkspaceMember> {
