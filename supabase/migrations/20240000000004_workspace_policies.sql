@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  type TEXT CHECK (type IN ('family', 'professional', 'private')) NOT NULL,
+  type TEXT CHECK (type IN ('personal', 'team')) NOT NULL,
   created_by UUID REFERENCES auth.users NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -35,10 +35,16 @@ DROP POLICY IF EXISTS "Suppression de membres" ON workspace_members;
 CREATE POLICY "Lecture des workspaces pour les membres"
 ON workspaces FOR SELECT
 USING (
-  EXISTS (
-    SELECT 1 FROM workspace_members
-    WHERE workspace_members.workspace_id = workspaces.id
-    AND workspace_members.user_id = auth.uid()
+  (
+    -- L'utilisateur peut voir ses propres espaces de travail personnels
+    (type = 'personal' AND created_by = auth.uid())
+    OR
+    -- L'utilisateur peut voir les espaces de travail d'équipe dont il est membre
+    (type = 'team' AND EXISTS (
+      SELECT 1 FROM workspace_members
+      WHERE workspace_members.workspace_id = workspaces.id
+      AND workspace_members.user_id = auth.uid()
+    ))
   )
 );
 
