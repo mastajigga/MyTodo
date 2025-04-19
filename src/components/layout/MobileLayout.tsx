@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+"use client";
+
 import { Home, LayoutGrid, CheckSquare, Settings, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,81 +7,48 @@ import { useState } from "react";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Accueil" },
-  { href: "/workspaces", icon: LayoutGrid, label: "Espaces" },
+  { href: "/projects", icon: LayoutGrid, label: "Projets" },
   { href: "/tasks", icon: CheckSquare, label: "Tâches" },
-  { href: "/settings", icon: Settings, label: "Réglages" },
+  { href: "/settings", icon: Settings, label: "Paramètres" },
 ];
-
-const mobileTransition = {
-  type: "spring",
-  stiffness: 300,
-  damping: 30
-};
 
 export function MobileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen pb-16 md:pb-0">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={mobileTransition}
-        className="flex-1"
-      >
-        {children}
-      </motion.div>
+    <div className="flex h-screen flex-col">
+      <header className="flex items-center justify-between border-b px-4 py-2">
+        <button onClick={() => setIsOpen(!isOpen)} className="p-2">
+          <Menu className="h-6 w-6" />
+        </button>
+        <h1 className="text-lg font-semibold">MyTodo</h1>
+      </header>
 
-      {/* Navigation mobile fixe en bas */}
-      <motion.nav 
-        className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden"
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={mobileTransition}
-      >
-        <div className="flex items-center justify-around p-2">
+      <main className="flex-1 overflow-y-auto p-4">{children}</main>
+
+      <nav className="border-t">
+        <ul className="flex justify-around">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
             const Icon = item.icon;
+            const isActive = pathname === item.href;
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center justify-center p-2 relative"
-              >
-                <motion.div
-                  whileTap={{ scale: 0.9 }}
-                  transition={mobileTransition}
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`flex flex-col items-center p-2 ${
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  }`}
                 >
-                  <Icon 
-                    className={`w-6 h-6 ${
-                      isActive 
-                        ? "text-primary" 
-                        : "text-muted-foreground"
-                    }`} 
-                  />
-                  <span className={`text-xs mt-1 ${
-                    isActive 
-                      ? "text-primary" 
-                      : "text-muted-foreground"
-                  }`}>
-                    {item.label}
-                  </span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute -bottom-2 left-0 right-0 h-0.5 bg-primary"
-                      transition={mobileTransition}
-                    />
-                  )}
-                </motion.div>
-              </Link>
+                  <Icon className="h-6 w-6" />
+                  <span className="text-xs">{item.label}</span>
+                </Link>
+              </li>
             );
           })}
-        </div>
-      </motion.nav>
+        </ul>
+      </nav>
     </div>
   );
 } 
