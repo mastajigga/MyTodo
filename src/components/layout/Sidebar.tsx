@@ -57,6 +57,54 @@ const overlayVariants = {
   }
 };
 
+// Déplacer NavContent en dehors du composant principal
+const NavContent = ({ pathname, onLogout }: { pathname: string; onLogout: () => Promise<void> }) => (
+  <>
+    <div className="flex h-16 items-center justify-center border-b border-gray-800">
+      <h1 className="text-xl font-bold text-white" data-testid="sidebar-title">MyTodo</h1>
+    </div>
+    <div className="flex flex-1 flex-col space-y-1 p-3">
+      {navigation.map((item) => {
+        const isActive = pathname === item.href;
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            data-testid={`nav-link-${item.name.toLowerCase()}`}
+            className={cn(
+              'group flex items-center rounded-lg px-3 py-2 text-sm font-medium',
+              isActive
+                ? 'bg-gray-800 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            <item.icon
+              className={cn(
+                'mr-3 h-5 w-5',
+                isActive
+                  ? 'text-white'
+                  : 'text-gray-400 group-hover:text-white'
+              )}
+            />
+            {item.name}
+          </Link>
+        );
+      })}
+    </div>
+    <div className="p-3">
+      <Button
+        variant="ghost"
+        className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
+        onClick={onLogout}
+        data-testid="logout-button"
+      >
+        <LogOut className="mr-3 h-5 w-5" />
+        Déconnexion
+      </Button>
+    </div>
+  </>
+);
+
 export function Sidebar() {
   const pathname = usePathname();
   const { supabase } = useSupabase();
@@ -88,70 +136,27 @@ export function Sidebar() {
     }
   };
 
-  const NavContent = () => (
-    <>
-      <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold text-white" data-testid="sidebar-title">MyTodo</h1>
-      </div>
-      <div className="flex flex-1 flex-col space-y-1 p-3">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              data-testid={`nav-link-${item.name.toLowerCase()}`}
-              className={cn(
-                'group flex items-center rounded-lg px-3 py-2 text-sm font-medium',
-                isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              <item.icon
-                className={cn(
-                  'mr-3 h-5 w-5',
-                  isActive
-                    ? 'text-white'
-                    : 'text-gray-400 group-hover:text-white'
-                )}
-              />
-              {item.name}
-            </Link>
-          );
-        })}
-      </div>
-      <div className="p-3">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
-          onClick={handleLogout}
-          data-testid="logout-button"
-        >
-          <LogOut className="mr-3 h-5 w-5" />
-          Déconnexion
-        </Button>
-      </div>
-    </>
-  );
+  const toggleMenu = () => {
+    console.log('Toggle menu, current state:', isOpen);
+    setIsOpen(!isOpen);
+  };
 
   return (
     <>
       {/* Bouton du menu burger (visible uniquement sur mobile) */}
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
-        className="fixed top-4 right-4 z-[100] rounded-full bg-gray-900 p-2 text-white md:hidden focus:outline-none focus:ring-2 focus:ring-primary"
+        type="button"
+        onClick={toggleMenu}
+        className="fixed top-4 right-4 z-[100] rounded-full bg-gray-900 p-2 text-white md:hidden focus:outline-none focus:ring-2 focus:ring-primary active:bg-gray-800"
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-expanded={isOpen}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* Version desktop */}
-      <div className="hidden h-full w-64 flex-col bg-gray-900 md:flex" data-testid="sidebar">
-        <NavContent />
+      <div className="hidden md:flex fixed h-full w-64 flex-col bg-gray-900" data-testid="sidebar">
+        <NavContent pathname={pathname} onLogout={handleLogout} />
       </div>
 
       {/* Version mobile avec animation */}
@@ -165,10 +170,7 @@ export function Sidebar() {
               exit="closed"
               variants={overlayVariants}
               className="fixed inset-0 z-[90] bg-black/50"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
+              onClick={toggleMenu}
             />
 
             {/* Menu latéral */}
@@ -177,9 +179,9 @@ export function Sidebar() {
               animate="open"
               exit="closed"
               variants={sidebarVariants}
-              className="fixed inset-y-0 left-0 z-[95] w-64 bg-gray-900 shadow-xl"
+              className="fixed inset-y-0 left-0 z-[95] w-64 bg-gray-900 shadow-xl flex flex-col"
             >
-              <NavContent />
+              <NavContent pathname={pathname} onLogout={handleLogout} />
             </motion.div>
           </>
         )}
