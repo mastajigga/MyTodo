@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label'
 const workspaceSchema = z.object({
   name: z.string().min(1, { message: 'Le nom est requis' }),
   description: z.string().optional(),
-  type: z.enum(['personal', 'team'], {
+  type: z.enum(['personal', 'team'] as const, {
     required_error: 'Le type est requis'
-  })
+  }) satisfies z.ZodType<WorkspaceType>
 })
 
 type WorkspaceFormData = z.infer<typeof workspaceSchema>

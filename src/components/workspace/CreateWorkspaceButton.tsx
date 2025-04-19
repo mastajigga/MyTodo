@@ -24,13 +24,14 @@ import { WorkspaceService } from '@/services/workspace.service';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
+import { WorkspaceType } from '@/types/workspace';
 
 export function CreateWorkspaceButton() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<'family' | 'professional' | 'private'>('private');
+  const [type, setType] = useState<WorkspaceType>('personal');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +50,7 @@ export function CreateWorkspaceButton() {
       setOpen(false);
       setName('');
       setDescription('');
-      setType('private');
+      setType('personal');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
       toast.error('Erreur lors de la création de l\'espace de travail');
@@ -102,14 +103,13 @@ export function CreateWorkspaceButton() {
               <label htmlFor="type" className="text-sm font-medium">
                 Type
               </label>
-              <Select value={type} onValueChange={(value: 'family' | 'professional' | 'private') => setType(value)}>
+              <Select value={type} onValueChange={(value: WorkspaceType) => setType(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionnez un type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="family">Famille</SelectItem>
-                  <SelectItem value="professional">Professionnel</SelectItem>
-                  <SelectItem value="private">Privé</SelectItem>
+                  <SelectItem value="personal">Personnel</SelectItem>
+                  <SelectItem value="team">Équipe</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,7 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWorkspaceContext } from "@/contexts/workspace-context";
-import { Workspace } from "@/services/workspace.service";
+import { Workspace } from "@/types/workspace";
 import { Plus } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 
@@ -21,7 +23,7 @@ export function KanbanHeader({ onAddTask, selectedProjectId, onProjectChange }: 
         <Select
           value={workspace?.id || ''}
           onValueChange={(value) => {
-            const selectedWorkspace = workspaces?.find((w: Workspace) => w.id === value);
+            const selectedWorkspace = workspaces?.find(w => w.id === value);
             if (selectedWorkspace) {
               setWorkspace(selectedWorkspace);
             }
@@ -31,7 +33,7 @@ export function KanbanHeader({ onAddTask, selectedProjectId, onProjectChange }: 
             <SelectValue placeholder="Sélectionner un espace" />
           </SelectTrigger>
           <SelectContent>
-            {workspaces?.map((w: Workspace) => (
+            {workspaces?.map(w => (
               <SelectItem key={w.id} value={w.id}>
                 {w.name}
               </SelectItem>

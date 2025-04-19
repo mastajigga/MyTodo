@@ -19,6 +19,41 @@ export const TaskService = {
     return data as Task[];
   },
 
+  async getWorkspaceTasks(workspaceId: string): Promise<Task[]> {
+    // D'abord, récupérer tous les projets du workspace
+    const { data: projects, error: projectsError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('workspace_id', workspaceId);
+
+    if (projectsError) {
+      throw projectsError;
+    }
+
+    if (!projects || projects.length === 0) {
+      return [];
+    }
+
+    // Ensuite, récupérer toutes les tâches de ces projets
+    const projectIds = projects.map(project => project.id);
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select(`
+        *,
+        created_by_user:created_by(id, email, full_name, avatar_url),
+        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
+        project:project_id(id, name)
+      `)
+      .in('project_id', projectIds)
+      .order('created_at', { ascending: false });
+
+    if (tasksError) {
+      throw tasksError;
+    }
+
+    return tasks as Task[] || [];
+  },
+
   async createTask(task: CreateTaskData): Promise<Task> {
     const { data, error } = await supabase
       .from('tasks')

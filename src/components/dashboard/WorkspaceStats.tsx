@@ -1,49 +1,33 @@
-'use client';
-
-import { useQuery } from '@tanstack/react-query';
-import { useWorkspaceContext } from '@/contexts/workspace-context';
-import { TaskService } from '@/services/task.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Task } from '@/types/task';
+import { useQuery } from '@tanstack/react-query'
+import { useWorkspaceContext } from '@/contexts/workspace-context'
+import { TaskService } from '@/services/task.service'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Task } from '@/types/task'
 import { motion } from "framer-motion"
-import { Users2, FolderKanban, CheckCircle2, Clock } from "lucide-react"
-
-interface DashboardStatsProps {
-  totalWorkspaces: number
-  totalProjects: number
-  totalTasks: number
-  tasksInProgress: number
-}
+import { CheckCircle2, Clock, ListTodo } from "lucide-react"
 
 const statsConfig = [
   {
-    label: "Espaces de travail",
-    value: (stats: DashboardStatsProps) => stats.totalWorkspaces,
-    icon: Users2,
-    color: "from-violet-500 to-purple-500",
-    description: "Total des espaces actifs"
-  },
-  {
-    label: "Projets",
-    value: (stats: DashboardStatsProps) => stats.totalProjects,
-    icon: FolderKanban,
-    color: "from-blue-500 to-cyan-500",
-    description: "Projets en cours"
-  },
-  {
-    label: "Tâches",
-    value: (stats: DashboardStatsProps) => stats.totalTasks,
+    label: "Tâches terminées",
+    value: (tasks: Task[]) => tasks.filter(task => task.status === 'done').length,
     icon: CheckCircle2,
     color: "from-green-500 to-emerald-500",
-    description: "Tâches totales"
+    description: "Tâches complétées"
   },
   {
     label: "En cours",
-    value: (stats: DashboardStatsProps) => stats.tasksInProgress,
+    value: (tasks: Task[]) => tasks.filter(task => task.status === 'in_progress').length,
     icon: Clock,
     color: "from-orange-500 to-amber-500",
     description: "Tâches en cours"
+  },
+  {
+    label: "À faire",
+    value: (tasks: Task[]) => tasks.filter(task => task.status === 'todo').length,
+    icon: ListTodo,
+    color: "from-blue-500 to-cyan-500",
+    description: "Tâches à commencer"
   }
 ]
 
@@ -73,35 +57,29 @@ const itemVariants = {
   }
 }
 
-export function DashboardStats(props: DashboardStatsProps) {
-  const { workspace } = useWorkspaceContext();
+export function WorkspaceStats() {
+  const { workspace } = useWorkspaceContext()
 
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ['workspace-tasks', workspace?.id],
     queryFn: async () => {
-      if (!workspace?.id) return [];
-      return TaskService.getWorkspaceTasks(workspace.id);
+      if (!workspace?.id) return []
+      return TaskService.getWorkspaceTasks(workspace.id)
     },
     enabled: !!workspace?.id,
-  });
+  })
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                <Skeleton className="h-4 w-[100px]" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[60px]" />
-            </CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="p-6">
+            <Skeleton className="h-4 w-[100px] mb-4" />
+            <Skeleton className="h-8 w-[60px]" />
           </Card>
         ))}
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -112,43 +90,15 @@ export function DashboardStats(props: DashboardStatsProps) {
           <div className="text-sm mt-2">{error.message}</div>
         )}
       </div>
-    );
+    )
   }
-
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((task: Task) => task.status === 'done').length;
-  const inProgressTasks = tasks.filter((task: Task) => task.status === 'in_progress').length;
-  const todoTasks = tasks.filter((task: Task) => task.status === 'todo').length;
-
-  const stats = [
-    {
-      title: "Total des tâches",
-      value: totalTasks,
-      className: "bg-card",
-    },
-    {
-      title: "Tâches terminées",
-      value: completedTasks,
-      className: "bg-green-100 dark:bg-green-900",
-    },
-    {
-      title: "Tâches en cours",
-      value: inProgressTasks,
-      className: "bg-yellow-100 dark:bg-yellow-900",
-    },
-    {
-      title: "Tâches à faire",
-      value: todoTasks,
-      className: "bg-blue-100 dark:bg-blue-900",
-    },
-  ];
 
   return (
     <motion.div 
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      className="grid grid-cols-1 md:grid-cols-3 gap-4"
     >
       {statsConfig.map((stat, index) => (
         <motion.div
@@ -166,7 +116,7 @@ export function DashboardStats(props: DashboardStatsProps) {
                 </span>
                 <div className="flex items-baseline space-x-2">
                   <span className="text-3xl font-bold">
-                    {stat.value(props)}
+                    {stat.value(tasks)}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -192,7 +142,7 @@ export function DashboardStats(props: DashboardStatsProps) {
                 <p className="text-sm font-medium">{stat.label}</p>
                 <div className="flex items-baseline">
                   <span className="text-2xl font-bold">
-                    {stat.value(props)}
+                    {stat.value(tasks)}
                   </span>
                 </div>
               </div>
@@ -201,5 +151,5 @@ export function DashboardStats(props: DashboardStatsProps) {
         </motion.div>
       ))}
     </motion.div>
-  );
+  )
 } 

@@ -31,9 +31,9 @@
     "types:supabase": "supabase gen types typescript --project-id eahjdvmpmqwnupsqnxjz > src/@types/supabase/index.ts"
   },
   "dependencies": {
-    "@headlessui/react": "1.7.17",
+    "@headlessui/react": "^1.7.17",
     "@hello-pangea/dnd": "18.0.1",
-    "@heroicons/react": "2.2.0",
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "5.0.1",
     "@radix-ui/react-alert-dialog": "1.0.5",
     "@radix-ui/react-avatar": "1.0.4",
@@ -58,7 +58,7 @@
     "clsx": "2.1.1",
     "cmdk": "0.1.22",
     "date-fns": "4.1.0",
-    "framer-motion": "12.6.3",
+    "framer-motion": "^12.6.3",
     "lucide-react": "0.487.0",
     "next": "14.1.0",
     "next-themes": "0.4.6",

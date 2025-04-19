@@ -1,21 +1,23 @@
 'use client';
 
-import { workspaceService } from '@/services/workspace';
+import { WorkspaceService } from '@/services/workspace.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { WorkspaceType } from '@/types/workspace';
+import { WorkspaceType, Workspace } from '@/types/workspace';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { toast } from 'sonner';
 
 const workspaceTypeLabels: Record<WorkspaceType, string> = {
   personal: 'Personnel',
-  team: 'Équipe',
+  team: 'Équipe'
 };
 
 const workspaceTypeColors: Record<WorkspaceType, string> = {
   personal: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-  team: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+  team: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
 };
 
 const container = {
@@ -42,23 +44,33 @@ const item = {
 };
 
 export function WorkspaceList() {
-  const [workspaces, setWorkspaces] = useState([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
-        const data = await workspaceService.getWorkspaces();
-        setWorkspaces(data);
+        // Vérifier l'authentification
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+          throw new Error('Non authentifié');
+        }
+
+        const data = await WorkspaceService.getWorkspaces();
+        if (data) {
+          setWorkspaces(data);
+        }
       } catch (error) {
         console.error('Error fetching workspaces:', error);
+        toast.error("Erreur lors de la récupération des espaces de travail");
       } finally {
         setLoading(false);
       }
     };
 
     fetchWorkspaces();
-  }, []);
+  }, [supabase]);
 
   if (loading) {
     return (

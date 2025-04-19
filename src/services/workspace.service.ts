@@ -1,114 +1,80 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '../lib/database.types';
+import { Database } from '@/lib/database.types';
+import { WorkspaceType, CreateWorkspaceData, UpdateWorkspaceData, Workspace } from '@/types/workspace';
 
-const supabase = createClientComponentClient<Database>();
-
-export type Workspace = Database['public']['Tables']['workspaces']['Row'];
-export type WorkspaceInsert = Database['public']['Tables']['workspaces']['Insert'];
-export type WorkspaceUpdate = Database['public']['Tables']['workspaces']['Update'];
-
-export interface CreateWorkspaceInput {
-  name: string;
-  description?: string;
-  type: 'family' | 'professional' | 'private';
-}
-
-export interface UpdateWorkspaceInput {
-  name?: string;
-  description?: string;
-  type?: 'family' | 'professional' | 'private';
-}
-
-export const WorkspaceService = {
-  async getWorkspaces(): Promise<Workspace[]> {
+export class WorkspaceService {
+  static async getWorkspaces(): Promise<Workspace[]> {
+    const supabase = createClientComponentClient<Database>();
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
-  },
+  }
 
-  async createWorkspace(input: CreateWorkspaceInput): Promise<Workspace> {
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
-
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
-    const workspaceData: WorkspaceInsert = {
-      name: input.name,
-      description: input.description || null,
-      type: input.type,
-      owner_id: userId,
-      created_by: userId
-    };
-
+  static async createWorkspace(workspaceData: CreateWorkspaceData): Promise<Workspace> {
+    const supabase = createClientComponentClient<Database>();
     const { data, error } = await supabase
       .from('workspaces')
-      .insert(workspaceData)
+      .insert({
+        name: workspaceData.name,
+        description: workspaceData.description || null,
+        type: workspaceData.type
+      })
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
-  },
+  }
 
-  async updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace> {
-    const updateData: WorkspaceUpdate = {
-      name: input.name,
-      description: input.description,
-      type: input.type
-    };
-
+  static async updateWorkspace(id: string, workspaceData: UpdateWorkspaceData): Promise<Workspace> {
+    const supabase = createClientComponentClient<Database>();
     const { data, error } = await supabase
       .from('workspaces')
-      .update(updateData)
+      .update({
+        name: workspaceData.name,
+        description: workspaceData.description || null,
+        type: workspaceData.type
+      })
       .eq('id', id)
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
-  },
+  }
 
-  async deleteWorkspace(id: string): Promise<void> {
+  static async deleteWorkspace(id: string): Promise<void> {
+    const supabase = createClientComponentClient<Database>();
     const { error } = await supabase
       .from('workspaces')
       .delete()
       .eq('id', id);
 
-    if (error) {
-      throw error;
-    }
-  },
+    if (error) throw error;
+  }
 
-  async getWorkspaceById(id: string): Promise<Workspace | null> {
-    const { data, error } = await supabase
+  static async getWorkspace(id: string): Promise<Workspace | null> {
+    const supabase = createClientComponentClient<Database>();
+    const { data: workspace, error } = await supabase
       .from('workspaces')
       .select('*')
       .eq('id', id)
       .single();
 
     if (error) {
-      throw error;
+      console.error('Error getting workspace:', error);
+      return null;
     }
 
-    return data;
-  },
+    return workspace;
+  }
 
-  async getWorkspaceMembers(workspaceId: string) {
+  static async getWorkspaceMembers(workspaceId: string) {
+    const supabase = createClientComponentClient<Database>();
     const { data, error } = await supabase
       .from('workspace_members')
       .select(`
@@ -125,4 +91,4 @@ export const WorkspaceService = {
     if (error) throw error;
     return data;
   }
-}; 
+} 

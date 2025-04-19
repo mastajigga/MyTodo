@@ -1,36 +1,40 @@
-import { Metadata } from 'next'
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
-import { cn } from "@/lib/utils";
-import { inter } from "@/lib/fonts";
-import "@/styles/globals.css";
-import { MobileLayout } from "@/components/layout/MobileLayout";
+import { Providers } from "./providers";
+import { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { cookies } from 'next/headers';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/lib/database.types';
+import { ClientLayoutContent } from "@/components/layout/ClientLayoutContent";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'MyTodo App',
-  description: 'A simple todo app built with Next.js and Supabase',
-}
+  title: "MyTodo",
+  description: "Une application de gestion de tâches moderne et intuitive",
+};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  const supabase = createServerComponentClient<Database>({ cookies });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background antialiased", inter.className)}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <MobileLayout>
+      <body className={inter.className}>
+        <Providers>
+          <ClientLayoutContent session={session}>
             {children}
-          </MobileLayout>
+          </ClientLayoutContent>
           <Toaster />
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
-  )
+  );
 }

@@ -1,15 +1,8 @@
-'use client';
-
-import { useQuery } from '@tanstack/react-query';
-import { useWorkspaceContext } from '@/contexts/workspace-context';
-import { TaskService } from '@/services/task.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Task } from '@/types/task';
 import { motion } from "framer-motion"
 import { Users2, FolderKanban, CheckCircle2, Clock } from "lucide-react"
+import { Card } from "@/components/ui/card"
 
-interface DashboardStatsProps {
+interface GlobalStatsProps {
   totalWorkspaces: number
   totalProjects: number
   totalTasks: number
@@ -19,28 +12,28 @@ interface DashboardStatsProps {
 const statsConfig = [
   {
     label: "Espaces de travail",
-    value: (stats: DashboardStatsProps) => stats.totalWorkspaces,
+    value: (stats: GlobalStatsProps) => stats.totalWorkspaces,
     icon: Users2,
     color: "from-violet-500 to-purple-500",
     description: "Total des espaces actifs"
   },
   {
     label: "Projets",
-    value: (stats: DashboardStatsProps) => stats.totalProjects,
+    value: (stats: GlobalStatsProps) => stats.totalProjects,
     icon: FolderKanban,
     color: "from-blue-500 to-cyan-500",
     description: "Projets en cours"
   },
   {
     label: "Tâches",
-    value: (stats: DashboardStatsProps) => stats.totalTasks,
+    value: (stats: GlobalStatsProps) => stats.totalTasks,
     icon: CheckCircle2,
     color: "from-green-500 to-emerald-500",
     description: "Tâches totales"
   },
   {
     label: "En cours",
-    value: (stats: DashboardStatsProps) => stats.tasksInProgress,
+    value: (stats: GlobalStatsProps) => stats.tasksInProgress,
     icon: Clock,
     color: "from-orange-500 to-amber-500",
     description: "Tâches en cours"
@@ -73,76 +66,7 @@ const itemVariants = {
   }
 }
 
-export function DashboardStats(props: DashboardStatsProps) {
-  const { workspace } = useWorkspaceContext();
-
-  const { data: tasks = [], isLoading, error } = useQuery({
-    queryKey: ['workspace-tasks', workspace?.id],
-    queryFn: async () => {
-      if (!workspace?.id) return [];
-      return TaskService.getWorkspaceTasks(workspace.id);
-    },
-    enabled: !!workspace?.id,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                <Skeleton className="h-4 w-[100px]" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[60px]" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center text-red-500">
-        Une erreur est survenue lors du chargement des statistiques
-        {error instanceof Error && (
-          <div className="text-sm mt-2">{error.message}</div>
-        )}
-      </div>
-    );
-  }
-
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((task: Task) => task.status === 'done').length;
-  const inProgressTasks = tasks.filter((task: Task) => task.status === 'in_progress').length;
-  const todoTasks = tasks.filter((task: Task) => task.status === 'todo').length;
-
-  const stats = [
-    {
-      title: "Total des tâches",
-      value: totalTasks,
-      className: "bg-card",
-    },
-    {
-      title: "Tâches terminées",
-      value: completedTasks,
-      className: "bg-green-100 dark:bg-green-900",
-    },
-    {
-      title: "Tâches en cours",
-      value: inProgressTasks,
-      className: "bg-yellow-100 dark:bg-yellow-900",
-    },
-    {
-      title: "Tâches à faire",
-      value: todoTasks,
-      className: "bg-blue-100 dark:bg-blue-900",
-    },
-  ];
-
+export function GlobalStats(props: GlobalStatsProps) {
   return (
     <motion.div 
       variants={containerVariants}
@@ -201,5 +125,5 @@ export function DashboardStats(props: DashboardStatsProps) {
         </motion.div>
       ))}
     </motion.div>
-  );
+  )
 } 

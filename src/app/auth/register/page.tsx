@@ -74,19 +74,19 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-6"
+        className="w-full max-w-md space-y-6"
       >
         <motion.div
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           className="space-y-2 text-center"
         >
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
             Créez votre compte
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export default function RegisterPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-4 bg-card/50 backdrop-blur-sm p-6 rounded-lg border shadow-sm"
         >
           <motion.div
             initial={{ x: -20, opacity: 0 }}
@@ -107,7 +107,7 @@ export default function RegisterPage() {
             transition={{ delay: 0.3 }}
             className="space-y-2"
           >
-            <Label htmlFor="fullName" className="flex items-center gap-2">
+            <Label htmlFor="fullName" className="text-sm font-medium flex items-center gap-2">
               <User className="h-4 w-4" />
               Nom complet
             </Label>
@@ -117,7 +117,8 @@ export default function RegisterPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="bg-background/50 backdrop-blur-sm"
+              className="h-12 px-4 bg-background/50"
+              autoComplete="name"
             />
           </motion.div>
 
@@ -127,7 +128,7 @@ export default function RegisterPage() {
             transition={{ delay: 0.4 }}
             className="space-y-2"
           >
-            <Label htmlFor="email" className="flex items-center gap-2">
+            <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
             </Label>
@@ -138,7 +139,8 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-background/50 backdrop-blur-sm"
+              className="h-12 px-4 bg-background/50"
+              autoComplete="email"
             />
           </motion.div>
 
@@ -148,7 +150,7 @@ export default function RegisterPage() {
             transition={{ delay: 0.5 }}
             className="space-y-2"
           >
-            <Label htmlFor="password" className="flex items-center gap-2">
+            <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
               <Lock className="h-4 w-4" />
               Mot de passe
             </Label>
@@ -158,7 +160,9 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-background/50 backdrop-blur-sm"
+              className="h-12 px-4 bg-background/50"
+              autoComplete="new-password"
+              minLength={6}
             />
           </motion.div>
 
@@ -166,15 +170,16 @@ export default function RegisterPage() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
+            className="pt-2"
           >
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+              className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Création en cours...
                 </>
               ) : (
@@ -188,13 +193,13 @@ export default function RegisterPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-center"
+          className="text-center space-y-3"
         >
-          <p className="text-sm text-muted-foreground">
-            Vous avez déjà un compte ?{' '}
+          <p className="text-sm">
+            <span className="text-muted-foreground">Vous avez déjà un compte ? </span>
             <Link
               href="/auth/login"
-              className="text-primary hover:underline transition-all"
+              className="font-medium text-primary hover:underline transition-all"
             >
               Se connecter
             </Link>

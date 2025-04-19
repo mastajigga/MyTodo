@@ -1,74 +1,81 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { User } from '@supabase/supabase-js'
+import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs'
 
-export const useAuth = () => {
+export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
   const supabase = createClientComponentClient()
+  const router = useRouter()
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) throw error
+      setUser(user)
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'utilisateur:', error)
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) throw error
-        setUser(user)
-      } catch (error) {
-        console.error('Erreur lors de la récupération de l\'utilisateur:', error)
+    fetchUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        await fetchUser()
+      } else if (event === 'SIGNED_OUT') {
         setUser(null)
-      } finally {
         setLoading(false)
       }
-    }
-
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, supabase])
+  }, [supabase, fetchUser])
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
       if (error) throw error
-      setUser(data.user)
-    } catch (err) {
-      console.error('Erreur lors de la connexion:', err)
+      await fetchUser()
+    } catch (error) {
+      console.error('Erreur lors de la connexion:', error)
+      throw error
     }
   }
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password
       })
       if (error) throw error
-      setUser(data.user)
-    } catch (err) {
-      console.error('Erreur lors de la création de compte:', err)
+      await fetchUser()
+    } catch (error) {
+      console.error('Erreur lors de la création de compte:', error)
+      throw error
     }
   }
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      await supabase.auth.signOut()
       setUser(null)
-    } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err)
+      setLoading(false)
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+      throw error
     }
-  }
+  }, [supabase])
 
   const signInWithGoogle = async () => {
     try {
@@ -79,8 +86,9 @@ export const useAuth = () => {
         }
       })
       if (error) throw error
-    } catch (err) {
-      console.error('Erreur lors de la connexion avec Google:', err)
+    } catch (error) {
+      console.error('Erreur lors de la connexion avec Google:', error)
+      throw error
     }
   }
 
@@ -93,8 +101,9 @@ export const useAuth = () => {
         }
       })
       if (error) throw error
-    } catch (err) {
-      console.error('Erreur lors de la connexion avec GitHub:', err)
+    } catch (error) {
+      console.error('Erreur lors de la connexion avec GitHub:', error)
+      throw error
     }
   }
 

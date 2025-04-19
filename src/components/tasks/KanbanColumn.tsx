@@ -21,8 +21,8 @@ export const KanbanColumn = ({ column, provided }: KanbanColumnProps) => {
       ref={provided.innerRef}
       {...provided.droppableProps}
       className={cn(
-        "w-80 rounded-xl p-4 flex flex-col border backdrop-blur-sm",
-        "bg-gradient-to-b shadow-lg",
+        "w-full md:w-80 rounded-xl p-4 flex flex-col border backdrop-blur-sm",
+        "bg-gradient-to-b shadow-lg min-h-[calc(100vh-24rem)]",
         columnColors[column.id]
       )}
     >
@@ -36,7 +36,7 @@ export const KanbanColumn = ({ column, provided }: KanbanColumnProps) => {
         </span>
       </div>
 
-      <div className="min-h-[1px] flex-1">
+      <div className="flex-1 space-y-3">
         {column.tasks.map((task, index) => (
           <Draggable key={task.id} draggableId={task.id} index={index}>
             {(provided, snapshot) => (
@@ -45,7 +45,7 @@ export const KanbanColumn = ({ column, provided }: KanbanColumnProps) => {
                 {...provided.draggableProps}
                 {...provided.dragHandleProps}
                 className={cn(
-                  'mb-3 transition-all duration-200',
+                  'transition-all duration-200',
                   snapshot.isDragging && 'scale-105 rotate-2 opacity-90'
                 )}
               >

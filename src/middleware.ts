@@ -2,46 +2,50 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Ces chemins ne nécessitent pas d'authentification
+const publicPaths = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/callback'
+];
+
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-  const supabase = createMiddlewareClient({ req: request, res: response });
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req: request, res });
+  const { data: { session } } = await supabase.auth.getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Routes publiques qui ne nécessitent pas d'authentification
-  const publicRoutes = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/forgot-password',
-    '/auth/reset-password'
-  ];
-  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
-
-  // Si l'utilisateur est sur une route d'authentification mais est déjà connecté
-  if (isPublicRoute && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+  // Vérifier si le chemin actuel est public
+  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
   // Si l'utilisateur n'est pas connecté et essaie d'accéder à une route protégée
-  if (!user && !isPublicRoute) {
+  if (!session && !isPublicPath) {
     const redirectUrl = new URL('/auth/login', request.url);
+    // Ajouter l'URL de redirection comme paramètre pour revenir après la connexion
     redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  return response;
+  // Si l'utilisateur est connecté et essaie d'accéder à une page d'authentification
+  if (session && isPublicPath) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  return res;
 }
 
+// Spécifier les chemins sur lesquels le middleware doit s'exécuter
 export const config = {
   matcher: [
     /*
-     * Correspond à toutes les routes request paths sauf celles commençant par:
-     * - _next/static (fichiers statiques)
-     * - _next/image (optimisation d'images)
-     * - favicon.ico (icône du site)
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images/* (image files)
+     * - api/* (API routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images|api).*)',
   ],
 }; 
