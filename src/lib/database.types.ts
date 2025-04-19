@@ -9,50 +9,45 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      profiles: {
+      tasks: {
         Row: {
           id: string
-          email: string
-          full_name: string
-          avatar_url: string | null
+          title: string
+          description: string
+          status: 'todo' | 'in_progress' | 'review' | 'done'
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          project_id: string | null
           created_at: string
           updated_at: string
+          due_date: string | null
+          created_by: string
+          assigned_to: string
+          position: number
         }
         Insert: {
           id?: string
-          email: string
-          full_name: string
-          avatar_url?: string | null
+          title: string
+          description: string
+          status: 'todo' | 'in_progress' | 'review' | 'done'
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          project_id?: string | null
           created_at?: string
           updated_at?: string
+          due_date?: string | null
+          created_by: string
+          assigned_to: string
+          position?: number
         }
         Update: {
-          email?: string
-          full_name?: string
-          avatar_url?: string | null
+          title?: string
+          description?: string
+          status?: 'todo' | 'in_progress' | 'review' | 'done'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          project_id?: string | null
           updated_at?: string
-        }
-      }
-      comments: {
-        Row: {
-          id: string
-          task_id: string
-          user_id: string
-          content: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          task_id: string
-          user_id: string
-          content: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          updated_at?: string
+          due_date?: string | null
+          assigned_to?: string
+          position?: number
         }
       }
       subtasks: {
@@ -78,70 +73,26 @@ export interface Database {
           updated_at?: string
         }
       }
-      task_activities: {
+      comments: {
         Row: {
           id: string
           task_id: string
-          task_title: string
-          action: string
-          previous_status: string | null
-          new_status: string | null
           user_id: string
+          content: string
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           task_id: string
-          task_title: string
-          action: string
-          previous_status?: string | null
-          new_status?: string | null
           user_id: string
+          content: string
           created_at?: string
+          updated_at?: string
         }
         Update: {
-          task_title?: string
-          action?: string
-          previous_status?: string | null
-          new_status?: string | null
-        }
-      }
-      project_members: {
-        Row: {
-          id: string
-          project_id: string
-          user_id: string
-          role: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          project_id: string
-          user_id: string
-          role: string
-          created_at?: string
-        }
-        Update: {
-          role?: string
-        }
-      }
-      workspace_members: {
-        Row: {
-          id: string
-          workspace_id: string
-          user_id: string
-          role: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          workspace_id: string
-          user_id: string
-          role: string
-          created_at?: string
-        }
-        Update: {
-          role?: string
+          content?: string
+          updated_at?: string
         }
       }
       projects: {
@@ -150,132 +101,91 @@ export interface Database {
           name: string
           description: string | null
           workspace_id: string
+          status: 'in_progress' | 'completed' | 'cancelled' | null
+          color: string | null
           created_by: string
           created_at: string
           updated_at: string
-          position: number
           is_archived: boolean
-          color: string | null
-          status: 'completed' | 'in_progress' | 'cancelled' | null
         }
         Insert: {
           id?: string
           name: string
           description?: string | null
           workspace_id: string
+          status?: 'in_progress' | 'completed' | 'cancelled' | null
+          color?: string | null
           created_by: string
           created_at?: string
           updated_at?: string
-          position?: number
           is_archived?: boolean
-          color?: string | null
-          status?: 'completed' | 'in_progress' | 'cancelled' | null
         }
         Update: {
+          id?: string
           name?: string
           description?: string | null
           workspace_id?: string
-          updated_at?: string
-          position?: number
-          is_archived?: boolean
+          status?: 'in_progress' | 'completed' | 'cancelled' | null
           color?: string | null
-          status?: 'completed' | 'in_progress' | 'cancelled' | null
-        }
-      }
-      tasks: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          status: string
-          priority: string
-          due_date: string | null
-          project_id: string
-          assigned_to: string | null
-          created_by: string
-          created_at: string
-          updated_at: string
-          position: number
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          status?: string
-          priority?: string
-          due_date?: string | null
-          project_id: string
-          assigned_to?: string | null
-          created_by: string
+          created_by?: string
           created_at?: string
           updated_at?: string
-          position?: number
-        }
-        Update: {
-          title?: string
-          description?: string | null
-          status?: string
-          priority?: string
-          due_date?: string | null
-          project_id?: string
-          assigned_to?: string | null
-          updated_at?: string
-          position?: number
+          is_archived?: boolean
         }
       }
       workspaces: {
         Row: {
           id: string
-          created_at: string
           name: string
           description: string | null
-          type: 'family' | 'professional' | 'private'
-          owner_id: string
+          type: 'personal' | 'team'
           created_by: string
+          created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          created_at?: string
           name: string
           description?: string | null
-          type: 'family' | 'professional' | 'private'
-          owner_id: string
+          type: 'personal' | 'team'
           created_by: string
+          created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          created_at?: string
           name?: string
           description?: string | null
-          type?: 'family' | 'professional' | 'private'
-          owner_id?: string
+          type?: 'personal' | 'team'
           created_by?: string
+          created_at?: string
           updated_at?: string
         }
       }
-      todos: {
+      workspace_members: {
         Row: {
           id: string
-          created_at: string
-          title: string
-          is_complete: boolean
+          workspace_id: string
           user_id: string
+          role: 'owner' | 'admin' | 'member'
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
-          created_at?: string
-          title: string
-          is_complete?: boolean
+          workspace_id: string
           user_id: string
+          role: 'owner' | 'admin' | 'member'
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          created_at?: string
-          title?: string
-          is_complete?: boolean
+          workspace_id?: string
           user_id?: string
+          role?: 'owner' | 'admin' | 'member'
+          created_at?: string
+          updated_at?: string
         }
       }
     }
@@ -289,4 +199,4 @@ export interface Database {
       [_ in never]: never
     }
   }
-} 
+}

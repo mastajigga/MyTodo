@@ -2,6 +2,12 @@ import { Database } from '../lib/database.types';
 
 export type ProjectBase = Database['public']['Tables']['projects']['Row'];
 
+// Re-export des types depuis leurs fichiers respectifs
+export * from './project';
+export * from './task';
+export * from './workspace';
+export * from './entry';
+
 export interface Project extends Omit<ProjectBase, 'color'> {
   color?: ProjectColor;
   workspace?: {
