@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LayoutDashboard, Workflow, ListTodo, Folder } from "lucide-react"
 import { motion } from "framer-motion"
+import { UserNav } from "./UserNav"
 
 export function Navigation() {
   const pathname = usePathname()
@@ -83,6 +84,9 @@ export function Navigation() {
             </motion.div>
           ))}
         </nav>
+      </div>
+      <div className="mt-auto border-t border-border/30 p-4">
+        <UserNav />
       </div>
     </motion.div>
   )

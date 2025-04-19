@@ -1,0 +1,54 @@
+[33m191db9e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m9e82ab1[m HEAD@{1}: commit: feat: ajout des pages de réinitialisation de mot de passe et composants manquants
+[33m191db9e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: reset: moving to origin/master
+[33m191db9e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: commit: fix: mise à jour des versions de Radix UI pour résoudre les problèmes de compatibilité
+[33m89d9bff[m HEAD@{4}: commit: feat: ajout des composants WorkspaceSelect, ProjectList et CreateProjectButton
+[33m76b9d14[m HEAD@{5}: commit: feat: ajout du composant Command et correction des métadonnées de la page projets
+[33m0f17bf5[m HEAD@{6}: commit: feat: ajout de @radix-ui/react-tooltip
+[33m1e2cb77[m HEAD@{7}: commit: fix: downgrade des versions Radix UI pour compatibilité React
+[33m4b142e6[m HEAD@{8}: commit: chore: mise à jour du fichier pnpm-lock.yaml pour correspondre au package.json
+[33m4294d02[m HEAD@{9}: commit: refactor: séparation de la logique client/serveur et correction des imports Supabase
+[33mb214829[m HEAD@{10}: commit (merge): merge: fusion des branches master et feature/animated-projects-page
+[33m84565d2[m[33m ([m[1;31morigin/feature/animated-projects-page[m[33m, [m[1;32mfeature/animated-projects-page[m[33m)[m HEAD@{11}: merge feature/animated-projects-page: Fast-forward
+[33m0fb3cb9[m[33m ([m[1;32mfeature/workspace-management[m[33m)[m HEAD@{12}: checkout: moving from feature/animated-projects-page to master
+[33m84565d2[m[33m ([m[1;31morigin/feature/animated-projects-page[m[33m, [m[1;32mfeature/animated-projects-page[m[33m)[m HEAD@{13}: commit: chore: mise à jour des dépendances pour le build
+[33m12753d8[m HEAD@{14}: commit: fix(test): correction de l'import de @vitejs/plugin-react dans vitest.config.ts
+[33m4bd0f53[m HEAD@{15}: commit: chore: mise à jour du pnpm-lock.yaml
+[33m087b94a[m HEAD@{16}: commit: feat(projects): implémentation de la page de projets animée avec refactoring des types, nouveaux composants UI, timeline, métriques, tests MSW et migrations Supabase
+[33mac0f4d7[m HEAD@{17}: commit: fix: typage strict Project (description, vérification d'objet) pour compatibilité TS
+[33m40745fb[m HEAD@{18}: commit: fix: suppression de l'import inutile de ProjectHeader dans RecentActivities
+[33mdca847f[m HEAD@{19}: commit: fix: ajout de la prop projectId sur KanbanBoard pour corriger le build
+[33m612dcfb[m HEAD@{20}: commit: fix: corrections finales pour le déploiement Netlify (imports, provider, service)
+[33m96fb611[m HEAD@{21}: commit: refactor: suppression des informations de débogage et correction des imports
+[33m3d3bd62[m HEAD@{22}: commit: fix: correction de l'importation Supabase dans useTask pour utiliser le client en ligne
+[33m09288e0[m HEAD@{23}: commit: refactor: suppression des informations de débogage du tableau de bord
+[33m929de96[m[33m ([m[1;32mfeature/modernization-phase1[m[33m)[m HEAD@{24}: checkout: moving from feature/modernization-phase1 to feature/animated-projects-page
+[33m929de96[m[33m ([m[1;32mfeature/modernization-phase1[m[33m)[m HEAD@{25}: commit: feat: ajout de la page de détail du projet avec TaskBoard
+[33m15f6b2c[m HEAD@{26}: commit: feat: ajout des animations Framer Motion et mise à jour des composants
+[33m4c4ba3b[m HEAD@{27}: commit: feat: ajout de la feuille de route pour la modernisation
+[33m56e835d[m[33m ([m[1;32mfeature/projects-page[m[33m, [m[1;32mfeature/project-detail-page[m[33m)[m HEAD@{28}: checkout: moving from feature/project-detail-page to feature/modernization-phase1
+[33m56e835d[m[33m ([m[1;32mfeature/projects-page[m[33m, [m[1;32mfeature/project-detail-page[m[33m)[m HEAD@{29}: checkout: moving from feature/projects-page to feature/project-detail-page
+[33m56e835d[m[33m ([m[1;32mfeature/projects-page[m[33m, [m[1;32mfeature/project-detail-page[m[33m)[m HEAD@{30}: commit: feat: ajout de la page des projets avec liste, création et actions
+[33mf0dca5e[m[33m ([m[1;31morigin/feature/settings-page[m[33m, [m[1;32mfeature/settings-page[m[33m)[m HEAD@{31}: checkout: moving from feature/settings-page to feature/projects-page
+[33mf0dca5e[m[33m ([m[1;31morigin/feature/settings-page[m[33m, [m[1;32mfeature/settings-page[m[33m)[m HEAD@{32}: commit: feat: Amélioration du tableau de bord et de la navigation - Design moderne, animations, composants optimisés et tests mis à jour
+[33m3432d40[m HEAD@{33}: commit: feat: ajout de la page des tâches avec tests
+[33mfd37822[m HEAD@{34}: commit: feat: ajout de la page des paramètres avec tests et migration de base de données
+[33m98fe1a3[m[33m ([m[1;32mfeature/dashboard-implementation[m[33m)[m HEAD@{35}: checkout: moving from feature/dashboard-implementation to feature/settings-page
+[33m98fe1a3[m[33m ([m[1;32mfeature/dashboard-implementation[m[33m)[m HEAD@{36}: commit: fix: amélioration de la sécurité en remplaçant getSession par getUser et ajout des composants dashboard
+[33md67f257[m HEAD@{37}: commit: feat: amélioration de la configuration TypeScript pour les tests
+[33m3aa2ee3[m HEAD@{38}: commit: feat: ajout des types pour Supabase et les mocks
+[33me6b5c53[m HEAD@{39}: commit: feat: Implémentation du tableau de bord avec tests
+[33m7efaf13[m[33m ([m[1;32mfeature/add-task-tests[m[33m)[m HEAD@{40}: checkout: moving from feature/add-task-tests to feature/dashboard-implementation
+[33m7efaf13[m[33m ([m[1;32mfeature/add-task-tests[m[33m)[m HEAD@{41}: commit: test: ajout des tests pour le composant AnimatedLayout avec data-testid
+[33m7afb703[m HEAD@{42}: commit: test: ajout des tests pour le composant Sidebar avec data-testid
+[33m857bec7[m HEAD@{43}: commit: test: ajout des tests pour le composant TopNav avec data-testid
+[33m09c92bd[m[33m ([m[1;31morigin/feature/add-task-tests[m[33m, [m[1;32mfeature/implement-components[m[33m)[m HEAD@{44}: checkout: moving from feature/implement-components to feature/add-task-tests
+[33m09c92bd[m[33m ([m[1;31morigin/feature/add-task-tests[m[33m, [m[1;32mfeature/implement-components[m[33m)[m HEAD@{45}: commit: feat: Implémentation des composants principaux de l'interface utilisateur
+[33mc9a05df[m[33m ([m[1;32mfix/animated-layout-client[m[33m)[m HEAD@{46}: checkout: moving from fix/animated-layout-client to feature/implement-components
+[33mc9a05df[m[33m ([m[1;32mfix/animated-layout-client[m[33m)[m HEAD@{47}: commit: fix: add 'use client' directive to AnimatedLayout component
+[33m96ec0ce[m[33m ([m[1;31morigin/feature/add-tests[m[33m, [m[1;32mfeature/add-tests[m[33m)[m HEAD@{48}: checkout: moving from feature/add-tests to fix/animated-layout-client
+[33m96ec0ce[m[33m ([m[1;31morigin/feature/add-tests[m[33m, [m[1;32mfeature/add-tests[m[33m)[m HEAD@{49}: commit: test: Ajout des tests pour les composants et services de projets
+[33maf3ab25[m[33m ([m[1;31morigin/feature/task-management[m[33m, [m[1;32mfeature/task-management[m[33m, [m[1;32mfeature/project-management[m[33m)[m HEAD@{50}: checkout: moving from feature/project-management to feature/add-tests
+[33maf3ab25[m[33m ([m[1;31morigin/feature/task-management[m[33m, [m[1;32mfeature/task-management[m[33m, [m[1;32mfeature/project-management[m[33m)[m HEAD@{51}: checkout: moving from feature/task-management to feature/project-management
+[33maf3ab25[m[33m ([m[1;31morigin/feature/task-management[m[33m, [m[1;32mfeature/task-management[m[33m, [m[1;32mfeature/project-management[m[33m)[m HEAD@{52}: commit: feat(tasks): Implémentation du système Kanban - Création des composants KanbanBoard, KanbanColumn et TaskCard avec tests
+[33m9324beb[m[33m ([m[1;31morigin/feature/dashboard-features[m[33m, [m[1;32mfeature/dashboard-features[m[33m)[m HEA

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Loader2, Lock } from 'lucide-react';
@@ -15,7 +15,20 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
+
+  // Vérifier si l'utilisateur a un token valide
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Session invalide. Veuillez réessayer la réinitialisation du mot de passe.');
+        router.push('/auth/forgot-password');
+      }
+    };
+    checkSession();
+  }, [router, supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,6 +37,10 @@ export default function ResetPasswordPage() {
     try {
       if (password !== confirmPassword) {
         throw new Error('Les mots de passe ne correspondent pas');
+      }
+
+      if (password.length < 6) {
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
       }
 
       console.log('Tentative de mise à jour du mot de passe');
@@ -93,6 +110,7 @@ export default function ResetPasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="bg-background/50 backdrop-blur-sm"
+              minLength={6}
             />
           </motion.div>
 
@@ -113,6 +131,7 @@ export default function ResetPasswordPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="bg-background/50 backdrop-blur-sm"
+              minLength={6}
             />
           </motion.div>
 

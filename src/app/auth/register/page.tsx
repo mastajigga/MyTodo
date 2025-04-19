@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { Loader2, User, Mail, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -72,30 +74,63 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
+    <div className="p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
+        <motion.div
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          className="space-y-2 text-center"
+        >
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
             Créez votre compte
           </h1>
           <p className="text-sm text-muted-foreground">
             Inscrivez-vous pour commencer à gérer vos tâches
           </p>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Nom complet</Label>
+        </motion.div>
+
+        <motion.form
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-2"
+          >
+            <Label htmlFor="fullName" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Nom complet
+            </Label>
             <Input
               id="fullName"
               placeholder="John Doe"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
+              className="bg-background/50 backdrop-blur-sm"
             />
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="space-y-2"
+          >
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -103,34 +138,69 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="bg-background/50 backdrop-blur-sm"
             />
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="space-y-2"
+          >
+            <Label htmlFor="password" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Mot de passe
+            </Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="bg-background/50 backdrop-blur-sm"
             />
-          </div>
+          </motion.div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Création en cours...' : 'Créer un compte'}
-          </Button>
-        </form>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                'Créer un compte'
+              )}
+            </Button>
+          </motion.div>
+        </motion.form>
 
-        <div className="text-center text-sm">
-          <p className="text-gray-500">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="text-center"
+        >
+          <p className="text-sm text-muted-foreground">
             Vous avez déjà un compte ?{' '}
-            <Link href="/auth/login" className="text-primary hover:underline">
+            <Link
+              href="/auth/login"
+              className="text-primary hover:underline transition-all"
+            >
               Se connecter
             </Link>
           </p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 } 

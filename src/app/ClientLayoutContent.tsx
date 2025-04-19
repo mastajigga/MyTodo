@@ -6,6 +6,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { WorkspaceProvider } from '@/contexts/workspace-context'
 import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider'
 import { Navigation } from '@/components/layout/Navigation'
+import { usePathname } from 'next/navigation'
 
 interface ClientLayoutContentProps {
   session: Session | null
@@ -13,14 +14,17 @@ interface ClientLayoutContentProps {
 }
 
 export default function ClientLayoutContent({ session, children }: ClientLayoutContentProps) {
+  const pathname = usePathname()
+  const isAuthPage = pathname?.startsWith('/auth')
+
   return (
     <SupabaseProvider session={session}>
       <QueryProvider>
         <WorkspaceProvider>
           <CreateTaskDialogProvider>
-            <div className="flex h-screen">
-              <Navigation />
-              <main className="flex-1 overflow-y-auto">
+            <div className={isAuthPage ? '' : 'flex h-screen'}>
+              {!isAuthPage && <Navigation />}
+              <main className={isAuthPage ? '' : 'flex-1 overflow-y-auto'}>
                 {children}
               </main>
             </div>

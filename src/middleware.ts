@@ -11,7 +11,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Routes publiques qui ne nécessitent pas d'authentification
-  const publicRoutes = ['/auth/login', '/auth/register'];
+  const publicRoutes = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password'
+  ];
   const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
 
   // Si l'utilisateur est sur une route d'authentification mais est déjà connecté

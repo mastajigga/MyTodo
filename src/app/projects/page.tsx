@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { WorkspaceSelect } from "@/components/workspace/WorkspaceSelect"
-import { ProjectList } from "@/components/project/ProjectList"
+import { ProjectList } from "@/components/projects/ProjectList"
 import { CreateProjectButton } from "@/components/project/CreateProjectButton"
 import ProjectStats from "@/components/project/ProjectStats"
 
