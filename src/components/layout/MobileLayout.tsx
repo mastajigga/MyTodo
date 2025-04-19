@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, LayoutGrid, CheckSquare, Settings, Menu } from "lucide-react";
+import { Home, LayoutGrid, CheckSquare, User, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -9,7 +9,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Accueil" },
   { href: "/projects", icon: LayoutGrid, label: "Projets" },
   { href: "/tasks", icon: CheckSquare, label: "Tâches" },
-  { href: "/settings", icon: Settings, label: "Paramètres" },
+  { href: "/profile", icon: User, label: "Profil" },
 ];
 
 export function MobileLayout({ children }: { children: React.ReactNode }) {

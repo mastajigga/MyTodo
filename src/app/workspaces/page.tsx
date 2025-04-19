@@ -34,20 +34,43 @@ export default function WorkspacesPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Récupérer le nombre total de membres
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) return;
+
+        // Récupérer les espaces de travail de l'utilisateur
+        const { data: userWorkspaces } = await supabase
+          .from('workspace_members')
+          .select('workspace_id')
+          .eq('user_id', userId);
+
+        if (!userWorkspaces?.length) {
+          setStats({
+            totalMembers: 0,
+            totalProjects: 0,
+            totalTasks: 0
+          });
+          return;
+        }
+
+        const workspaceIds = userWorkspaces.map(w => w.workspace_id);
+
+        // Récupérer le nombre total de membres dans les espaces de travail de l'utilisateur
         const { count: membersCount } = await supabase
           .from('workspace_members')
-          .select('*', { count: 'exact' });
+          .select('*', { count: 'exact' })
+          .in('workspace_id', workspaceIds);
 
-        // Récupérer le nombre total de projets
+        // Récupérer le nombre total de projets dans les espaces de travail de l'utilisateur
         const { count: projectsCount } = await supabase
           .from('projects')
-          .select('*', { count: 'exact' });
+          .select('*', { count: 'exact' })
+          .in('workspace_id', workspaceIds);
 
-        // Récupérer le nombre total de tâches
+        // Récupérer le nombre total de tâches dans les espaces de travail de l'utilisateur
         const { count: tasksCount } = await supabase
           .from('tasks')
-          .select('*', { count: 'exact' });
+          .select('*', { count: 'exact' })
+          .in('workspace_id', workspaceIds);
 
         setStats({
           totalMembers: membersCount || 0,
@@ -56,6 +79,11 @@ export default function WorkspacesPage() {
         });
       } catch (error) {
         console.error('Erreur lors de la récupération des statistiques:', error);
+        setStats({
+          totalMembers: 0,
+          totalProjects: 0,
+          totalTasks: 0
+        });
       } finally {
         setLoading(false);
       }

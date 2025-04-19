@@ -64,7 +64,7 @@ export default function RegisterPage() {
       }
 
       toast.success('Compte créé avec succès ! Veuillez vérifier votre email pour confirmer votre compte.');
-      router.push('/auth/login?message=verify-email');
+      router.push('/auth/register/confirmation');
     } catch (error: any) {
       console.error('Erreur lors de l\'inscription:', error);
       toast.error(error?.message || 'Une erreur est survenue lors de la création du compte');

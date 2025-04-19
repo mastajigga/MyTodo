@@ -10,9 +10,13 @@ import {
   Settings,
   Users,
   LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { useSupabase } from '@/lib/supabase/supabase-provider';
 import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -21,9 +25,59 @@ const navigation = [
   { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
 ];
 
+const sidebarVariants = {
+  open: {
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    }
+  },
+  closed: {
+    x: "-100%",
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    }
+  }
+};
+
+const overlayVariants = {
+  open: {
+    opacity: 1,
+    backdropFilter: "blur(4px)",
+    transition: { duration: 0.3 }
+  },
+  closed: {
+    opacity: 0,
+    backdropFilter: "blur(0px)",
+    transition: { duration: 0.3 }
+  }
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const { supabase } = useSupabase();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Fermer le menu quand on change de page
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Empêcher le défilement du body quand le menu est ouvert
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleLogout = async () => {
     try {
@@ -34,8 +88,8 @@ export function Sidebar() {
     }
   };
 
-  return (
-    <div className="flex h-full w-64 flex-col bg-gray-900" data-testid="sidebar">
+  const NavContent = () => (
+    <>
       <div className="flex h-16 items-center justify-center border-b border-gray-800">
         <h1 className="text-xl font-bold text-white" data-testid="sidebar-title">MyTodo</h1>
       </div>
@@ -78,6 +132,51 @@ export function Sidebar() {
           Déconnexion
         </Button>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Bouton du menu burger (visible uniquement sur mobile) */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 right-4 z-50 rounded-full bg-gray-900 p-2 text-white md:hidden"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Version desktop */}
+      <div className="hidden h-full w-64 flex-col bg-gray-900 md:flex" data-testid="sidebar">
+        <NavContent />
+      </div>
+
+      {/* Version mobile avec animation */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Overlay avec effet de flou */}
+            <motion.div
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={overlayVariants}
+              className="fixed inset-0 z-40 bg-black/50"
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Menu latéral */}
+            <motion.div
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={sidebarVariants}
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900"
+            >
+              <NavContent />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 } 

@@ -8,10 +8,7 @@ interface TaskStats {
 
 export const statsService = {
   async getTaskStats(workspaceId: string): Promise<TaskStats> {
-    console.log('Fetching stats for workspace:', workspaceId);
-
     if (!workspaceId) {
-      console.log('No workspace ID provided');
       return {
         current: 0,
         upcoming: 0,
@@ -20,7 +17,23 @@ export const statsService = {
     }
 
     try {
-      // Récupérer toutes les tâches non supprimées pour ce workspace
+      // Vérifier que l'utilisateur a accès à cet espace de travail
+      const { data: hasAccess } = await supabase
+        .from('workspace_members')
+        .select('user_id')
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!hasAccess) {
+        return {
+          current: 0,
+          upcoming: 0,
+          completed: 0
+        };
+      }
+
+      // Récupérer les tâches uniquement si l'utilisateur a accès
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select('status')
@@ -32,17 +45,11 @@ export const statsService = {
         throw error;
       }
 
-      console.log('Tasks fetched:', tasks);
-
-      // Compter manuellement les tâches par statut
-      const stats = {
+      return {
         current: tasks?.filter(task => task.status === 'in_progress').length || 0,
         upcoming: tasks?.filter(task => task.status === 'todo').length || 0,
         completed: tasks?.filter(task => task.status === 'done').length || 0
       };
-
-      console.log('Calculated stats:', stats);
-      return stats;
 
     } catch (error) {
       console.error('Error in getTaskStats:', error);

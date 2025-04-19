@@ -1,17 +1,24 @@
 'use client';
 
-import { DashboardLayout } from '@/components/DashboardLayout';
-import { StatsCard } from '@/components/StatsCard';
-import { ActivityList } from '@/components/ActivityList';
-import { motion } from 'framer-motion';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
-import {
-  UsersIcon,
-  FolderIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  PencilSquareIcon,
-} from '@heroicons/react/24/outline';
+import { motion } from "framer-motion";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { StatsCard } from "@/components/StatsCard";
+import { ActivityList } from "@/components/ActivityList";
+import { CheckCircle, Clock, PenSquare, Users, Folder } from "lucide-react";
+import { useWorkspaceContext } from "@/contexts/workspace-context";
+import { useQuery } from "@tanstack/react-query";
+import { statsService } from "@/lib/services/statsService";
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const containerVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 }
+};
 
 const recentActivities = [
   {
@@ -37,13 +44,30 @@ const recentActivities = [
 ] as const;
 
 export default function Dashboard() {
+  const { workspace } = useWorkspaceContext();
+
+  const { data: stats = { current: 0, upcoming: 0, completed: 0 }, isLoading } = useQuery({
+    queryKey: ['workspace-stats', workspace?.id],
+    queryFn: () => statsService.getTaskStats(workspace?.id || ''),
+    enabled: !!workspace?.id,
+  });
+
+  const activities = workspace ? [
+    // Exemple d'activités - à remplacer par les vraies données
+    {
+      type: 'created' as const,
+      taskTitle: 'Nouvelle tâche',
+      timestamp: new Date().toISOString()
+    }
+  ] : [];
+
   return (
     <DashboardLayout>
       <motion.div
-        variants={staggerContainer}
+        variants={containerVariants}
         initial="initial"
         animate="animate"
-        className="w-full"
+        className="container mx-auto p-6"
       >
         <motion.h1
           variants={fadeInUp}
@@ -52,36 +76,7 @@ export default function Dashboard() {
           Tableau de bord
         </motion.h1>
 
-        {/* Statistiques globales */}
-        <motion.div
-          variants={fadeInUp}
-          className="mb-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4"
-        >
-          <StatsCard
-            title="Espaces de travail"
-            value={1}
-            icon={UsersIcon}
-            trend={{ value: 10, isPositive: true }}
-          />
-          <StatsCard
-            title="Projets"
-            value={2}
-            icon={FolderIcon}
-            trend={{ value: 25, isPositive: true }}
-          />
-          <StatsCard
-            title="Tâches totales"
-            value={14}
-            icon={CheckCircleIcon}
-          />
-          <StatsCard
-            title="En cours"
-            value={5}
-            icon={ClockIcon}
-          />
-        </motion.div>
-
-        {/* Statistiques de l'espace actif */}
+        {/* Statistiques */}
         <motion.div variants={fadeInUp}>
           <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
             Statistiques de l'espace de travail actif
@@ -89,23 +84,23 @@ export default function Dashboard() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <StatsCard
               title="Tâches terminées"
-              value={3}
-              icon={CheckCircleIcon}
+              value={stats.completed}
+              icon={CheckCircle}
             />
             <StatsCard
               title="En cours"
-              value={5}
-              icon={ClockIcon}
+              value={stats.current}
+              icon={Clock}
             />
             <StatsCard
               title="En révision"
-              value={1}
-              icon={PencilSquareIcon}
+              value={0}
+              icon={PenSquare}
             />
             <StatsCard
               title="À faire"
-              value={2}
-              icon={ClockIcon}
+              value={stats.upcoming}
+              icon={Clock}
             />
           </div>
         </motion.div>
@@ -115,7 +110,13 @@ export default function Dashboard() {
           <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
             Activités
           </h2>
-          <ActivityList activities={recentActivities} />
+          {workspace ? (
+            <ActivityList activities={activities} />
+          ) : (
+            <p className="text-muted-foreground text-center py-8">
+              Sélectionnez un espace de travail pour voir les activités
+            </p>
+          )}
         </motion.div>
       </motion.div>
     </DashboardLayout>
