@@ -5,8 +5,7 @@ import SupabaseProvider from '@/lib/supabase/supabase-provider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { WorkspaceProvider } from '@/contexts/workspace-context'
 import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider'
-import { Navigation } from '@/components/layout/Navigation'
-import { MobileLayout } from '@/components/layout/MobileLayout'
+import { Sidebar } from '@/components/layout/Sidebar'
 import { usePathname } from 'next/navigation'
 
 interface ClientLayoutContentProps {
@@ -37,14 +36,12 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
       <QueryProvider>
         <WorkspaceProvider>
           <CreateTaskDialogProvider>
-            <div className="min-h-screen flex">
-              <Navigation />
-              <div className="flex-1 relative">
-                <MobileLayout>
-                  <main className="h-full p-4">
-                    {children}
-                  </main>
-                </MobileLayout>
+            <div className="min-h-screen flex bg-background">
+              <Sidebar />
+              <div className="flex-1 md:ml-64">
+                <main className="h-full p-4 pt-16 md:pt-4">
+                  {children}
+                </main>
               </div>
             </div>
           </CreateTaskDialogProvider>

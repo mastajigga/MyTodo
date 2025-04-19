@@ -10,6 +10,7 @@ import { useCreateTaskDialog } from '@/hooks/useCreateTaskDialog';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 type KanbanBoardProps = {
   projectId?: string;
@@ -86,14 +87,17 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-muted-foreground">Chargement du tableau...</p>
+      <div className="flex items-center justify-center p-4 sm:p-8">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Chargement du tableau...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <KanbanHeader
         selectedProjectId={projectId || selectedProjectId}
         onProjectChange={setSelectedProjectId}
@@ -101,7 +105,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
       />
 
       {/* Sélecteur de colonne pour mobile */}
-      <div className="md:hidden">
+      <div className="block md:hidden">
         <Select value={selectedColumnId} onValueChange={(value) => setSelectedColumnId(value as TaskStatus)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Sélectionner une colonne" />
@@ -109,7 +113,12 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
           <SelectContent>
             {columns.map((column) => (
               <SelectItem key={column.id} value={column.id}>
-                {column.title} ({column.tasks.length})
+                <div className="flex items-center justify-between w-full">
+                  <span>{column.title}</span>
+                  <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-full">
+                    {column.tasks.length}
+                  </span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
@@ -118,7 +127,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         {/* Vue mobile : une seule colonne à la fois */}
-        <div className="md:hidden">
+        <div className="block md:hidden">
           <AnimatePresence mode="wait">
             {columns.map((column) => (
               column.id === selectedColumnId && (
@@ -128,6 +137,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.2 }}
+                  className="bg-muted/50 rounded-lg p-2"
                 >
                   <Droppable droppableId={column.id}>
                     {(provided) => (
@@ -141,11 +151,13 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         </div>
 
         {/* Vue desktop : toutes les colonnes */}
-        <div className="hidden md:flex gap-4">
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
           {columns.map((column) => (
             <Droppable key={column.id} droppableId={column.id}>
               {(provided) => (
-                <Column column={column} provided={provided} />
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <Column column={column} provided={provided} />
+                </div>
               )}
             </Droppable>
           ))}
