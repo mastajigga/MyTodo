@@ -44,6 +44,11 @@ const formSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   dueDate: z.string().optional(),
+  start_time: z.string().optional(),
+  estimated_time: z
+    .number({ invalid_type_error: "Le temps estimé est requis" })
+    .min(0, "Le temps estimé doit être positif")
+    .optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -59,6 +64,8 @@ export function CreateTaskDialog() {
       status: "TODO",
       priority: "MEDIUM",
       dueDate: "",
+      start_time: "",
+      estimated_time: 0,
     },
   });
 
@@ -173,6 +180,32 @@ export function CreateTaskDialog() {
                   <FormLabel>Date d'échéance</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="start_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="start_time">Heure de début</FormLabel>
+                  <FormControl>
+                    <Input id="start_time" type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="estimated_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="estimated_time">Temps estimé (en minutes)</FormLabel>
+                  <FormControl>
+                    <Input id="estimated_time" type="number" min={0} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

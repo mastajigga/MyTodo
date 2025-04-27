@@ -48,6 +48,8 @@ export interface Database {
           workspace_id: string
           created_at: string
           updated_at: string
+          start_time?: string | null
+          estimated_time?: number | null
         }
         Insert: {
           id?: string
@@ -58,6 +60,8 @@ export interface Database {
           workspace_id: string
           created_at?: string
           updated_at?: string
+          start_time?: string | null
+          estimated_time?: number | null
         }
         Update: {
           id?: string
@@ -68,6 +72,8 @@ export interface Database {
           workspace_id?: string
           created_at?: string
           updated_at?: string
+          start_time?: string | null
+          estimated_time?: number | null
         }
       }
       profiles: {
