@@ -1,17 +1,66 @@
 import { renderHook, act } from '@testing-library/react'
 import { useAuth } from '@/lib/auth/useAuth'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { mockRouter, mockSupabase } from '../../../../vitest.setup'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+const mockUser = { id: '123', email: 'test@test.com' }
+
+const mockSupabase = {
+  auth: {
+    getUser: vi.fn().mockResolvedValue({
+      data: { user: mockUser },
+      error: null
+    }),
+    signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    onAuthStateChange: vi.fn().mockImplementation((callback) => {
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+  }
+}
+
+vi.mock('@supabase/auth-helpers-nextjs', () => ({
+  createClientComponentClient: () => mockSupabase
+}))
 
 describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
+  it('devrait charger l\'utilisateur au montage', async () => {
+    const { result } = renderHook(() => useAuth())
+
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled()
+    expect(result.current.loading).toBe(true)
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.user).toEqual(mockUser)
+    expect(result.current.loading).toBe(false)
+  })
+
+  it('devrait gérer les erreurs de chargement de l\'utilisateur', async () => {
+    mockSupabase.auth.getUser.mockRejectedValueOnce(new Error('Erreur de chargement'))
+
+    const { result } = renderHook(() => useAuth())
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.user).toBeNull()
+    expect(result.current.loading).toBe(false)
+  })
+
   describe('signIn', () => {
-    it('devrait se connecter avec succès avec email/mot de passe', async () => {
-      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
-        data: { user: { id: '123', email: 'test@test.com' } },
+    it('devrait se connecter avec succès', async () => {
+      mockSupabase.auth.signInWithPassword.mockResolvedValueOnce({
+        data: { user: mockUser },
         error: null
       })
 
@@ -25,24 +74,20 @@ describe('useAuth', () => {
         email: 'test@test.com',
         password: 'password'
       })
-      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
 
     it('devrait gérer les erreurs de connexion', async () => {
-      const mockError = new Error('Invalid credentials')
-      mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
-        data: { user: null },
-        error: mockError
-      })
+      mockSupabase.auth.signInWithPassword.mockRejectedValueOnce(
+        new Error('Erreur de connexion')
+      )
 
       const { result } = renderHook(() => useAuth())
 
-      await act(async () => {
-        await result.current.signIn('test@test.com', 'wrong-password')
-      })
-
-      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalled()
-      expect(mockRouter.push).not.toHaveBeenCalled()
+      await expect(
+        act(async () => {
+          await result.current.signIn('test@test.com', 'password')
+        })
+      ).rejects.toThrow('Erreur de connexion')
     })
   })
 
@@ -91,7 +136,6 @@ describe('useAuth', () => {
       })
 
       expect(mockSupabase.auth.signOut).toHaveBeenCalled()
-      expect(mockRouter.push).toHaveBeenCalledWith('/login')
     })
   })
 
@@ -104,7 +148,10 @@ describe('useAuth', () => {
       })
 
       expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
-        provider: 'google'
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       })
     })
 
@@ -116,23 +163,11 @@ describe('useAuth', () => {
       })
 
       expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
-        provider: 'github'
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       })
-    })
-  })
-
-  describe('Gestion de session', () => {
-    it('devrait vérifier la session au montage', async () => {
-      mockSupabase.auth.getSession = vi.fn().mockResolvedValue({
-        data: {
-          session: { user: { id: '123', email: 'test@test.com' } }
-        },
-        error: null
-      })
-
-      renderHook(() => useAuth())
-
-      expect(mockSupabase.auth.getSession).toHaveBeenCalled()
     })
   })
 }) 

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { projectService } from '@/lib/services/projectService';
-import { ProjectCard } from './ProjectCard';
 import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -16,17 +15,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
-import { stagger, scale, listItem } from '@/lib/animations';
+import { stagger } from '@/lib/animations';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Pencil, Trash2, Calendar, Users } from 'lucide-react';
+import { Pencil, Trash2, Calendar } from 'lucide-react';
 import Link from 'next/link';
+import { Project } from '@/types/project';
 
 interface ProjectListProps {
   workspaceId?: string;
+  projects: Project[];
 }
 
-export function ProjectList({ workspaceId }: ProjectListProps) {
-  const [editingProject, setEditingProject] = useState<any>(null);
+export function ProjectList({ workspaceId, projects }: ProjectListProps) {
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -34,18 +35,7 @@ export function ProjectList({ workspaceId }: ProjectListProps) {
     resolver: zodResolver(projectSchema),
   });
 
-  const {
-    data: projects,
-    isLoading,
-    isError,
-    error
-  } = useQuery({
-    queryKey: ['projects', workspaceId],
-    queryFn: () => projectService.getProjects(workspaceId),
-    enabled: true
-  });
-
-  const handleEdit = (project: any) => {
+  const handleEdit = (project: Project) => {
     setEditingProject(project);
     form.reset({
       name: project.name,
@@ -56,6 +46,8 @@ export function ProjectList({ workspaceId }: ProjectListProps) {
   };
 
   const handleEditSubmit = async (data: ProjectFormValues) => {
+    if (!editingProject) return;
+    
     try {
       await projectService.updateProject(editingProject.id, data);
       toast.success('Projet modifié avec succès');
@@ -67,51 +59,15 @@ export function ProjectList({ workspaceId }: ProjectListProps) {
     }
   };
 
-  const handleDelete = async (project: any) => {
+  const handleDelete = async (projectId: string) => {
     try {
-      await projectService.deleteProject(project.id);
+      await projectService.deleteProject(projectId);
       toast.success('Projet supprimé avec succès');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch (error) {
       toast.error('Erreur lors de la suppression du projet');
     }
   };
-
-  if (isLoading) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="w-full h-48 flex items-center justify-center"
-      >
-        <motion.div 
-          animate={{ 
-            rotate: 360,
-            transition: { duration: 1, repeat: Infinity, ease: "linear" }
-          }}
-          className="rounded-full h-8 w-8 border-b-2 border-primary"
-        />
-      </motion.div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-      >
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des projets : {error.message}
-          </AlertDescription>
-        </Alert>
-      </motion.div>
-    );
-  }
 
   if (!projects?.length) {
     return (
@@ -196,10 +152,6 @@ export function ProjectList({ workspaceId }: ProjectListProps) {
                           <Calendar className="h-4 w-4 mr-1" />
                           {new Date(safeProject.created_at).toLocaleDateString()}
                         </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          {safeProject.members?.length || 0} membres
-                        </div>
                       </div>
                     </CardContent>
                   </Link>
@@ -210,61 +162,56 @@ export function ProjectList({ workspaceId }: ProjectListProps) {
         </motion.div>
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
-        {isEditDialogOpen && (
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="sm:max-w-[425px] backdrop-blur-sm bg-card/50">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                  Modifier le projet
-                </DialogTitle>
-                <DialogDescription>
-                  Modifiez les informations du projet ci-dessous.
-                </DialogDescription>
-              </DialogHeader>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom du projet</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="backdrop-blur-sm bg-card/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} value={field.value ?? ''} className="backdrop-blur-sm bg-card/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Enregistrer les modifications
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le projet</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations du projet ci-dessous.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit">Enregistrer</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 

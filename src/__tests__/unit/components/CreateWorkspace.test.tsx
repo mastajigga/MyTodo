@@ -1,130 +1,137 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { CreateWorkspace } from '../CreateWorkspace'
-import { createClient } from '@/lib/supabase/client'
+import { CreateWorkspace } from '@/components/workspace/CreateWorkspace'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mockSupabaseClient } from '@/test/mocks'
 import { toast } from 'sonner'
+import { useWorkspace } from '@/hooks/useWorkspace'
 
-// Mock des dépendances
-jest.mock('@/lib/supabase/client')
-jest.mock('sonner')
+vi.mock('@/hooks/useWorkspace', () => ({
+  useWorkspace: () => ({
+    createWorkspace: vi.fn().mockResolvedValue({ id: 'test-workspace-id' }),
+    workspace: null,
+    setWorkspace: vi.fn()
+  })
+}))
+vi.mock('sonner')
+
+// Types de workspace disponibles
+type WorkspaceType = 'private' | 'professional' | 'family'
 
 describe('CreateWorkspace', () => {
-  const mockOnClose = jest.fn()
-  const mockOnSuccess = jest.fn()
-  const mockSupabase = {
-    auth: {
-      getUser: jest.fn()
-    },
-    from: jest.fn()
-  }
-
-  let consoleSpy: jest.SpyInstance
+  let consoleSpy: any
+  let createWorkspaceSpy: any
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    ;(createClient as jest.Mock).mockReturnValue(mockSupabase)
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'test-user-id' } }
+    vi.clearAllMocks()
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    createWorkspaceSpy = vi.fn().mockResolvedValue({ id: 'test-workspace-id' })
+    vi.mocked(useWorkspace).mockReturnValue({
+      createWorkspace: createWorkspaceSpy,
+      workspace: null,
+      setWorkspace: vi.fn()
     })
-    mockSupabase.from.mockReturnValue({
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn()
-    })
-    // Espionner console.error avant chaque test
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    // Restaurer console.error après chaque test
     consoleSpy.mockRestore()
   })
 
   it('affiche le formulaire de création', () => {
-    render(<CreateWorkspace onClose={mockOnClose} onSuccess={mockOnSuccess} />)
-
-    expect(screen.getByText('Créer un espace de travail')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Nom de l\'espace de travail')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Description (optionnelle)')).toBeInTheDocument()
-    expect(screen.getByText('Professionnel')).toBeInTheDocument()
-    expect(screen.getByText('Famille')).toBeInTheDocument()
-    expect(screen.getByText('Privé')).toBeInTheDocument()
+    render(<CreateWorkspace />)
+    
+    expect(screen.getByLabelText(/nom/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/description/i)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /type/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /créer/i })).toBeInTheDocument()
   })
 
-  it('permet de créer un workspace avec succès', async () => {
-    const mockWorkspace = {
-      id: 'test-workspace-id',
-      name: 'Test Workspace',
-      description: 'Test Description',
-      type: 'professional'
-    }
+  describe('Tests des types de workspace', () => {
+    const workspaceTypes: WorkspaceType[] = ['private', 'professional', 'family']
+    
+    workspaceTypes.forEach(type => {
+      it(`crée un workspace de type ${type} avec succès`, async () => {
+        render(<CreateWorkspace />)
 
-    mockSupabase.from.mockReturnValue({
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: mockWorkspace })
+        fireEvent.change(screen.getByLabelText(/nom/i), {
+          target: { value: `Test ${type} Workspace` }
+        })
+        fireEvent.change(screen.getByLabelText(/description/i), {
+          target: { value: `Test ${type} Description` }
+        })
+        
+        const typeSelect = screen.getByRole('combobox', { name: /type/i })
+        fireEvent.click(typeSelect)
+        fireEvent.click(screen.getByText(type))
+
+        fireEvent.click(screen.getByRole('button', { name: /créer/i }))
+
+        await waitFor(() => {
+          expect(createWorkspaceSpy).toHaveBeenCalledWith({
+            name: `Test ${type} Workspace`,
+            description: `Test ${type} Description`,
+            type: type
+          })
+        })
+      })
+
+      it(`valide les champs requis pour le type ${type}`, async () => {
+        render(<CreateWorkspace />)
+
+        const typeSelect = screen.getByRole('combobox', { name: /type/i })
+        fireEvent.click(typeSelect)
+        fireEvent.click(screen.getByText(type))
+
+        fireEvent.click(screen.getByRole('button', { name: /créer/i }))
+
+        await waitFor(() => {
+          expect(screen.getByText(/le nom est requis/i)).toBeInTheDocument()
+        })
+      })
     })
-
-    render(<CreateWorkspace onClose={mockOnClose} onSuccess={mockOnSuccess} />)
-
-    fireEvent.change(screen.getByPlaceholderText('Nom de l\'espace de travail'), {
-      target: { value: 'Test Workspace' }
-    })
-    fireEvent.change(screen.getByPlaceholderText('Description (optionnelle)'), {
-      target: { value: 'Test Description' }
-    })
-    fireEvent.click(screen.getByText('Créer'))
-
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Espace de travail créé avec succès !')
-      expect(mockOnSuccess).toHaveBeenCalledWith('test-workspace-id')
-      expect(mockOnClose).toHaveBeenCalled()
-    })
-
-    expect(consoleSpy).not.toHaveBeenCalled()
   })
 
   it('affiche une erreur en cas d\'échec de création', async () => {
     const testError = new Error('Test error')
-    mockSupabase.from.mockReturnValue({
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockRejectedValue(testError)
-    })
+    createWorkspaceSpy.mockRejectedValue(testError)
 
-    render(<CreateWorkspace onClose={mockOnClose} onSuccess={mockOnSuccess} />)
+    render(<CreateWorkspace />)
 
-    fireEvent.change(screen.getByPlaceholderText('Nom de l\'espace de travail'), {
+    fireEvent.change(screen.getByLabelText(/nom/i), {
       target: { value: 'Test Workspace' }
     })
-    fireEvent.click(screen.getByText('Créer'))
+    
+    const typeSelect = screen.getByRole('combobox', { name: /type/i })
+    fireEvent.click(typeSelect)
+    fireEvent.click(screen.getByText('private'))
+
+    fireEvent.click(screen.getByRole('button', { name: /créer/i }))
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Erreur lors de la création de l\'espace de travail')
-      expect(mockOnSuccess).not.toHaveBeenCalled()
-      expect(mockOnClose).not.toHaveBeenCalled()
-      expect(consoleSpy).toHaveBeenCalledWith(testError)
+      expect(consoleSpy).toHaveBeenCalledWith('Erreur lors de la création:', testError)
     })
   })
 
   it('désactive le bouton pendant la création', async () => {
-    mockSupabase.from.mockReturnValue({
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      single: jest.fn().mockImplementation(() => new Promise(() => {})) // Promise qui ne se résout jamais
+    let resolvePromise: (value: unknown) => void
+    const createPromise = new Promise((resolve) => {
+      resolvePromise = resolve
     })
+    createWorkspaceSpy.mockImplementation(() => createPromise)
 
-    render(<CreateWorkspace onClose={mockOnClose} onSuccess={mockOnSuccess} />)
+    render(<CreateWorkspace />)
 
-    const createButton = screen.getByText('Créer')
-    fireEvent.change(screen.getByPlaceholderText('Nom de l\'espace de travail'), {
+    fireEvent.change(screen.getByLabelText(/nom/i), {
       target: { value: 'Test Workspace' }
     })
-    fireEvent.click(createButton)
+    
+    const typeSelect = screen.getByRole('combobox', { name: /type/i })
+    fireEvent.click(typeSelect)
+    fireEvent.click(screen.getByText('private'))
 
-    await waitFor(() => {
-      expect(createButton).toBeDisabled()
-    })
+    fireEvent.click(screen.getByRole('button', { name: /créer/i }))
 
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /création/i })).toBeDisabled()
+
+    resolvePromise!({ id: 'test-workspace-id' })
   })
 }) 

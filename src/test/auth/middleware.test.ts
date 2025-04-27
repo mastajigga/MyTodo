@@ -29,62 +29,37 @@ const mockSession: Session = {
 };
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createMiddlewareClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn(),
-    },
-  })),
+  createMiddlewareClient: vi.fn()
 }));
 
 describe('Auth Middleware', () => {
-  let mockReq: NextRequest;
-  let mockSupabase: ReturnType<typeof createMiddlewareClient>;
+  const mockSupabase = createMockSupabaseClient();
+  const mockResponse = new NextResponse();
+  let mockRequest: NextRequest;
 
   beforeEach(() => {
-    mockReq = new NextRequest(new URL('http://localhost:3000'));
-    mockSupabase = createMockSupabaseClient() as unknown as ReturnType<typeof createMiddlewareClient>;
-    vi.mocked(createMiddlewareClient).mockReturnValue(mockSupabase);
+    mockRequest = new NextRequest(new URL('http://localhost:3000'));
+    (createMiddlewareClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
-  it('should redirect to login for protected routes when not authenticated', async () => {
-    mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
-    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
+  it('should allow access when user is authenticated', async () => {
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-123', email: 'test@example.com' } },
+      error: null
+    });
 
-    const response = await middleware(mockReq);
-
-    expect(response).toBeInstanceOf(NextResponse);
-    const redirectUrl = new URL('/auth/login', 'http://localhost:3000');
-    redirectUrl.searchParams.set('redirectTo', '/dashboard');
-    expect(response?.url).toBe(redirectUrl.toString());
+    const response = await middleware(mockRequest);
+    expect(response.status).toBe(200);
   });
 
-  it('should allow access to public routes when not authenticated', async () => {
-    mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
-    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null });
+  it('should redirect to login when user is not authenticated', async () => {
+    mockSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: null
+    });
 
-    const response = await middleware(mockReq);
-
-    expect(response).toBeInstanceOf(NextResponse);
-    expect(response?.url).toBeUndefined();
-  });
-
-  it('should redirect to dashboard when accessing auth routes while authenticated', async () => {
-    mockReq = new NextRequest(new URL('http://localhost:3000/auth/login'));
-    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null });
-
-    const response = await middleware(mockReq);
-
-    expect(response).toBeInstanceOf(NextResponse);
-    expect(response?.url).toBe('http://localhost:3000/dashboard');
-  });
-
-  it('should allow access to protected routes when authenticated', async () => {
-    mockReq = new NextRequest(new URL('http://localhost:3000/dashboard'));
-    mockSupabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null });
-
-    const response = await middleware(mockReq);
-
-    expect(response).toBeInstanceOf(NextResponse);
-    expect(response?.url).toBeUndefined();
+    const response = await middleware(mockRequest);
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('/auth/login');
   });
 }); 

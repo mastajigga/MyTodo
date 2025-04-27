@@ -1,27 +1,25 @@
-import { Database } from '../../lib/database.types';
-import { getSupabaseClient } from '@/lib/supabase/client';
-
-export type Workspace = Database['public']['Tables']['workspaces']['Row'];
-export type WorkspaceInsert = Database['public']['Tables']['workspaces']['Insert'];
-export type WorkspaceUpdate = Database['public']['Tables']['workspaces']['Update'];
-
-const supabase = getSupabaseClient();
+import type {
+  Workspace,
+  WorkspaceInsert,
+  WorkspaceUpdate,
+  CreateWorkspaceData,
+  UpdateWorkspaceData,
+  WorkspaceMember,
+  InviteWorkspaceMemberData
+} from '@/types/supabase'
+import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
 
 export const workspaceService = {
-  async getWorkspaces() {
-    const { data, error } = await supabase
+  async getUserWorkspaces(supabase: SupabaseClient): Promise<Workspace[]> {
+    const { data: workspaces, error } = await supabase
       .from('workspaces')
       .select('*')
       .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+    if (error) throw error;
+    return workspaces;
   },
 
-  async createWorkspace(workspace: WorkspaceInsert) {
+  async createWorkspace(supabase: SupabaseClient, workspace: WorkspaceInsert) {
     const { data, error } = await supabase
       .from('workspaces')
       .insert(workspace)
@@ -35,7 +33,7 @@ export const workspaceService = {
     return data;
   },
 
-  async updateWorkspace(id: string, workspace: WorkspaceUpdate) {
+  async updateWorkspace(supabase: SupabaseClient, id: string, workspace: WorkspaceUpdate) {
     const { data, error } = await supabase
       .from('workspaces')
       .update(workspace)
@@ -50,7 +48,7 @@ export const workspaceService = {
     return data;
   },
 
-  async deleteWorkspace(id: string) {
+  async deleteWorkspace(supabase: SupabaseClient, id: string) {
     const { error } = await supabase
       .from('workspaces')
       .delete()
@@ -61,7 +59,7 @@ export const workspaceService = {
     }
   },
 
-  async getWorkspaceById(id: string) {
+  async getWorkspaceById(supabase: SupabaseClient, id: string) {
     const { data, error } = await supabase
       .from('workspaces')
       .select('*')
@@ -75,7 +73,7 @@ export const workspaceService = {
     return data;
   },
 
-  async inviteToWorkspace(workspaceId: string, email: string) {
+  async inviteToWorkspace(supabase: SupabaseClient, workspaceId: string, email: string) {
     // Vérifier si l'utilisateur existe
     const { data: user, error: userError } = await supabase
       .from('users')

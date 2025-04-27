@@ -2,114 +2,106 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useWorkspace } from '@/lib/workspace/useWorkspace'
-import { WorkspaceType } from '@/types/workspace'
+import { useWorkspace } from '@/hooks/useWorkspace'
+import type { WorkspaceType } from '@/types/supabase'
+import { workspaceTypeLabels, workspaceTypeColors } from '@/types/supabase'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
 const workspaceSchema = z.object({
   name: z.string().min(1, { message: 'Le nom est requis' }),
   description: z.string().optional(),
-  type: z.enum(['personal', 'team'] as const, {
+  type: z.enum(['family', 'professional', 'private'] as const, {
     required_error: 'Le type est requis'
   }) satisfies z.ZodType<WorkspaceType>
 })
 
 type WorkspaceFormData = z.infer<typeof workspaceSchema>
 
-interface CreateWorkspaceProps {
-  onSuccess?: () => void
-}
-
-export function CreateWorkspace({ onSuccess }: CreateWorkspaceProps) {
+export function CreateWorkspace() {
+  const [isLoading, setIsLoading] = useState(false)
   const { createWorkspace } = useWorkspace()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<WorkspaceFormData>({
-    resolver: zodResolver(workspaceSchema)
+  const form = useForm<WorkspaceFormData>({
+    resolver: zodResolver(workspaceSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      type: 'private'
+    }
   })
 
   const onSubmit = async (data: WorkspaceFormData) => {
     try {
-      setIsSubmitting(true)
-      setError(null)
+      setIsLoading(true)
       await createWorkspace(data)
-      reset()
-      onSuccess?.()
-    } catch (err) {
-      setError(err as Error)
+      form.reset()
+    } catch (error) {
+      console.error('Erreur lors de la création:', error)
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
 
-  const workspaceTypes: { value: WorkspaceType; label: string }[] = [
-    { value: 'personal', label: 'Personnel' },
-    { value: 'team', label: 'Équipe' }
-  ]
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-2">
         <Label htmlFor="name">Nom</Label>
-        <input
+        <Input
           id="name"
-          type="text"
-          {...register('name')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          {...form.register('name')}
           placeholder="Mon espace de travail"
+          disabled={isLoading}
         />
-        {errors.name && (
-          <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+        {form.formState.errors.name && (
+          <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
         )}
       </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <textarea
+      <div className="space-y-2">
+        <Label htmlFor="description">Description (optionnelle)</Label>
+        <Textarea
           id="description"
-          {...register('description')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          placeholder="Description de l'espace de travail"
-          rows={3}
+          {...form.register('description')}
+          placeholder="Description de votre espace de travail"
+          disabled={isLoading}
         />
       </div>
 
-      <div>
-        <Label htmlFor="type">Type</Label>
-        <select
-          id="type"
-          {...register('type')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+      <div className="space-y-2">
+        <Label>Type</Label>
+        <Select
+          value={form.watch('type')}
+          onValueChange={(value: WorkspaceType) => form.setValue('type', value)}
+          disabled={isLoading}
         >
-          <option value="">Sélectionner un type</option>
-          {workspaceTypes.map(type => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-        {errors.type && (
-          <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+          <SelectTrigger>
+            <SelectValue placeholder="Sélectionnez un type" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(workspaceTypeLabels).map(([type, label]) => (
+              <SelectItem
+                key={type}
+                value={type}
+                className={cn('cursor-pointer', workspaceTypeColors[type as WorkspaceType])}
+              >
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {form.formState.errors.type && (
+          <p className="text-sm text-red-500">{form.formState.errors.type.message}</p>
         )}
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600">{error.message}</p>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-      >
-        {isSubmitting ? 'Création...' : 'Créer'}
-      </button>
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? 'Création...' : 'Créer l\'espace de travail'}
+      </Button>
     </form>
   )
 } 

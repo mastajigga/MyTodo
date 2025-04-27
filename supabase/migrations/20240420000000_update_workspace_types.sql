@@ -8,7 +8,7 @@ ADD COLUMN temp_type text;
 -- Convertir les anciens types vers les nouveaux
 UPDATE workspaces 
 SET temp_type = CASE type
-    WHEN 'family' THEN 'personal'
+    WHEN 'family' THEN 'family'
     WHEN 'professional' THEN 'team'
     WHEN 'private' THEN 'personal'
     ELSE 'personal' -- Valeur par défaut
@@ -28,14 +28,14 @@ RENAME COLUMN temp_type TO type;
 -- Ajouter la nouvelle contrainte
 ALTER TABLE workspaces 
 ADD CONSTRAINT workspaces_type_check 
-CHECK (type IN ('personal', 'team'));
+CHECK (type IN ('family', 'team', 'personal'));
 
 -- Mettre à jour les politiques RLS
 DROP POLICY IF EXISTS "Les utilisateurs peuvent créer des workspaces" ON workspaces;
 CREATE POLICY "Les utilisateurs peuvent créer des workspaces" ON workspaces
 FOR INSERT TO authenticated
 WITH CHECK (
-    type IN ('personal', 'team')
+    type IN ('family', 'team', 'personal')
 );
 
 DROP POLICY IF EXISTS "Les utilisateurs peuvent voir leurs workspaces" ON workspaces;

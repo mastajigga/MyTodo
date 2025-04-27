@@ -1,6 +1,29 @@
 import { vi } from 'vitest'
 import type { Database } from '../../lib/database.types'
+import { SupabaseClient } from '@supabase/supabase-js'
 
+// Type pour les réponses Supabase mockées
+type MockSupabaseResponse<T> = {
+  data: T | null
+  error: { message: string } | null
+  status: number
+  statusText: string
+  count: number
+}
+
+// Création d'une réponse Supabase mockée
+const createMockResponse = <T>(
+  data: T | null = null,
+  error: { message: string } | null = null
+): MockSupabaseResponse<T> => ({
+  data,
+  error,
+  status: error ? 400 : 200,
+  statusText: error ? 'Bad Request' : 'OK',
+  count: data ? 1 : 0,
+})
+
+// Mock du client Supabase
 export const mockSupabase = {
   from: vi.fn((table: string) => ({
     select: vi.fn().mockReturnThis(),
@@ -9,21 +32,57 @@ export const mockSupabase = {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
+    single: vi.fn().mockImplementation(() => 
+      Promise.resolve(createMockResponse(null))
+    ),
+    match: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
   })),
+  
   auth: {
-    getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
-    signInWithPassword: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
-    signInWithOAuth: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
-    signOut: vi.fn().mockResolvedValue({ error: null }),
+    getUser: vi.fn().mockResolvedValue(createMockResponse({ 
+      user: { 
+        id: 'test-user',
+        email: 'test@example.com',
+        role: 'authenticated',
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      } 
+    })),
+    signInWithPassword: vi.fn().mockResolvedValue(createMockResponse({ 
+      user: { id: 'test-user' } 
+    })),
+    signInWithOAuth: vi.fn().mockResolvedValue(createMockResponse({ 
+      provider: 'github',
+      url: 'http://localhost:3000/auth/callback'
+    })),
+    signOut: vi.fn().mockResolvedValue(createMockResponse(null)),
     onAuthStateChange: vi.fn().mockImplementation((callback) => {
-      callback('SIGNED_IN', { user: { id: 'test-user' } });
-      return { data: { subscription: { unsubscribe: vi.fn() } }, error: null };
+      callback('SIGNED_IN', { user: { id: 'test-user' } })
+      return { 
+        data: { subscription: { unsubscribe: vi.fn() } },
+        error: null 
+      }
     }),
   },
-  rpc: vi.fn().mockReturnThis(),
-} as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient<Database>>
 
+  storage: {
+    from: vi.fn().mockReturnValue({
+      upload: vi.fn().mockResolvedValue(createMockResponse(null)),
+      download: vi.fn().mockResolvedValue(createMockResponse(null)),
+      remove: vi.fn().mockResolvedValue(createMockResponse(null)),
+    }),
+  },
+
+  rpc: vi.fn().mockResolvedValue(createMockResponse(null)),
+  
+  functions: {
+    invoke: vi.fn().mockResolvedValue(createMockResponse(null)),
+  },
+} as unknown as SupabaseClient<Database>
+
+// Fonction pour réinitialiser tous les mocks
 export const resetSupabaseMocks = () => {
   vi.clearAllMocks()
   Object.values(mockSupabase).forEach(mock => {
@@ -33,8 +92,10 @@ export const resetSupabaseMocks = () => {
   })
 }
 
+// Mock du module client Supabase
 vi.mock('@/lib/supabase/client', () => ({
-  supabase: mockSupabase
+  supabase: mockSupabase,
+  getSupabaseClient: () => mockSupabase,
 }))
 
 export const mockProject = {

@@ -1,11 +1,9 @@
-import { getSupabaseClient } from '@/lib/supabase/client';
+import { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
 
-const supabase = getSupabaseClient();
-
 export const ProjectService = {
-  async createProject(data: CreateProjectData): Promise<Project> {
+  async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
     const { data: project, error } = await supabase
       .from('projects')
       .insert(data)
@@ -16,7 +14,7 @@ export const ProjectService = {
     return project;
   },
 
-  async updateProject(id: string, data: UpdateProjectData): Promise<Project> {
+  async updateProject(id: string, data: UpdateProjectData, supabase: SupabaseClient): Promise<Project> {
     const { data: project, error } = await supabase
       .from('projects')
       .update(data)
@@ -28,7 +26,7 @@ export const ProjectService = {
     return project;
   },
 
-  async deleteProject(id: string): Promise<void> {
+  async deleteProject(id: string, supabase: SupabaseClient): Promise<void> {
     const { error } = await supabase
       .from('projects')
       .delete()
@@ -37,7 +35,7 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  async getProject(id: string): Promise<Project> {
+  async getProject(id: string, supabase: SupabaseClient): Promise<Project> {
     const { data: project, error } = await supabase
       .from('projects')
       .select('*, tasks(*)')
@@ -48,7 +46,7 @@ export const ProjectService = {
     return project;
   },
 
-  async getWorkspaceProjects(workspaceId: string): Promise<Project[]> {
+  async getWorkspaceProjects(workspaceId: string, supabase: SupabaseClient): Promise<Project[]> {
     const { data: projects, error } = await supabase
       .from('projects')
       .select('*')
@@ -59,7 +57,7 @@ export const ProjectService = {
     return projects;
   },
 
-  async getProjectStats(id: string) {
+  async getProjectStats(id: string, supabase: SupabaseClient) {
     const { data: stats, error } = await supabase
       .from('tasks')
       .select('status')
@@ -81,7 +79,7 @@ export const ProjectService = {
     };
   },
 
-  async reorderProjects(projects: Project[]): Promise<void> {
+  async reorderProjects(projects: Project[], supabase: SupabaseClient): Promise<void> {
     const { error } = await supabase.rpc('reorder_projects', {
       project_ids: projects.map(p => p.id)
     });
@@ -89,7 +87,7 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription {
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabase: SupabaseClient): SupabaseSubscription {
     return supabase
       .channel(`projects:${workspaceId}`)
       .on('postgres_changes', {
@@ -101,5 +99,11 @@ export const ProjectService = {
         callback(payload.new as Project);
       })
       .subscribe();
+  },
+
+  async getProjects(supabase: SupabaseClient) {
+    const { data, error } = await supabase.from('projects').select('*');
+    if (error) throw error;
+    return data;
   }
 }; 

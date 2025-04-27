@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { mockSupabase } from '@/test/mocks/supabase'
+
+vi.mock('@supabase/supabase-js', () => ({
+  AuthError: class extends Error {
+    constructor(message: string) {
+      super(message)
+      this.name = 'AuthError'
+    }
+  }
+}))
 
 const mockRouter = {
   push: vi.fn(),
@@ -15,7 +25,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter
 }))
 
-const mockSupabase = {
+const mockSupabaseAuth = {
   auth: {
     signInWithPassword: vi.fn(),
     signInWithOAuth: vi.fn(),
@@ -23,7 +33,7 @@ const mockSupabase = {
 }
 
 vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createClientComponentClient: () => mockSupabase
+  createClientComponentClient: () => mockSupabaseAuth
 }))
 
 describe('LoginForm', () => {
@@ -53,7 +63,7 @@ describe('LoginForm', () => {
   })
 
   it('devrait gérer la soumission du formulaire avec succès', async () => {
-    mockSupabase.auth.signInWithPassword.mockResolvedValueOnce({
+    mockSupabaseAuth.auth.signInWithPassword.mockResolvedValueOnce({
       data: { user: { id: 'user-123' } },
       error: null
     })
@@ -67,7 +77,7 @@ describe('LoginForm', () => {
     fireEvent.click(submitButton)
     
     await waitFor(() => {
-      expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      expect(mockSupabaseAuth.auth.signInWithPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password'
       })
@@ -76,7 +86,7 @@ describe('LoginForm', () => {
   })
 
   it('devrait gérer la connexion avec Google', async () => {
-    mockSupabase.auth.signInWithOAuth.mockResolvedValueOnce({
+    mockSupabaseAuth.auth.signInWithOAuth.mockResolvedValueOnce({
       data: { provider: 'google' },
       error: null
     })
@@ -87,7 +97,7 @@ describe('LoginForm', () => {
     fireEvent.click(googleButton)
     
     await waitFor(() => {
-      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      expect(mockSupabaseAuth.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
         options: {
           redirectTo: expect.stringContaining('/auth/callback')
@@ -97,7 +107,7 @@ describe('LoginForm', () => {
   })
 
   it('devrait gérer la connexion avec GitHub', async () => {
-    mockSupabase.auth.signInWithOAuth.mockResolvedValueOnce({
+    mockSupabaseAuth.auth.signInWithOAuth.mockResolvedValueOnce({
       data: { provider: 'github' },
       error: null
     })
@@ -108,7 +118,7 @@ describe('LoginForm', () => {
     fireEvent.click(githubButton)
     
     await waitFor(() => {
-      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      expect(mockSupabaseAuth.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'github',
         options: {
           redirectTo: expect.stringContaining('/auth/callback')
@@ -118,7 +128,7 @@ describe('LoginForm', () => {
   })
 
   it('devrait afficher une erreur en cas d\'échec de connexion', async () => {
-    mockSupabase.auth.signInWithPassword.mockRejectedValueOnce(
+    mockSupabaseAuth.auth.signInWithPassword.mockRejectedValueOnce(
       new Error('Une erreur est survenue')
     )
     

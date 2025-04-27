@@ -41,24 +41,32 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         if (typeof window === 'undefined') {
-          // Serveur
           console.info('[SERVEUR] Utilisateur non connecté');
         } else {
-          // Client
           console.log('[CLIENT] Utilisateur non connecté');
         }
         setWorkspaces([]);
         return;
       }
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return setWorkspaces([]);
-      const { data } = await supabase
+      console.log('[DEBUG] Utilisateur récupéré pour workspaces:', user);
+      if (!user) {
+        console.warn('[DEBUG] Aucun utilisateur trouvé lors de la récupération des workspaces');
+        return setWorkspaces([]);
+      }
+      const { data, error } = await supabase
         .from('workspace_members')
         .select('workspace_id, workspaces(*)')
         .eq('user_id', user.id);
+      if (error) {
+        console.error('[DEBUG] Erreur lors de la récupération des workspaces:', error);
+      } else {
+        console.log('[DEBUG] Résultat de la requête workspaces:', data);
+      }
       const userWorkspaces = (data || [])
         .map((m: any) => m.workspaces)
         .filter(Boolean);
+      console.log('[DEBUG] Workspaces finaux pour utilisateur', user.id, ':', userWorkspaces);
       setWorkspaces(userWorkspaces);
     };
     fetchWorkspaces();

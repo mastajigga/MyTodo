@@ -7,6 +7,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/lib/database.types';
 import { ClientLayoutContent } from "@/components/layout/ClientLayoutContent";
 import "./globals.css";
+import { Logger } from '@/lib/logger';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,19 +16,26 @@ export const metadata: Metadata = {
   description: "Une application de gestion de tâches moderne et intuitive",
 };
 
+const logger = Logger.getInstance();
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const supabase = createServerComponentClient<Database>({ cookies });
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    logger.info('User logged in', { data: { userId: user.id } });
+  } else {
+    logger.info('Application started without user');
+  }
 
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <Providers>
           <ClientLayoutContent session={session}>
             {children}

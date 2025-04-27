@@ -9,6 +9,7 @@ import { useWorkspaceContext } from "@/contexts/workspace-context";
 import { useQuery } from "@tanstack/react-query";
 import { statsService } from "@/lib/services/statsService";
 import { WorkspaceSelectorScreen } from '@/components/workspace/WorkspaceSelectorScreen';
+import { useSupabase } from '@/lib/supabase/supabase-provider';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -46,6 +47,14 @@ const recentActivities = [
 
 export default function Dashboard() {
   const { workspace, workspaces } = useWorkspaceContext();
+  const { supabase } = useSupabase();
+
+  // Toujours appeler le hook useQuery, même si workspace est null
+  const { data: stats = { current: 0, upcoming: 0, completed: 0 }, isLoading } = useQuery({
+    queryKey: ['workspace-stats', workspace?.id],
+    queryFn: () => (workspace?.id ? statsService.getTaskStats(supabase, workspace.id) : Promise.resolve({ current: 0, upcoming: 0, completed: 0 })),
+    enabled: !!workspace?.id,
+  });
 
   const isLoadingWorkspaces = !workspace && workspaces.length > 0;
 
@@ -68,13 +77,6 @@ export default function Dashboard() {
       </DashboardLayout>
     );
   }
-
-  // Toujours appeler le hook useQuery, même si workspace est null
-  const { data: stats = { current: 0, upcoming: 0, completed: 0 }, isLoading } = useQuery({
-    queryKey: ['workspace-stats', workspace?.id],
-    queryFn: () => workspace?.id ? statsService.getTaskStats(workspace.id) : Promise.resolve({ current: 0, upcoming: 0, completed: 0 }),
-    enabled: !!workspace?.id,
-  });
 
   const activities = workspace ? [
     // Exemple d'activités - à remplacer par les vraies données

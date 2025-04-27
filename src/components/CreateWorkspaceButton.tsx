@@ -5,6 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,36 +16,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { WorkspaceService } from "@/services/workspace.service";
+import { workspaceService } from "@/services/workspace";
 import { WorkspaceType } from "@/types/workspace";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
-export default function CreateWorkspaceButton() {
+export function CreateWorkspaceButton() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [type, setType] = useState<WorkspaceType>("personal");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      await WorkspaceService.createWorkspace({
+      await workspaceService.createWorkspace({
         name,
         type,
+        description
       });
       toast.success("Espace de travail créé avec succès");
       setOpen(false);
       setName("");
+      setDescription("");
       setType("personal");
     } catch (error) {
       console.error("Erreur lors de la création de l'espace de travail:", error);
       toast.error("Erreur lors de la création de l'espace de travail");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -61,12 +67,13 @@ export default function CreateWorkspaceButton() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Créer un nouvel espace de travail</DialogTitle>
+          <DialogDescription>
+            Créez un nouvel espace de travail pour organiser vos projets et tâches.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Nom
-            </label>
+            <Label htmlFor="name">Nom</Label>
             <Input
               id="name"
               value={name}
@@ -76,9 +83,16 @@ export default function CreateWorkspaceButton() {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="type" className="text-sm font-medium">
-              Type
-            </label>
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description de l'espace de travail"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Type</Label>
             <Select
               value={type}
               onValueChange={(value: WorkspaceType) => setType(value)}
@@ -93,8 +107,8 @@ export default function CreateWorkspaceButton() {
             </Select>
           </div>
           <div className="flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Création..." : "Créer"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Création..." : "Créer"}
             </Button>
           </div>
         </form>

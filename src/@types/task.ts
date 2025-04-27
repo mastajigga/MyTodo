@@ -1,5 +1,5 @@
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type Subtask = {
   id: string;
@@ -13,25 +13,25 @@ export type Subtask = {
 export interface User {
   id: string;
   email: string;
-  full_name: string;
-  avatar_url: string;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
-  project_id: string | null;
+  project_id: string;
   created_at: string;
   updated_at: string;
   due_date: string | null;
   created_by: string;
-  assigned_to: string;
+  assigned_to: string | null;
   position: number;
   created_by_user?: User;
-  assigned_to_user?: User;
+  assigned_to_user?: User | null;
   project?: {
     id: string;
     name: string;
@@ -113,13 +113,12 @@ export const DEFAULT_KANBAN_COLUMNS = [
 
 export type CreateTaskData = {
   title: string;
-  description?: string;
+  description?: string | null;
   status: TaskStatus;
   priority: TaskPriority;
-  project_id?: string | null;
+  project_id: string;
   due_date?: string | null;
-  workspace_id?: string;
   position?: number;
-  created_by?: string;
-  assigned_to?: string;
+  created_by: string;
+  assigned_to?: string | null;
 }; 

@@ -1,39 +1,69 @@
-'use client'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { ProjectsView } from '@/components/projects/ProjectsView';
+import { Logger } from '@/lib/logger';
 
-import { useState } from "react"
-import { WorkspaceSelect } from "@/components/workspace/WorkspaceSelect"
-import { ProjectList } from "@/components/projects/ProjectList"
-import { CreateProjectButton } from "@/components/project/CreateProjectButton"
-import ProjectStats from "@/components/project/ProjectStats"
+export default async function ProjectsPage() {
+  const supabase = createServerComponentClient({ cookies });
+  const logger = Logger.getInstance();
+  
+  // Récupération des projets
+  const { data: projects, error: projectsError } = await supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-export default function ProjectsPage() {
-  const [selectedWorkspace, setSelectedWorkspace] = useState('all')
+  // Récupération des workspaces
+  const { data: workspaces, error: workspacesError } = await supabase
+    .from('workspaces')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
-      <div className="relative mb-8 sm:mb-12">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent">
-          Projets
-        </h1>
-        <div className="absolute -bottom-2 left-0 w-16 sm:w-24 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
-        <div className="absolute -bottom-2 left-0 w-16 sm:w-24 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm" />
-      </div>
+  // Récupération du profil utilisateur
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      <ProjectStats />
+  // Logs
+  if (user) {
+    logger.info('👤 Profil utilisateur connecté:', {
+      context: 'auth',
+      data: {
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata
+      }
+    });
+  }
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <div className="w-full sm:w-auto">
-          <WorkspaceSelect 
-            value={selectedWorkspace} 
-            onValueChange={setSelectedWorkspace}
-          />
-        </div>
-        <div className="w-full sm:w-auto">
-          <CreateProjectButton workspaceId={selectedWorkspace !== 'all' ? selectedWorkspace : undefined} />
-        </div>
-      </div>
+  if (workspaces) {
+    logger.info('🏢 Workspaces disponibles:', {
+      context: 'workspaces',
+      data: workspaces.map(w => ({
+        id: w.id,
+        name: w.name,
+        description: w.description
+      }))
+    });
+  }
 
-      <ProjectList workspaceId={selectedWorkspace !== 'all' ? selectedWorkspace : undefined} />
-    </div>
-  )
+  if (projects) {
+    logger.info('📂 Projets disponibles:', {
+      context: 'projects',
+      data: projects.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        workspace_id: p.workspace_id
+      }))
+    });
+  }
+
+  if (projectsError) {
+    logger.error('Erreur lors de la récupération des projets:', {
+      context: 'projects',
+      data: projectsError
+    });
+    return <div>Une erreur est survenue lors du chargement des projets.</div>;
+  }
+
+  return <ProjectsView projects={projects} />;
 } 

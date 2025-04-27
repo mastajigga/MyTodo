@@ -1,4 +1,6 @@
-import { getSupabaseClient } from '@/lib/supabase/client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Database } from '@/types/supabase'
+import { WorkspaceMemberRole } from '@/types/workspace'
 import {
   Workspace,
   WorkspaceMember,
@@ -7,23 +9,37 @@ import {
   InviteWorkspaceMemberData,
 } from '@/types/workspace';
 
-const supabase = getSupabaseClient();
+const supabase = createClientComponentClient<Database>()
 
 export const workspaceService = {
-  async createWorkspace(data: CreateWorkspaceData): Promise<Workspace> {
+  async createWorkspace(name: string, description: string) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+
+    if (!user) throw new Error('Utilisateur non authentifié')
+
     const { data: workspace, error } = await supabase
       .from('workspaces')
+      .insert([{ name, description, owner_id: user.id }])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Ajouter le créateur comme membre avec le rôle OWNER
+    const { error: memberError } = await supabase
+      .from('workspace_members')
       .insert([
         {
-          ...data,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        },
+          workspace_id: workspace.id,
+          user_id: user.id,
+          role: 'OWNER' as WorkspaceMemberRole
+        }
       ])
-      .select('*')
-      .single();
 
-    if (error) throw error;
-    return workspace;
+    if (memberError) throw memberError
+
+    return workspace
   },
 
   async getWorkspace(id: string): Promise<Workspace> {

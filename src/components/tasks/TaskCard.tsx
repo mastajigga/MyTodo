@@ -9,7 +9,7 @@ import { Calendar, Clock } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PRIORITY_COLORS } from '@/lib/constants/task';
-import { TASK_PRIORITY_MAP } from '@/types/task';
+import { TASK_PRIORITY_MAP } from '@/types/common';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +45,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
           {task.assigned_to_user && (
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 ring-2 ring-background">
-                <AvatarImage src={task.assigned_to_user.avatar_url} />
+                <AvatarImage src={task.assigned_to_user.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary/10 text-primary">
                   {task.assigned_to_user.full_name?.[0] || 'U'}
                 </AvatarFallback>

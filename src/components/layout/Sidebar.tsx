@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,9 @@ import {
   Users,
   LogOut,
   Menu,
-  X
+  X,
+  FolderKanban,
+  Briefcase
 } from 'lucide-react';
 import { useSupabase } from '@/lib/supabase/supabase-provider';
 import { toast } from 'sonner';
@@ -20,9 +22,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Tâches', href: '/dashboard/tasks', icon: ListTodo },
-  { name: 'Équipe', href: '/dashboard/team', icon: Users },
-  { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
+  { name: 'Workspaces', href: '/workspaces', icon: Briefcase },
+  { name: 'Projets', href: '/projects', icon: FolderKanban },
+  { name: 'Tâches', href: '/tasks', icon: ListTodo },
 ];
 
 const sidebarVariants = {
@@ -65,7 +67,7 @@ const NavContent = ({ pathname, onLogout }: { pathname: string; onLogout: () => 
     </div>
     <div className="flex flex-1 flex-col space-y-1 p-3">
       {navigation.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname.startsWith(item.href);
         return (
           <Link
             key={item.name}
@@ -91,7 +93,27 @@ const NavContent = ({ pathname, onLogout }: { pathname: string; onLogout: () => 
         );
       })}
     </div>
-    <div className="p-3">
+    <div className="mt-auto p-3 space-y-2">
+      <Link
+        href="/settings"
+        data-testid="nav-link-settings"
+        className={cn(
+          'group flex items-center rounded-lg px-3 py-2 text-sm font-medium',
+          pathname.startsWith('/settings')
+            ? 'bg-gray-800 text-white'
+            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+        )}
+      >
+        <Settings
+          className={cn(
+            'mr-3 h-5 w-5',
+            pathname.startsWith('/settings')
+              ? 'text-white'
+              : 'text-gray-400 group-hover:text-white'
+          )}
+        />
+        Paramètres
+      </Link>
       <Button
         variant="ghost"
         className="w-full justify-start text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -107,6 +129,7 @@ const NavContent = ({ pathname, onLogout }: { pathname: string; onLogout: () => 
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { supabase } = useSupabase();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -129,9 +152,22 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Suppression de tous les cookies du domaine
+      document.cookie.split(';').forEach((c) => {
+        const cookieName = c.split('=')[0].trim();
+        document.cookie = `${cookieName}=; Max-Age=0; path=/;`;
+      });
+
+      // Suppression du localStorage et sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+
       toast.success('Déconnexion réussie');
-    } catch (error: any) {
+      window.location.replace('/auth/login');
+    } catch (error) {
       toast.error('Erreur lors de la déconnexion');
     }
   };

@@ -12,7 +12,7 @@ export default function CreateWorkspacePage() {
   const [formData, setFormData] = useState<CreateWorkspaceData>({
     name: "",
     description: "",
-    type: "personal"
+    type: "private"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,8 +22,9 @@ export default function CreateWorkspacePage() {
   };
 
   const types: { value: WorkspaceType; label: string }[] = [
-    { value: "personal", label: "Personnel" },
-    { value: "team", label: "Équipe" }
+    { value: "private", label: "Privé" },
+    { value: "professional", label: "Professionnel" },
+    { value: "family", label: "Famille" }
   ];
 
   return (

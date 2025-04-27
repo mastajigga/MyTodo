@@ -6,19 +6,21 @@ import { createContext, ReactNode, useContext, useState } from "react";
 
 interface CreateTaskDialogContextType {
   isOpen: boolean;
-  projectId?: string;
+  projectId: string | null;
   onSuccess?: () => void;
   openCreateTaskDialog: (projectId?: string, onSuccess?: () => void) => void;
   closeCreateTaskDialog: () => void;
 }
 
-const CreateTaskDialogContext = createContext<CreateTaskDialogContextType | undefined>(undefined);
+const CreateTaskDialogContext = createContext<CreateTaskDialogContextType | null>(null);
 
 export function useCreateTaskDialog() {
   const context = useContext(CreateTaskDialogContext);
-  if (context === undefined) {
-    throw new Error('useCreateTaskDialog must be used within a CreateTaskDialogProvider');
+  
+  if (!context) {
+    throw new Error('useCreateTaskDialog doit être utilisé à l\'intérieur d\'un CreateTaskDialogProvider');
   }
+  
   return context;
 }
 
@@ -28,19 +30,19 @@ interface CreateTaskDialogProviderProps {
 
 export function CreateTaskDialogProvider({ children }: CreateTaskDialogProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [projectId, setProjectId] = useState<string>();
-  const [onSuccess, setOnSuccess] = useState<(() => void) | undefined>();
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [onSuccessCallback, setOnSuccessCallback] = useState<(() => void) | undefined>();
 
-  const openCreateTaskDialog = (projectId?: string, onSuccess?: () => void) => {
-    setProjectId(projectId);
-    setOnSuccess(() => onSuccess);
+  const openCreateTaskDialog = (newProjectId?: string, onSuccess?: () => void) => {
+    setProjectId(newProjectId || null);
+    setOnSuccessCallback(() => onSuccess);
     setIsOpen(true);
   };
 
   const closeCreateTaskDialog = () => {
     setIsOpen(false);
-    setProjectId(undefined);
-    setOnSuccess(undefined);
+    setProjectId(null);
+    setOnSuccessCallback(undefined);
   };
 
   return (
@@ -48,7 +50,7 @@ export function CreateTaskDialogProvider({ children }: CreateTaskDialogProviderP
       value={{
         isOpen,
         projectId,
-        onSuccess,
+        onSuccess: onSuccessCallback,
         openCreateTaskDialog,
         closeCreateTaskDialog,
       }}

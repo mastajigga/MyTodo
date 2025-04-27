@@ -1,132 +1,160 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { projectService } from '@/services/projectService'
-import { supabase } from '@/lib/supabase/client'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { Project, CreateProjectData, UpdateProjectData } from '@/types/project'
-import type { Database } from '@/types/supabase'
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { mockSupabase } from '@/lib/supabase/__mocks__/mockSupabase';
+import { getProject, createProject, updateProject, deleteProject } from '@/services/projectService';
+import type { Tables } from '@/lib/database.types';
 
-vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createClientComponentClient: vi.fn()
-}))
+type Project = Tables<'projects'>;
 
-describe('ProjectService', () => {
+vi.mock('@/lib/supabase/client', () => ({
+  getSupabaseClient: () => mockSupabase,
+}));
+
+describe('projectService', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(createClientComponentClient<Database>).mockReturnValue(supabase)
-  })
+    vi.clearAllMocks();
+  });
 
   describe('getProject', () => {
-    it('should get a project by id', async () => {
+    it('should return a project when found', async () => {
       const mockProject: Project = {
-        id: '1',
+        id: '123',
         name: 'Test Project',
-        description: null,
-        workspace_id: 'workspace-1',
+        description: 'Test Description',
+        color: 'blue',
+        workspace_id: 'workspace-123',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        position: 0,
-        created_by: '1',
-        is_archived: false
-      }
+      };
 
-      vi.mocked(supabase.from).mockReturnValueOnce({
-        ...supabase.from('projects'),
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValueOnce({
-          data: mockProject,
-          error: null,
-        }),
-      } as any)
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await projectService.getProject('1')
-      expect(result).toEqual(mockProject)
-    })
-  })
+      const result = await getProject('123');
+
+      expect(result).toEqual(mockProject);
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.eq).toHaveBeenCalledWith('id', '123');
+    });
+
+    it('should throw error when project not found', async () => {
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.single.mockResolvedValue({ data: null, error: new Error('Not found') });
+
+      await expect(getProject('123')).rejects.toThrow('Not found');
+    });
+  });
 
   describe('createProject', () => {
-    it('should create a new project', async () => {
-      const input: CreateProjectData = {
-        workspace_id: 'workspace-1',
+    it('should create a project successfully', async () => {
+      const newProject: Omit<Project, 'id' | 'created_at' | 'updated_at'> = {
         name: 'New Project',
-        description: null,
-      }
+        description: 'New Description',
+        color: 'red',
+        workspace_id: 'workspace-123',
+      };
 
       const mockProject: Project = {
-        id: '1',
-        workspace_id: input.workspace_id,
-        name: input.name,
-        description: input.description ?? null,
+        ...newProject,
+        id: '123',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        position: 0,
-        created_by: '1',
-        is_archived: false
-      }
+      };
 
-      vi.mocked(supabase.from).mockReturnValueOnce({
-        ...supabase.from('projects'),
-        insert: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValueOnce({
-          data: mockProject,
-          error: null,
-        }),
-      } as any)
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.insert.mockReturnThis();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await projectService.createProject(input)
-      expect(result).toEqual(mockProject)
-    })
-  })
+      const result = await createProject(newProject);
+
+      expect(result).toEqual(mockProject);
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.insert).toHaveBeenCalledWith(newProject);
+    });
+  });
 
   describe('updateProject', () => {
-    it('should update an existing project', async () => {
-      const input: UpdateProjectData = {
+    it('should update a project successfully', async () => {
+      const updatedProject: Partial<Project> = {
         name: 'Updated Project',
-        description: 'Updated description',
-      }
+        description: 'Updated Description',
+      };
 
       const mockProject: Project = {
-        id: '1',
-        workspace_id: 'workspace-1',
+        id: '123',
         name: 'Updated Project',
-        description: 'Updated description',
+        description: 'Updated Description',
+        color: 'blue',
+        workspace_id: 'workspace-123',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        position: 0,
-        created_by: '1',
-        is_archived: false
-      }
+      };
 
-      vi.mocked(supabase.from).mockReturnValueOnce({
-        ...supabase.from('projects'),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValueOnce({
-          data: mockProject,
-          error: null,
-        }),
-      } as any)
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.update.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await projectService.updateProject('1', input)
-      expect(result).toEqual(mockProject)
-    })
-  })
+      const result = await updateProject('123', updatedProject);
+
+      expect(result).toEqual(mockProject);
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.update).toHaveBeenCalledWith(updatedProject);
+      expect(queryBuilder.eq).toHaveBeenCalledWith('id', '123');
+    });
+
+    it('should return null when update fails', async () => {
+      const updatedProject: Partial<Project> = {
+        name: 'Updated Project',
+        description: 'Updated Description',
+      };
+
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.update.mockReturnThis();
+      queryBuilder.eq.mockReturnThis();
+      queryBuilder.select.mockReturnThis();
+      queryBuilder.single.mockResolvedValue({ data: null, error: new Error('Update failed') });
+
+      const result = await updateProject('123', updatedProject);
+
+      expect(result).toBeNull();
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.update).toHaveBeenCalledWith(updatedProject);
+      expect(queryBuilder.eq).toHaveBeenCalledWith('id', '123');
+    });
+  });
 
   describe('deleteProject', () => {
-    it('should delete a project', async () => {
-      vi.mocked(supabase.from).mockReturnValueOnce({
-        ...supabase.from('projects'),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValueOnce({
-          data: null,
-          error: null,
-        }),
-      } as any)
+    it('should delete a project successfully', async () => {
+      const queryBuilder = mockSupabase.from();
+      queryBuilder.delete.mockReturnThis();
+      queryBuilder.eq.mockResolvedValue({ error: null });
 
-      await projectService.deleteProject('1')
-      expect(supabase.from).toHaveBeenCalledWith('projects')
-    })
-  })
-}) 
+      const result = await deleteProject('123');
+
+      expect(result).toBe(true);
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.delete).toHaveBeenCalled();
+      expect(queryBuilder.eq).toHaveBeenCalledWith('id', '123');
+    });
+
+    it('should return false when delete fails', async () => {
+      const error = new Error('Delete failed');
+      const queryBuilder = mockSupabase.from();
+      const deleteBuilder = { eq: vi.fn().mockResolvedValue({ error }) };
+      queryBuilder.delete.mockReturnValue(deleteBuilder);
+
+      const result = await deleteProject('123');
+
+      expect(result).toBe(false);
+      expect(mockSupabase.from).toHaveBeenCalledWith('projects');
+      expect(queryBuilder.delete).toHaveBeenCalled();
+      expect(deleteBuilder.eq).toHaveBeenCalledWith('id', '123');
+    });
+  });
+}); 
