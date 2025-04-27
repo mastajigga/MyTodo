@@ -38,7 +38,7 @@ export interface Database {
           id: string
           name: string
           description: string | null
-          type: 'family' | 'professional' | 'private'
+          type: 'personal' | 'team'
           owner_id: string
           created_by: string
           created_at: string
@@ -48,7 +48,7 @@ export interface Database {
           id?: string
           name: string
           description?: string | null
-          type: 'family' | 'professional' | 'private'
+          type: 'personal' | 'team'
           owner_id: string
           created_by: string
           created_at?: string
@@ -57,7 +57,7 @@ export interface Database {
         Update: {
           name?: string
           description?: string | null
-          type?: 'family' | 'professional' | 'private'
+          type?: 'personal' | 'team'
           updated_at?: string
         }
       }
@@ -157,4 +157,6 @@ export interface Database {
       }
     }
   }
-} 
+}
+
+export type WorkspaceType = 'personal' | 'team'; 
