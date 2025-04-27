@@ -8,6 +8,7 @@ import { CheckCircle, Clock, PenSquare, Users, Folder } from "lucide-react";
 import { useWorkspaceContext } from "@/contexts/workspace-context";
 import { useQuery } from "@tanstack/react-query";
 import { statsService } from "@/lib/services/statsService";
+import { WorkspaceSelectorScreen } from '@/components/workspace/WorkspaceSelectorScreen';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -44,11 +45,34 @@ const recentActivities = [
 ] as const;
 
 export default function Dashboard() {
-  const { workspace } = useWorkspaceContext();
+  const { workspace, workspaces } = useWorkspaceContext();
 
+  const isLoadingWorkspaces = !workspace && workspaces.length > 0;
+
+  // Affiche un loader tant que la sélection automatique n'est pas faite
+  if (isLoadingWorkspaces) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-full">
+          <span>Chargement de l'espace de travail…</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Affiche l'invitation seulement si aucun workspace n'existe
+  if (!workspace && workspaces.length === 0) {
+    return (
+      <DashboardLayout>
+        <WorkspaceSelectorScreen hasWorkspaces={false} />
+      </DashboardLayout>
+    );
+  }
+
+  // Toujours appeler le hook useQuery, même si workspace est null
   const { data: stats = { current: 0, upcoming: 0, completed: 0 }, isLoading } = useQuery({
     queryKey: ['workspace-stats', workspace?.id],
-    queryFn: () => statsService.getTaskStats(workspace?.id || ''),
+    queryFn: () => workspace?.id ? statsService.getTaskStats(workspace.id) : Promise.resolve({ current: 0, upcoming: 0, completed: 0 }),
     enabled: !!workspace?.id,
   });
 
