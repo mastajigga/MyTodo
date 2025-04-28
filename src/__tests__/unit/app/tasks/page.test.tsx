@@ -1,21 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import TasksPage from '@/app/tasks/page';
 
-vi.mock('@/components/tasks/TaskList', () => ({
-  TaskList: () => <div data-testid="task-list">Task List Component</div>,
+vi.mock('@/components/tasks/KanbanBoard', () => ({
+  KanbanBoard: () => <div data-testid="kanban-board">Kanban Board Component</div>,
 }));
 
 describe('TasksPage', () => {
-  it('renders page header with correct title and description', () => {
+  it('renders page header with correct title', () => {
     render(<TasksPage />);
-    
     expect(screen.getByText('Mes tâches')).toBeInTheDocument();
-    expect(screen.getByText('Gérez et suivez vos tâches personnelles')).toBeInTheDocument();
   });
 
-  it('renders TaskList component', () => {
+  it('renders KanbanBoard component', () => {
     render(<TasksPage />);
-    
-    expect(screen.getByTestId('task-list')).toBeInTheDocument();
+    expect(screen.getByTestId('kanban-board')).toBeInTheDocument();
   });
 }); 

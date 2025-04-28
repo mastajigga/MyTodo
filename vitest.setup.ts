@@ -1,10 +1,50 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import { expect, afterEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
+import * as matchers from '@testing-library/jest-dom/matchers'
 import { TextEncoder, TextDecoder } from 'util'
 import './src/test/mocks/supabase'
+import { createClient } from '@supabase/supabase-js'
+import dotenv from 'dotenv'
+import { vi } from 'vitest'
 
-global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder
-global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder
+// Extend matchers
+expect.extend(matchers)
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup()
+})
+
+// Charger les variables d'environnement de test
+dotenv.config({ path: '.env.test' })
+
+// Mock TextEncoder/TextDecoder
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder as any
+
+// Mock de Supabase
+const mockSupabase = {
+  auth: {
+    getUser: vi.fn(),
+    signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+  },
+  from: vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn(),
+  }),
+}
+
+// Mock du client Supabase
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => mockSupabase),
+}))
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

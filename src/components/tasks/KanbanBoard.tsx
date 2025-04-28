@@ -1,168 +1,184 @@
 'use client';
 
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useState } from 'react';
-import { Task, KanbanColumn, DEFAULT_KANBAN_COLUMNS, TaskStatus } from '@/types/task';
-import { taskService } from '@/lib/services/taskService';
-import { KanbanColumn as Column } from './KanbanColumn';
-import { KanbanHeader } from './KanbanHeader';
-import { useCreateTaskDialog } from '@/hooks/useCreateTaskDialog';
-import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Task } from '@/types/task';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { PRIORITY_COLORS } from '@/lib/constants/task';
+import { TASK_PRIORITY_MAP } from '@/types/common';
+import { Info } from 'lucide-react';
 
-type KanbanBoardProps = {
-  projectId?: string;
-};
+interface KanbanBoardProps {
+  tasks: Task[];
+}
 
-export function KanbanBoard({ projectId }: KanbanBoardProps) {
-  const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_KANBAN_COLUMNS as KanbanColumn[]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || 'all');
-  const [selectedColumnId, setSelectedColumnId] = useState<TaskStatus>('todo');
-  const { openCreateTaskDialog } = useCreateTaskDialog();
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const tasks = await taskService.getTasks(projectId || selectedProjectId);
-      const updatedColumns = DEFAULT_KANBAN_COLUMNS.map((column) => ({
-        ...column,
-        id: column.id as TaskStatus,
-        tasks: tasks.filter((task) => task.status === column.id).map(task => ({
-          ...task,
-          title: (projectId || selectedProjectId) === 'all' ? `[${task.project?.name || 'Sans projet'}] ${task.title}` : task.title
-        }))
-      })) as KanbanColumn[];
-      setColumns(updatedColumns);
-    } catch (error) {
-      toast.error('Impossible de charger les tâches');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId, selectedProjectId]);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
-
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    
-    const newColumns = [...columns];
-    const sourceColumn = newColumns.find((col) => col.id === source.droppableId);
-    const destColumn = newColumns.find((col) => col.id === destination.droppableId);
-    
-    if (!sourceColumn || !destColumn) return;
-    
-    const [movedTask] = sourceColumn.tasks.splice(source.index, 1);
-    destColumn.tasks.splice(destination.index, 0, movedTask);
-    
-    setColumns(newColumns);
-    
-    try {
-      await taskService.updateTaskStatus(movedTask.id, destination.droppableId as TaskStatus);
-      toast.success('Statut de la tâche mis à jour');
-      // Mettre à jour la colonne sélectionnée si la tâche a été déplacée vers une autre colonne
-      if (source.droppableId !== destination.droppableId) {
-        setSelectedColumnId(destination.droppableId as TaskStatus);
-      }
-    } catch (error) {
-      toast.error('Impossible de mettre à jour la tâche');
-      fetchTasks();
-    }
-  };
-
-  const handleAddTask = useCallback(() => {
-    openCreateTaskDialog({
-      projectId: (projectId || selectedProjectId) === 'all' ? undefined : (projectId || selectedProjectId),
-      onSuccess: () => {
-        fetchTasks();
-      },
-    });
-  }, [projectId, selectedProjectId, openCreateTaskDialog]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-4 sm:p-8">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Chargement du tableau...</p>
-        </div>
-      </div>
-    );
-  }
+export function KanbanBoard({ tasks }: KanbanBoardProps) {
+  const todoTasks = tasks.filter(task => task.status === 'todo');
+  const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
+  const doneTasks = tasks.filter(task => task.status === 'done');
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <KanbanHeader
-        selectedProjectId={projectId || selectedProjectId}
-        onProjectChange={setSelectedProjectId}
-        onAddTask={handleAddTask}
-      />
-
-      {/* Sélecteur de colonne pour mobile */}
-      <div className="block md:hidden">
-        <Select value={selectedColumnId} onValueChange={(value) => setSelectedColumnId(value as TaskStatus)}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Sélectionner une colonne" />
-          </SelectTrigger>
-          <SelectContent>
-            {columns.map((column) => (
-              <SelectItem key={column.id} value={column.id}>
-                <div className="flex items-center justify-between w-full">
-                  <span>{column.title}</span>
-                  <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-full">
-                    {column.tasks.length}
-                  </span>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Colonne Todo */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+        <h3 className="font-semibold mb-4">À faire ({todoTasks.length})</h3>
+        <div className="space-y-2">
+          {todoTasks.map((task) => {
+            const isAutoShifted = !!task.start_time && typeof task.estimated_time === 'number' && task.estimated_time > 0;
+            return (
+              <div key={task.id} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm" tabIndex={0} aria-label={`Tâche ${task.title}`}> 
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium">{task.title}</h4>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'transition-colors',
+                      PRIORITY_COLORS[task.priority],
+                      task.priority === 'urgent' && 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20'
+                    )}
+                    aria-label={`Priorité ${TASK_PRIORITY_MAP[task.priority]}`}
+                  >
+                    {TASK_PRIORITY_MAP[task.priority]}
+                  </Badge>
+                  {isAutoShifted && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200"
+                      aria-label="Tâche automatiquement décalée pour éviter un chevauchement"
+                      title="Cette tâche a été automatiquement décalée pour éviter un chevauchement."
+                    >
+                      <Info className="h-3 w-3" />
+                      Décalée
+                    </Badge>
+                  )}
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+                {task.start_time && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Débute : {new Date(task.start_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </p>
+                )}
+                {typeof task.estimated_time === 'number' && task.estimated_time > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Durée estimée : {Math.floor(task.estimated_time / 60)}h{task.estimated_time % 60}m
+                  </p>
+                )}
+                {task.project && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {task.project.name}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        {/* Vue mobile : une seule colonne à la fois */}
-        <div className="block md:hidden">
-          <AnimatePresence mode="wait">
-            {columns.map((column) => (
-              column.id === selectedColumnId && (
-                <motion.div
-                  key={column.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-muted/50 rounded-lg p-2"
-                >
-                  <Droppable droppableId={column.id}>
-                    {(provided) => (
-                      <Column column={column} provided={provided} />
+      {/* Colonne En cours */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+        <h3 className="font-semibold mb-4">En cours ({inProgressTasks.length})</h3>
+        <div className="space-y-2">
+          {inProgressTasks.map((task) => {
+            const isAutoShifted = !!task.start_time && typeof task.estimated_time === 'number' && task.estimated_time > 0;
+            return (
+              <div key={task.id} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm" tabIndex={0} aria-label={`Tâche ${task.title}`}> 
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium">{task.title}</h4>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'transition-colors',
+                      PRIORITY_COLORS[task.priority],
+                      task.priority === 'urgent' && 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20'
                     )}
-                  </Droppable>
-                </motion.div>
-              )
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {/* Vue desktop : toutes les colonnes */}
-        <div className="hidden md:grid md:grid-cols-3 gap-4">
-          {columns.map((column) => (
-            <Droppable key={column.id} droppableId={column.id}>
-              {(provided) => (
-                <div className="bg-muted/50 rounded-lg p-2">
-                  <Column column={column} provided={provided} />
+                    aria-label={`Priorité ${TASK_PRIORITY_MAP[task.priority]}`}
+                  >
+                    {TASK_PRIORITY_MAP[task.priority]}
+                  </Badge>
+                  {isAutoShifted && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200"
+                      aria-label="Tâche automatiquement décalée pour éviter un chevauchement"
+                      title="Cette tâche a été automatiquement décalée pour éviter un chevauchement."
+                    >
+                      <Info className="h-3 w-3" />
+                      Décalée
+                    </Badge>
+                  )}
                 </div>
-              )}
-            </Droppable>
-          ))}
+                {task.start_time && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Débute : {new Date(task.start_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </p>
+                )}
+                {typeof task.estimated_time === 'number' && task.estimated_time > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Durée estimée : {Math.floor(task.estimated_time / 60)}h{task.estimated_time % 60}m
+                  </p>
+                )}
+                {task.project && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {task.project.name}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </DragDropContext>
+      </div>
+
+      {/* Colonne Terminé */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+        <h3 className="font-semibold mb-4">Terminé ({doneTasks.length})</h3>
+        <div className="space-y-2">
+          {doneTasks.map((task) => {
+            const isAutoShifted = !!task.start_time && typeof task.estimated_time === 'number' && task.estimated_time > 0;
+            return (
+              <div key={task.id} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm" tabIndex={0} aria-label={`Tâche ${task.title}`}> 
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium">{task.title}</h4>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'transition-colors',
+                      PRIORITY_COLORS[task.priority],
+                      task.priority === 'urgent' && 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20'
+                    )}
+                    aria-label={`Priorité ${TASK_PRIORITY_MAP[task.priority]}`}
+                  >
+                    {TASK_PRIORITY_MAP[task.priority]}
+                  </Badge>
+                  {isAutoShifted && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200"
+                      aria-label="Tâche automatiquement décalée pour éviter un chevauchement"
+                      title="Cette tâche a été automatiquement décalée pour éviter un chevauchement."
+                    >
+                      <Info className="h-3 w-3" />
+                      Décalée
+                    </Badge>
+                  )}
+                </div>
+                {task.start_time && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Débute : {new Date(task.start_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </p>
+                )}
+                {typeof task.estimated_time === 'number' && task.estimated_time > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Durée estimée : {Math.floor(task.estimated_time / 60)}h{task.estimated_time % 60}m
+                  </p>
+                )}
+                {task.project && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {task.project.name}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 } 

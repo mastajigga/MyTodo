@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskService } from "@/services/task.service";
+import { taskService } from "@/services/task.service";
 import { toast } from "sonner";
 
 const taskSchema = z.object({
@@ -27,6 +27,11 @@ const taskSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
   due_date: z.string().optional(),
+  start_time: z.string().optional(),
+  estimated_time: z
+    .number({ invalid_type_error: "Le temps estimé est requis" })
+    .min(0, "Le temps estimé doit être positif")
+    .optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -49,11 +54,16 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
 
   const onSubmit = async (data: TaskFormData) => {
     try {
-      await TaskService.createTask({
+      await taskService.createTask({
         ...data,
+        description: data.description ?? null,
+        due_date: data.due_date ?? null,
         project_id: projectId,
         status: "todo",
-        workspace_id: workspaceId
+        workspace_id: workspaceId,
+        created_by: "",
+        assigned_to: null,
+        tags: [],
       });
       onSuccess();
       toast.success("Tâche créée avec succès");
@@ -126,6 +136,32 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
               <FormLabel htmlFor="due_date">Date d'échéance</FormLabel>
               <FormControl>
                 <Input id="due_date" type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="start_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="start_time">Heure de début</FormLabel>
+              <FormControl>
+                <Input id="start_time" type="datetime-local" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="estimated_time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="estimated_time">Temps estimé (en minutes)</FormLabel>
+              <FormControl>
+                <Input id="estimated_time" type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

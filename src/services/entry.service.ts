@@ -1,9 +1,9 @@
-import { supabase } from '@/lib/supabase'
+import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { Entry, CreateEntryData, UpdateEntryData } from '@/types/entry'
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 
 export const EntryService = {
-  async getWorkspaceEntries(workspaceId: string): Promise<Entry[]> {
+  async getWorkspaceEntries(supabase: SupabaseClient, workspaceId: string): Promise<Entry[]> {
     const { data: entries, error } = await supabase
       .from('entries')
       .select('*')
@@ -19,7 +19,7 @@ export const EntryService = {
     return entries || []
   },
 
-  async createEntry(data: CreateEntryData): Promise<Entry> {
+  async createEntry(supabase: SupabaseClient, data: CreateEntryData): Promise<Entry> {
     const { data: entry, error } = await supabase
       .from('entries')
       .insert(data)
@@ -30,7 +30,7 @@ export const EntryService = {
     return entry
   },
 
-  async updateEntry(id: string, data: UpdateEntryData): Promise<Entry> {
+  async updateEntry(supabase: SupabaseClient, id: string, data: UpdateEntryData): Promise<Entry> {
     const { data: entry, error } = await supabase
       .from('entries')
       .update(data)
@@ -42,7 +42,7 @@ export const EntryService = {
     return entry
   },
 
-  async deleteEntry(id: string): Promise<void> {
+  async deleteEntry(supabase: SupabaseClient, id: string): Promise<void> {
     const { error } = await supabase
       .from('entries')
       .delete()
@@ -51,7 +51,7 @@ export const EntryService = {
     if (error) throw error
   },
 
-  subscribeToEntries(workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription {
+  subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription {
     return supabase
       .channel(`entries:${workspaceId}`)
       .on('postgres_changes', {

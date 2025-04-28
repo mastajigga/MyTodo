@@ -39,7 +39,7 @@ export function CreateWorkspaceDialog() {
       const formData = new FormData(e.currentTarget);
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
-      const type = formData.get('type') as 'family' | 'professional' | 'private';
+      const type = formData.get('type') as 'private' | 'professional' | 'family';
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -108,9 +108,9 @@ export function CreateWorkspaceDialog() {
                   <SelectValue placeholder="Sélectionnez un type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="family">Famille</SelectItem>
-                  <SelectItem value="professional">Professionnel</SelectItem>
                   <SelectItem value="private">Privé</SelectItem>
+                  <SelectItem value="professional">Professionnel</SelectItem>
+                  <SelectItem value="family">Famille</SelectItem>
                 </SelectContent>
               </Select>
             </div>

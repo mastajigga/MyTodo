@@ -1,6 +1,6 @@
 'use client';
 
-import { WorkspaceService } from '@/services/workspace.service';
+import { workspaceService } from '@/services/workspace';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WorkspaceType, Workspace } from '@/types/workspace';
@@ -9,16 +9,6 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
-
-const workspaceTypeLabels: Record<WorkspaceType, string> = {
-  personal: 'Personnel',
-  team: 'Équipe'
-};
-
-const workspaceTypeColors: Record<WorkspaceType, string> = {
-  personal: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-  team: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-};
 
 const container = {
   hidden: { opacity: 0 },
@@ -43,6 +33,16 @@ const item = {
   }
 };
 
+const workspaceTypeLabels: Record<WorkspaceType, string> = {
+  personal: 'Personnel',
+  team: 'Équipe'
+};
+
+const workspaceTypeColors: Record<WorkspaceType, string> = {
+  personal: 'text-blue-600',
+  team: 'text-green-600'
+};
+
 export function WorkspaceList() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,7 @@ export function WorkspaceList() {
           throw new Error('Non authentifié');
         }
 
-        const data = await WorkspaceService.getWorkspaces();
+        const data = await workspaceService.getUserWorkspaces();
         if (data) {
           setWorkspaces(data);
         }

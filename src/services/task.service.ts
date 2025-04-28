@@ -1,120 +1,157 @@
+'use client';
+
 import { supabase } from '@/lib/supabase/client';
-import { Task, CreateTaskData, TaskStatus } from '@/types/task';
+import { Task, CreateTaskData } from '@/types/task';
+import { Database } from '@/lib/database.types';
 
-export const TaskService = {
-  async getTasks(projectId: string): Promise<Task[]> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select(`
-        *,
-        created_by_user:created_by(id, email, full_name, avatar_url),
-        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
-        project:project_id(id, name),
-        subtasks(id, title, completed)
-      `)
-      .eq('project_id', projectId)
-      .order('position');
-    
-    if (error) throw error;
-    return data as Task[];
-  },
+type Tables = Database['public']['Tables'];
+type TaskRow = Tables['tasks']['Row'];
+type TaskInsert = Tables['tasks']['Insert'];
+type TaskUpdate = Tables['tasks']['Update'];
 
-  async getWorkspaceTasks(workspaceId: string): Promise<Task[]> {
-    // D'abord, récupérer tous les projets du workspace
-    const { data: projects, error: projectsError } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('workspace_id', workspaceId);
+export function getNextAvailableStartTime(tasks: Task[], newTask: Partial<Task>): string | null {
+  const sorted = tasks
+    .filter(t => t.id !== newTask.id)
+    .filter(t => t.start_time && t.estimated_time)
+    .sort((a, b) => new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime());
 
-    if (projectsError) {
-      throw projectsError;
+  let proposedStart = newTask.start_time ? new Date(newTask.start_time) : new Date();
+  for (const task of sorted) {
+    const taskStart = new Date(task.start_time!);
+    const taskEnd = new Date(taskStart.getTime() + (task.estimated_time || 0) * 60000);
+    if (proposedStart >= taskStart && proposedStart < taskEnd) {
+      proposedStart = taskEnd;
     }
+  }
+  return proposedStart.toISOString();
+}
 
-    if (!projects || projects.length === 0) {
-      return [];
+function mapToTask(row: any): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? null,
+    status: row.status,
+    priority: row.priority,
+    due_date: row.due_date ?? null,
+    start_time: row.start_time ?? null,
+    estimated_time: row.estimated_time ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user_id: row.user_id ?? row.created_by ?? '',
+    project_id: row.project_id,
+    project: row.project ? {
+      id: row.project.id,
+      name: row.project.name,
+    } : undefined,
+  };
+}
+
+class TaskService {
+  async createTask(data: CreateTaskData): Promise<Task> {
+    let allTasks: Task[] = [];
+    if (data.project_id) {
+      const { data: fetchedTasks, error: fetchError } = await supabase
+        .from('tasks')
+        .select()
+        .eq('project_id', data.project_id)
+        .eq('workspace_id', data.workspace_id);
+      if (fetchError) {
+        throw fetchError;
+      }
+      allTasks = (fetchedTasks as any[]).map(mapToTask);
     }
-
-    // Ensuite, récupérer toutes les tâches de ces projets
-    const projectIds = projects.map(project => project.id);
-    const { data: tasks, error: tasksError } = await supabase
-      .from('tasks')
-      .select(`
-        *,
-        created_by_user:created_by(id, email, full_name, avatar_url),
-        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
-        project:project_id(id, name)
-      `)
-      .in('project_id', projectIds)
-      .order('created_at', { ascending: false });
-
-    if (tasksError) {
-      throw tasksError;
+    let start_time = data.start_time ?? null;
+    const priority = typeof data.priority === 'string' ? data.priority : 'medium';
+    if (data.estimated_time && data.estimated_time > 0) {
+      const safeData = { ...data, priority, due_date: data.due_date ?? undefined, project_id: data.project_id ?? undefined };
+      start_time = getNextAvailableStartTime(allTasks, safeData) ?? start_time;
     }
-
-    return tasks as Task[] || [];
-  },
-
-  async createTask(task: CreateTaskData): Promise<Task> {
-    const { data, error } = await supabase
+    const { data: taskRow, error } = await supabase
       .from('tasks')
-      .insert([{
-        ...task,
-        position: 0, // Position par défaut
+      .insert({
+        ...data,
+        priority,
+        start_time,
+        estimated_time: data.estimated_time ?? null,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
-      .select(`
-        *,
-        created_by_user:created_by(id, email, full_name, avatar_url),
-        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
-        project:project_id(id, name)
-      `)
+        updated_at: new Date().toISOString(),
+        position: 0,
+      } as TaskInsert)
+      .select()
       .single();
-    
-    if (error) throw error;
-    return data as Task;
-  },
+    if (error) {
+      throw error;
+    }
+    return mapToTask(taskRow);
+  }
 
-  async updateTask(id: string, task: Partial<Omit<Task, 'id' | 'created_at' | 'created_by'>>): Promise<Task> {
-    const { data, error } = await supabase
+  async updateTask(taskId: string, data: Partial<CreateTaskData>): Promise<Task> {
+    const { data: taskRow, error } = await supabase
       .from('tasks')
       .update({
-        ...task,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select(`
-        *,
-        created_by_user:created_by(id, email, full_name, avatar_url),
-        assigned_to_user:assigned_to(id, email, full_name, avatar_url),
-        project:project_id(id, name)
-      `)
+        ...data,
+        start_time: data.start_time ?? null,
+        estimated_time: data.estimated_time ?? null,
+        updated_at: new Date().toISOString(),
+      } as TaskUpdate)
+      .eq('id', taskId)
+      .select()
       .single();
-    
-    if (error) throw error;
-    return data as Task;
-  },
+    if (error) {
+      throw error;
+    }
+    return mapToTask(taskRow);
+  }
 
-  async deleteTask(id: string): Promise<void> {
+  async deleteTask(taskId: string): Promise<void> {
     const { error } = await supabase
       .from('tasks')
       .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-  },
+      .eq('id', taskId);
 
-  async reorderTasks(projectId: string, taskIds: string[]): Promise<void> {
-    const updates = taskIds.map((id, index) => ({
-      id,
-      position: index,
-      updated_at: new Date().toISOString()
-    }));
-
-    const { error } = await supabase
-      .from('tasks')
-      .upsert(updates);
-    
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
   }
-}; 
+
+  async getTask(taskId: string): Promise<Task> {
+    const { data: taskRow, error } = await supabase
+      .from('tasks')
+      .select()
+      .eq('id', taskId)
+      .single();
+    if (error) {
+      throw error;
+    }
+    return mapToTask(taskRow);
+  }
+
+  async getTasks(workspaceId: string, projectId?: string): Promise<Task[]> {
+    let query = supabase
+      .from('tasks')
+      .select()
+      .eq('workspace_id', workspaceId)
+      .order('position');
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+    const { data: rows, error } = await query;
+    if (error) {
+      throw error;
+    }
+    return (rows as any[]).map(mapToTask);
+  }
+
+  async reorderTasks(taskPositions: { id: string; position: number }[], projectId: string): Promise<void> {
+    const task_updates = taskPositions.map(tp => ({ id: tp.id, position: tp.position }));
+    const { error } = await supabase
+      .rpc('reorder_tasks', { task_updates, project_id_param: projectId });
+
+    if (error) {
+      throw error;
+    }
+  }
+}
+
+export const taskService = new TaskService(); 

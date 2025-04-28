@@ -1,0 +1,63 @@
+# Plan d'implémentation : Ajout du temps estimé et du temps de départ par tâche
+
+## 1. Analyse et préparation
+- Relire la structure actuelle de la table `tasks` (base de données et types TypeScript)
+- Lister tous les composants, services et hooks impactés
+- Lister les tests existants à adapter
+
+## 2. Migration base de données
+- Créer une migration SQL pour ajouter :
+  - `start_time` (timestamp, nullable)
+  - `estimated_time` (integer, nullable, en minutes)
+- Mettre à jour les types TypeScript générés pour la base (si besoin)
+
+## 3. Mise à jour des types TypeScript
+- Ajouter les champs `start_time` et `estimated_time` dans :
+  - `Task` (src/types/task.ts)
+  - `CreateTaskData`, `UpdateTaskData`
+  - Types Supabase (src/types/database.types.ts)
+
+## 4. Services et hooks
+- Adapter `task.service.ts` pour gérer les nouveaux champs à la création et à la mise à jour
+- Adapter les hooks de récupération de tâches pour inclure les nouveaux champs
+
+## 5. Formulaires de création/édition de tâche
+- Ajouter deux champs dans les formulaires :
+  - Saisie du temps de début (`start_time`) (date + heure)
+  - Saisie du temps estimé (`estimated_time`) (heures + minutes)
+- Adapter la validation (zod/yup)
+- Prévoir la gestion de l'édition de ces champs
+
+## 6. Logique métier : gestion des conflits et décalage automatique
+- Lors de l'ajout ou modification d'une tâche :
+  - Vérifier s'il existe un conflit de temps avec d'autres tâches du même projet/utilisateur
+  - Si oui, ajuster automatiquement le `start_time` de la nouvelle tâche pour qu'elle commence après la fin de la dernière tâche conflictuelle
+  - Si une tâche est déplacée (drag & drop), recalculer les `start_time` des tâches suivantes pour éviter les chevauchements
+- Centraliser cette logique dans un service ou hook dédié
+
+## 7. Affichage
+- Afficher le temps de début et le temps estimé dans :
+  - TaskCard, TaskList, KanbanBoard, etc.
+- Afficher une indication si une tâche a été automatiquement décalée
+
+## 8. Import/Export
+- Adapter l'import/export JSON pour inclure les nouveaux champs
+
+## 9. Tests
+- Ajouter/adapter des tests unitaires et d'intégration pour :
+  - L'ajout d'une tâche avec gestion automatique du temps de début
+  - Le déplacement d'une tâche et le recalcul des horaires
+  - L'absence de superposition dans tous les cas
+
+## 10. Revue et nettoyage
+- Vérifier la cohérence de la logique métier sur tous les environnements (dev, test, prod)
+- Nettoyer le code, éviter toute duplication
+- Mettre à jour la documentation technique
+
+---
+
+**Conseils :**
+- Toujours commencer par la base de données et les types, puis remonter vers l'UI et la logique métier
+- Tester chaque étape indépendamment avant de passer à la suivante
+- Utiliser git à chaque étape clé (migration, types, logique, UI, tests)
+- Privilégier la simplicité et la centralisation de la logique métier 

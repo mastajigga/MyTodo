@@ -1,7 +1,26 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { RegisterForm } from '../RegisterForm'
-import { mockSupabaseClient, resetSupabaseMocks } from '@/test/mocks/supabase'
+import { RegisterForm } from '@/components/auth/RegisterForm'
+import { mockSupabase, resetSupabaseMocks } from '@/test/mocks/supabase'
+
+vi.mock("@supabase/auth-helpers-nextjs")
+
+const mockUser = {
+  id: "123",
+  app_metadata: {},
+  user_metadata: {},
+  aud: "authenticated",
+  created_at: new Date().toISOString()
+}
+
+const mockSession = {
+  access_token: "mock_access_token",
+  refresh_token: "mock_refresh_token",
+  expires_in: 3600,
+  expires_at: 3600,
+  token_type: "bearer",
+  user: mockUser
+}
 
 describe('RegisterForm', () => {
   const consoleSpy = vi.spyOn(console, 'error')
@@ -21,15 +40,19 @@ describe('RegisterForm', () => {
   })
 
   it('devrait créer un compte avec succès', async () => {
-    mockSupabaseClient.auth.signUp.mockResolvedValue({
-      data: { user: { id: '123', email: 'test@test.com' } },
+    const mockedSignUp = vi.mocked(mockSupabase.auth.signUp)
+    mockedSignUp.mockResolvedValue({ 
+      data: { 
+        user: mockUser,
+        session: mockSession
+      },
       error: null
     })
-
+    
     render(<RegisterForm />)
 
     fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@test.com' }
+      target: { value: 'test@example.com' }
     })
     fireEvent.change(screen.getByLabelText(/mot de passe/i), {
       target: { value: 'password123' }
@@ -41,8 +64,8 @@ describe('RegisterForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /s'inscrire/i }))
 
     await waitFor(() => {
-      expect(mockSupabaseClient.auth.signUp).toHaveBeenCalledWith({
-        email: 'test@test.com',
+      expect(mockedSignUp).toHaveBeenCalledWith({
+        email: 'test@example.com',
         password: 'password123'
       })
     })
@@ -73,16 +96,13 @@ describe('RegisterForm', () => {
   })
 
   it('devrait afficher une erreur en cas d\'échec d\'inscription', async () => {
-    const mockError = new Error('Email already exists')
-    mockSupabaseClient.auth.signUp.mockResolvedValue({
-      data: { user: null },
-      error: mockError
-    })
+    const mockedSignUp = vi.mocked(mockSupabase.auth.signUp)
+    mockedSignUp.mockRejectedValue(new Error('Registration failed'))
 
     render(<RegisterForm />)
 
     fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'existing@test.com' }
+      target: { value: 'test@example.com' }
     })
     fireEvent.change(screen.getByLabelText(/mot de passe/i), {
       target: { value: 'password123' }
@@ -94,7 +114,7 @@ describe('RegisterForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /s'inscrire/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/email already exists/i)).toBeInTheDocument()
+      expect(screen.getByText(/registration failed/i)).toBeInTheDocument()
     })
 
     expect(consoleSpy).not.toHaveBeenCalled()
@@ -115,10 +135,17 @@ describe('RegisterForm', () => {
   })
 
   it('devrait désactiver le bouton pendant la soumission', async () => {
-    mockSupabaseClient.auth.signUp.mockImplementation(() =>
-      new Promise(resolve => setTimeout(resolve, 100))
+    const mockedSignUp = vi.mocked(mockSupabase.auth.signUp)
+    mockedSignUp.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({
+        data: { 
+          user: mockUser,
+          session: mockSession
+        },
+        error: null
+      }), 100))
     )
-
+    
     render(<RegisterForm />)
 
     fireEvent.change(screen.getByLabelText(/email/i), {

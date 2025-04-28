@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,10 +21,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setPasswordError('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -32,6 +35,9 @@ export default function LoginPage() {
       });
 
       if (error) {
+        if (error.message === 'Invalid login credentials') {
+          setPasswordError('Mot de passe incorrect');
+        }
         throw error;
       }
 
@@ -105,11 +111,20 @@ export default function LoginPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError('');
+              }}
               required
-              className="h-12 px-4 bg-background/50"
+              className={cn(
+                "h-12 px-4 bg-background/50",
+                passwordError && "border-red-500 focus:ring-red-500"
+              )}
               autoComplete="current-password"
             />
+            {passwordError && (
+              <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+            )}
           </motion.div>
 
           <motion.div

@@ -27,7 +27,6 @@ export type MockSupabaseClient = {
     signOut: MockFunction;
     signInWithPassword: MockFunction;
     signUp: MockFunction;
-    getSession: MockFunction;
   };
 };
 
@@ -71,12 +70,6 @@ export const createMockSupabaseClient = (): MockSupabaseClient => ({
     }),
     signUp: vi.fn().mockResolvedValue({
       data: { user: { id: 'user-123', email: 'test@example.com' } },
-      error: null
-    }),
-    getSession: vi.fn().mockResolvedValue({
-      data: {
-        session: { user: { id: 'user-123', email: 'test@example.com' } }
-      },
       error: null
     })
   }

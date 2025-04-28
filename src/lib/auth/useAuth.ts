@@ -67,15 +67,29 @@ export function useAuth() {
   }
 
   const signOut = useCallback(async () => {
+    console.log('🎯 Fonction signOut du hook useAuth appelée');
     try {
-      await supabase.auth.signOut()
+      console.log('📤 Tentative de déconnexion Supabase...');
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('❌ Erreur Supabase lors de la déconnexion:', error);
+        throw error;
+      }
+      console.log('✅ Déconnexion Supabase réussie');
+
+      console.log('🔄 Mise à jour de l\'état local...');
       setUser(null)
       setLoading(false)
+      console.log('✅ État local mis à jour');
+
+      console.log('🔄 Redirection vers la page de connexion...');
+      router.push('/auth/login');
+      router.refresh();
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error)
+      console.error('❌ Erreur lors de la déconnexion:', error)
       throw error
     }
-  }, [supabase])
+  }, [supabase, router])
 
   const signInWithGoogle = async () => {
     try {
