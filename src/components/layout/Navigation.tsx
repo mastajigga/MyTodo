@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { UserNav } from "./UserNav"
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 const navItems = [
   {
@@ -40,6 +41,7 @@ const navTransition = {
 
 export function Navigation() {
   const pathname = usePathname()
+  const { user } = useSupabase()
 
   return (
     <motion.div
@@ -109,7 +111,7 @@ export function Navigation() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, ...navTransition }}
         >
-          <UserNav />
+          <UserNav user={user} />
         </motion.div>
       </div>
     </motion.div>
