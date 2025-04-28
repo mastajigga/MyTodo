@@ -89,7 +89,7 @@ export const Project = ({ projectId }: ProjectProps) => {
             <Card>
               <CardContent className="p-0">
                 <KanbanBoard
-                  projectId={projectId}
+                  tasks={tasks}
                 />
               </CardContent>
             </Card>
