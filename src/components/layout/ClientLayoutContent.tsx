@@ -19,7 +19,7 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
 
   if (isAuthPage) {
     return (
-      <SupabaseProvider session={session}>
+      <SupabaseProvider>
         <QueryProvider>
           <WorkspaceProvider>
             <CreateTaskDialogProvider>
@@ -32,7 +32,7 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
   }
 
   return (
-    <SupabaseProvider session={session}>
+    <SupabaseProvider>
       <QueryProvider>
         <WorkspaceProvider>
           <CreateTaskDialogProvider>
