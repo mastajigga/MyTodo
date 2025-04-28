@@ -7,6 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WorkspaceType, CreateWorkspaceData } from "@/types/workspace";
 import { useState } from "react";
+import { useSupabase } from "@/lib/supabase/useSupabase";
+import { useRouter } from "next/navigation";
+import { workspaceService } from "@/lib/services/workspaceService";
+import type { WorkspaceInsert } from "@/types/supabase";
 
 export default function CreateWorkspacePage() {
   const [formData, setFormData] = useState<CreateWorkspaceData>({
@@ -15,10 +19,29 @@ export default function CreateWorkspacePage() {
     type: "private"
   });
 
+  const { supabase } = useSupabase();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implémenter la création d'espace de travail
-    console.log("Création d'espace de travail:", formData);
+    setError(null);
+    setLoading(true);
+    try {
+      // Mapping explicite : description null si vide, type conversion si enum
+      const workspaceInsert: WorkspaceInsert = {
+        name: formData.name,
+        description: formData.description?.trim() ? formData.description : null,
+        type: formData.type,
+      };
+      await workspaceService.createWorkspace(supabase, workspaceInsert);
+      router.push("/workspaces");
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la création de l'espace de travail");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const types: { value: WorkspaceType; label: string }[] = [
@@ -31,7 +54,7 @@ export default function CreateWorkspacePage() {
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">Créer un nouvel espace de travail</h1>
       <Card className="p-6 max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" aria-label="Créer un espace de travail">
           <div className="space-y-2">
             <Label htmlFor="name">Nom</Label>
             <Input
@@ -72,8 +95,9 @@ export default function CreateWorkspacePage() {
             </Select>
           </div>
 
-          <Button type="submit" className="w-full">
-            Créer l'espace de travail
+          {error && <div className="text-red-600" role="alert">{error}</div>}
+          <Button type="submit" className="w-full" disabled={loading} aria-label="Créer l'espace de travail">
+            {loading ? "Création..." : "Créer l'espace de travail"}
           </Button>
         </form>
       </Card>
