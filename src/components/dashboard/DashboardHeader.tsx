@@ -1,4 +1,4 @@
-import { User } from '@/types/user';
+import { User } from '@/@types/user';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
