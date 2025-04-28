@@ -36,8 +36,23 @@ export function TasksView({ tasks }: TasksViewProps) {
 
   // Filtrage des tâches selon le projet sélectionné
   const filteredTasks = useMemo(() => {
-    if (selectedProjectId === 'all') return tasks || [];
-    return (tasks || []).filter(task => task.project && task.project.id === selectedProjectId);
+    if (selectedProjectId === 'all') {
+      return (tasks || []).map(task => ({
+        ...task,
+        priority: (task as any).priority ?? 'medium',
+        updated_at: (task as any).updated_at ?? task.created_at ?? '',
+        user_id: (task as any).user_id ?? '',
+        project_id: (task as any).project_id ?? (task.project && typeof (task.project as any).id === 'string' ? (task.project as any).id : ''),
+      }) as import('@/types/task').Task);
+    }
+    return (tasks || []).filter(task => task.project && typeof (task.project as any).id === 'string' && (task.project as any).id === selectedProjectId)
+      .map(task => ({
+        ...task,
+        priority: (task as any).priority ?? 'medium',
+        updated_at: (task as any).updated_at ?? task.created_at ?? '',
+        user_id: (task as any).user_id ?? '',
+        project_id: (task as any).project_id ?? (task.project && typeof (task.project as any).id === 'string' ? (task.project as any).id : ''),
+      }) as import('@/types/task').Task);
   }, [tasks, selectedProjectId]);
 
   // Gestion du surlignage de la nouvelle tâche
