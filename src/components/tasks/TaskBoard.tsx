@@ -12,7 +12,7 @@ interface TaskBoardProps {
 }
 
 export function TaskBoard({ projectId }: TaskBoardProps) {
-  const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_KANBAN_COLUMNS as KanbanColumn[]);
+  const [columns, setColumns] = useState<KanbanColumn[]>(() => DEFAULT_KANBAN_COLUMNS.map(col => ({ ...col, tasks: [] })));
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTasks = useCallback(async () => {
