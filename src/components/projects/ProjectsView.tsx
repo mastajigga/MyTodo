@@ -13,6 +13,9 @@ interface Project {
   name: string;
   description: string;
   created_at: string;
+  workspace_id?: string;
+  status?: string;
+  updated_at?: string;
 }
 
 interface ProjectsViewProps {
@@ -52,7 +55,12 @@ export function ProjectsView({ projects }: ProjectsViewProps) {
             <CreateProjectButton />
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
-            <ProjectList projects={projects} />
+            <ProjectList projects={projects.map(p => ({
+              ...p,
+              workspace_id: p.workspace_id || '',
+              status: (p.status as 'in_progress' | 'completed' | 'cancelled') || 'in_progress',
+              updated_at: p.updated_at || p.created_at || '',
+            }))} />
           </CardContent>
         </Card>
       </div>
