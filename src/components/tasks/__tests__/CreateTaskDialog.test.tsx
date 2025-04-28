@@ -1,48 +1,49 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CreateTaskDialog } from '../CreateTaskDialog';
-import { TaskService } from '@/services/task.service';
+import { taskService } from '@/services/task.service';
 import { toast } from 'sonner';
 import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider';
 import { useWorkspaceContext } from '@/contexts/workspace-context';
 import { useProjects } from '@/hooks/useProjects';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
+import { vi } from 'vitest';
 
 // Mock des dépendances
-jest.mock('sonner', () => ({
+vi.mock('sonner', () => ({
   toast: {
-    success: jest.fn(),
-    error: jest.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-jest.mock('@/services/task.service', () => ({
-  TaskService: {
-    createTask: jest.fn(),
+vi.mock('@/services/task.service', () => ({
+  taskService: {
+    createTask: vi.fn(),
   },
 }));
 
-jest.mock('@/components/providers/CreateTaskDialogProvider', () => ({
-  useCreateTaskDialog: jest.fn(),
+vi.mock('@/components/providers/CreateTaskDialogProvider', () => ({
+  useCreateTaskDialog: vi.fn(),
 }));
 
-jest.mock('@/contexts/workspace-context', () => ({
-  useWorkspaceContext: jest.fn(),
+vi.mock('@/contexts/workspace-context', () => ({
+  useWorkspaceContext: vi.fn(),
 }));
 
-jest.mock('@/hooks/useProjects', () => ({
-  useProjects: jest.fn(),
+vi.mock('@/hooks/useProjects', () => ({
+  useProjects: vi.fn(),
 }));
 
-jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: jest.fn(),
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: vi.fn(),
 }));
 
-jest.mock('@/lib/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   supabase: {
     auth: {
-      getUser: jest.fn(),
+      getUser: vi.fn(),
     },
   },
 }));
@@ -56,36 +57,36 @@ describe('CreateTaskDialog', () => {
   ];
 
   const mockQueryClient = {
-    invalidateQueries: jest.fn(),
+    invalidateQueries: vi.fn(),
   };
 
   beforeEach(() => {
     // Configuration des mocks
-    (useCreateTaskDialog as jest.Mock).mockReturnValue({
+    (useCreateTaskDialog as vi.Mock).mockReturnValue({
       isOpen: true,
       projectId: 'project-1',
-      onSuccess: jest.fn(),
-      closeCreateTaskDialog: jest.fn(),
+      onSuccess: vi.fn(),
+      closeCreateTaskDialog: vi.fn(),
     });
 
-    (useWorkspaceContext as jest.Mock).mockReturnValue({
+    (useWorkspaceContext as vi.Mock).mockReturnValue({
       workspace: mockWorkspace,
       workspaces: [mockWorkspace],
-      setWorkspace: jest.fn(),
+      setWorkspace: vi.fn(),
     });
 
-    (useProjects as jest.Mock).mockReturnValue({
+    (useProjects as vi.Mock).mockReturnValue({
       projects: mockProjects,
     });
 
-    (useQueryClient as jest.Mock).mockReturnValue(mockQueryClient);
+    (useQueryClient as vi.Mock).mockReturnValue(mockQueryClient);
 
-    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+    (supabase.auth.getUser as vi.Mock).mockResolvedValue({
       data: { user: mockUser },
     });
 
     // Réinitialisation des mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('devrait rendre correctement le dialogue avec tous les champs', () => {
@@ -128,7 +129,7 @@ describe('CreateTaskDialog', () => {
     fireEvent.click(screen.getByText('Créer'));
 
     await waitFor(() => {
-      expect(TaskService.createTask).toHaveBeenCalledWith(expect.objectContaining({
+      expect(taskService.createTask).toHaveBeenCalledWith(expect.objectContaining({
         title: 'Nouvelle tâche',
         description: 'Description de la tâche',
         priority: 'high',
@@ -140,7 +141,7 @@ describe('CreateTaskDialog', () => {
 
   it('devrait gérer les erreurs lors de la création', async () => {
     const error = new Error('Erreur de création');
-    (TaskService.createTask as jest.Mock).mockRejectedValueOnce(error);
+    (taskService.createTask as vi.Mock).mockRejectedValueOnce(error);
 
     render(<CreateTaskDialog />);
 
@@ -154,10 +155,10 @@ describe('CreateTaskDialog', () => {
   });
 
   it('devrait fermer le dialogue et réinitialiser le formulaire après une création réussie', async () => {
-    const mockCloseDialog = jest.fn();
-    const mockOnSuccess = jest.fn();
+    const mockCloseDialog = vi.fn();
+    const mockOnSuccess = vi.fn();
     
-    (useCreateTaskDialog as jest.Mock).mockReturnValue({
+    (useCreateTaskDialog as vi.Mock).mockReturnValue({
       isOpen: true,
       projectId: 'project-1',
       onSuccess: mockOnSuccess,
@@ -178,8 +179,8 @@ describe('CreateTaskDialog', () => {
   });
 
   it('devrait mettre à jour le projet sélectionné lors du changement d\'espace de travail', async () => {
-    const mockSetWorkspace = jest.fn();
-    (useWorkspaceContext as jest.Mock).mockReturnValue({
+    const mockSetWorkspace = vi.fn();
+    (useWorkspaceContext as vi.Mock).mockReturnValue({
       workspace: mockWorkspace,
       workspaces: [mockWorkspace, { id: 'workspace-2', name: 'Workspace 2' }],
       setWorkspace: mockSetWorkspace,

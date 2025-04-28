@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { TaskService } from '@/services/task.service';
+import { taskService } from '@/services/task.service';
 import { Task } from '@/types/task';
 
 export const useProjectTasks = (projectId: string) => {
@@ -10,7 +10,7 @@ export const useProjectTasks = (projectId: string) => {
   } = useQuery<Task[]>({
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
-      const tasks = await TaskService.getTasks(projectId);
+      const tasks = await taskService.getTasks(projectId);
       return tasks ?? [];
     },
     enabled: !!projectId

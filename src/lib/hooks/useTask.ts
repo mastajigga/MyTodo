@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { TaskStatus, TaskPriority } from '@/types/task'
+import { TaskStatus, TaskPriority, CreateTaskData, UpdateTaskData } from '@/types/task'
 
 export type Task = {
   id: string
@@ -16,23 +16,6 @@ export type Task = {
   assigned_to: string | null
   project_id: string
   position: number
-}
-
-type CreateTaskData = {
-  title: string
-  description?: string
-  due_date?: string
-  list_id: string
-  workspace_id: string
-  position: number
-  completed: boolean
-}
-
-type UpdateTaskData = {
-  title: string
-  description?: string
-  due_date?: string
-  completed: boolean
 }
 
 export function useTask() {

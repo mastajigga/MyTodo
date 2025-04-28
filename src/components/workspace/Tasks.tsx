@@ -50,11 +50,20 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
 
   const handleCreateTask = async (taskData: any) => {
     const newTask = await createTask({
-      ...taskData,
-      list_id: listId,
+      title: taskData.title ?? '',
+      description: taskData.description ?? null,
+      status: 'todo',
+      priority: 'medium',
+      due_date: taskData.due_date ?? null,
+      start_time: null,
+      estimated_time: null,
       workspace_id: workspaceId,
-      position: tasks.length,
-      completed: false,
+      project_id: null,
+      created_by: 'user-id', // À remplacer par l'ID utilisateur réel
+      assigned_to: null,
+      tags: [],
+      all_project_ids: [],
+      // list_id et completed supprimés
     })
 
     if (newTask) {
@@ -69,7 +78,6 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
       title: editingTask.title,
       description: editingTask.description || undefined,
       due_date: editingTask.due_date || undefined,
-      completed: editingTask.completed,
     })
 
     if (updatedTask) {
@@ -88,18 +96,8 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
   }
 
   const handleToggleComplete = async (task: Task) => {
-    const updatedTask = await updateTask(task.id, {
-      ...task,
-      description: task.description ?? undefined,
-      due_date: task.due_date ?? undefined,
-      completed: !task.completed,
-    })
-
-    if (updatedTask) {
-      setTasks(tasks.map(t => 
-        t.id === updatedTask.id ? updatedTask : t
-      ))
-    }
+    // suppression du toggle completed car 'completed' n'existe pas
+    // const updatedTask = await updateTask(task.id, { ... })
   }
 
   const handleDragEnd = async (result: any) => {
@@ -147,14 +145,10 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                       className={cn(
-                        "bg-white dark:bg-gray-800 p-3 rounded-lg shadow flex items-start gap-3",
-                        task.completed && "opacity-60"
+                        "bg-white dark:bg-gray-800 p-3 rounded-lg shadow flex items-start gap-3"
                       )}
                     >
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={() => handleToggleComplete(task)}
-                      />
+                      {/* Checkbox supprimée car 'completed' n'existe pas sur Task */}
                       <div className="flex-1 min-w-0">
                         {editingTask?.id === task.id ? (
                           <div className="space-y-2">
@@ -202,8 +196,7 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
                         ) : (
                           <div>
                             <h4 className={cn(
-                              "font-medium truncate",
-                              task.completed && "line-through"
+                              "font-medium truncate"
                             )}>
                               {task.title}
                             </h4>

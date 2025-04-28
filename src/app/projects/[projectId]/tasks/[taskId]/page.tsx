@@ -63,15 +63,15 @@ export default function TaskDetailPage() {
           </Badge>
           <Badge variant="outline" className="flex items-center gap-2">
             <UserIcon className="h-4 w-4" />
-            {task.assigned_to_user ? (
+            {task.assigned_user ? (
               <div className="flex items-center gap-2">
                 <Avatar className="h-5 w-5">
-                  <AvatarImage src={task.assigned_to_user.avatar_url || ''} />
+                  <AvatarImage src={task.assigned_user.avatar_url || ''} />
                   <AvatarFallback>
-                    {task.assigned_to_user.full_name?.charAt(0) || task.assigned_to_user.email?.charAt(0)}
+                    {task.assigned_user.full_name?.charAt(0) || task.assigned_user.email?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                {task.assigned_to_user.full_name || task.assigned_to_user.email}
+                {task.assigned_user.full_name || task.assigned_user.email}
               </div>
             ) : (
               'Non assigné'

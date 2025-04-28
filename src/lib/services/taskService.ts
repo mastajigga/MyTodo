@@ -5,6 +5,35 @@ import { Task, TaskStatus, TASK_STATUS_MAP, TaskActivity } from '@/types/task';
 export type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
 export type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
 
+// Ajout du mapping strict pour Task
+function mapToTask(row: any): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? null,
+    status: row.status,
+    priority: row.priority,
+    due_date: row.due_date ?? null,
+    start_time: row.start_time ?? null,
+    estimated_time: row.estimated_time ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    user_id: row.user_id ?? row.created_by ?? '',
+    project_id: row.project_id,
+    project: row.project ? {
+      id: row.project.id,
+      name: row.project.name,
+    } : undefined,
+    assigned_user: row.assigned_to_user ? {
+      id: row.assigned_to_user.id,
+      full_name: row.assigned_to_user.full_name,
+      email: row.assigned_to_user.email,
+      avatar_url: row.assigned_to_user.avatar_url,
+    } : undefined,
+    subtasks: row.subtasks ?? [],
+  };
+}
+
 export const taskService = {
   async getTasks(projectId: string) {
     // Construire la requête de base
@@ -42,7 +71,8 @@ export const taskService = {
       throw tasksError;
     }
 
-    return tasks || [];
+    // Correction : mapping strict vers Task
+    return (tasks || []).map(mapToTask);
   },
 
   async getTask(id: string) {
@@ -56,7 +86,7 @@ export const taskService = {
       throw error;
     }
 
-    return data;
+    return mapToTask(data);
   },
 
   async createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) {

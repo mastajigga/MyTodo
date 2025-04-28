@@ -5,7 +5,7 @@ export interface WorkspaceStats {
   activities: number;
 }
 
-export type WorkspaceType = 'personal' | 'team' | 'family';
+export type WorkspaceType = 'family' | 'professional' | 'private';
 
 export interface Workspace {
   id: string;
