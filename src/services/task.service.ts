@@ -49,41 +49,85 @@ function mapToTask(row: any): Task {
 
 class TaskService {
   async createTask(data: CreateTaskData): Promise<Task> {
+    console.log('[taskService.createTask] Appel avec :', data);
+    if (data.all_project_ids) {
+      console.log('[taskService.createTask] Liste complète des project_ids disponibles pour l\'utilisateur :', data.all_project_ids);
+    }
     let allTasks: Task[] = [];
     if (data.project_id) {
+      console.log('[taskService.createTask] project_id fourni :', data.project_id);
+    } else {
+      console.warn('[taskService.createTask] ATTENTION : project_id manquant !');
+    }
+    if (data.workspace_id) {
+      console.log('[taskService.createTask] workspace_id fourni :', data.workspace_id);
+    } else {
+      console.warn('[taskService.createTask] ATTENTION : workspace_id manquant !');
+    }
+    if (data.created_by) {
+      console.log('[taskService.createTask] created_by fourni :', data.created_by);
+    } else {
+      console.warn('[taskService.createTask] ATTENTION : created_by manquant !');
+    }
+    // Log Supabase user connecté
+    try {
+      // @ts-ignore
+      const user = await supabase.auth.getUser ? (await supabase.auth.getUser()).data.user : null;
+      if (user) {
+        console.log('[taskService.createTask] Utilisateur connecté (supabase.auth.getUser) :', user.id, user.email);
+      } else {
+        console.warn('[taskService.createTask] Aucun utilisateur connecté (supabase.auth.getUser renvoie null)');
+      }
+    } catch (e) {
+      console.warn('[taskService.createTask] Impossible de récupérer l\'utilisateur connecté via supabase.auth.getUser', e);
+    }
+    if (data.project_id) {
+      console.log('[taskService.createTask] Recherche des tâches du projet', data.project_id);
       const { data: fetchedTasks, error: fetchError } = await supabase
         .from('tasks')
         .select()
-        .eq('project_id', data.project_id)
-        .eq('workspace_id', data.workspace_id);
+        .eq('project_id', data.project_id);
       if (fetchError) {
+        console.error('[taskService.createTask] Erreur lors de la récupération des tâches du projet :', fetchError);
         throw fetchError;
       }
       allTasks = (fetchedTasks as any[]).map(mapToTask);
+      console.log('[taskService.createTask] Tâches du projet récupérées :', allTasks);
     }
     let start_time = data.start_time ?? null;
     const priority = typeof data.priority === 'string' ? data.priority : 'medium';
     if (data.estimated_time && data.estimated_time > 0) {
       const safeData = { ...data, priority, due_date: data.due_date ?? undefined, project_id: data.project_id ?? undefined };
       start_time = getNextAvailableStartTime(allTasks, safeData) ?? start_time;
+      console.log('[taskService.createTask] Nouvelle start_time calculée :', start_time);
     }
-    const { data: taskRow, error } = await supabase
-      .from('tasks')
-      .insert({
-        ...data,
-        priority,
-        start_time,
-        estimated_time: data.estimated_time ?? null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        position: 0,
-      } as TaskInsert)
-      .select()
-      .single();
-    if (error) {
-      throw error;
+    try {
+      console.log('[taskService.createTask] Insertion de la tâche dans la base...');
+      const { workspace_id, all_project_ids, ...taskDataSansWorkspace } = data;
+      const { data: taskRow, error } = await supabase
+        .from('tasks')
+        .insert({
+          ...taskDataSansWorkspace,
+          priority,
+          start_time,
+          estimated_time: data.estimated_time ?? null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          position: 0,
+        } as TaskInsert)
+        .select()
+        .single();
+      if (error) {
+        console.error('[taskService.createTask] Erreur lors de l\'insertion :', error);
+        throw error;
+      }
+      const mapped = mapToTask(taskRow);
+      console.log('[taskService.createTask] Tâche insérée et mappée :', mapped);
+      return mapped;
+    } catch (err) {
+      console.error('[taskService.createTask] Exception attrapée :', err);
+      throw err;
     }
-    return mapToTask(taskRow);
   }
 
   async updateTask(taskId: string, data: Partial<CreateTaskData>): Promise<Task> {
@@ -130,12 +174,12 @@ class TaskService {
   async getTasks(workspaceId: string, projectId?: string): Promise<Task[]> {
     let query = supabase
       .from('tasks')
-      .select()
-      .eq('workspace_id', workspaceId)
+      .select('*, project:projects!inner(id, name, workspace_id)')
       .order('position');
     if (projectId) {
       query = query.eq('project_id', projectId);
     }
+    query = query.eq('project.workspace_id', workspaceId);
     const { data: rows, error } = await query;
     if (error) {
       throw error;

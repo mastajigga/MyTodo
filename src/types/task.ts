@@ -35,6 +35,8 @@ export interface Task {
     id: string;
     name: string;
   };
+  assigned_user?: User | null;
+  subtasks?: { completed: boolean }[];
 }
 
 export interface CreateTaskData {
@@ -50,6 +52,7 @@ export interface CreateTaskData {
   created_by: string;
   assigned_to: string | null;
   tags: string[];
+  all_project_ids?: string[];
 }
 
 export type UpdateTaskData = Partial<Omit<CreateTaskData, 'created_by' | 'workspace_id'>> & {

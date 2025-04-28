@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { taskService } from "@/services/task.service";
 import { toast } from "sonner";
+import { z as zod } from "zod";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -28,13 +29,18 @@ const taskSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]),
   due_date: z.string().optional(),
   start_time: z.string().optional(),
-  estimated_time: z
-    .number({ invalid_type_error: "Le temps estimé est requis" })
-    .min(0, "Le temps estimé doit être positif")
-    .optional(),
+  estimated_time: z.preprocess(
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number({ invalid_type_error: "Le temps estimé est requis" })
+      .min(1, "Le temps estimé est requis")
+      .or(z.literal(undefined))
+      .or(z.literal(null))
+  )
+    .transform(val => (typeof val === 'number' && !isNaN(val) ? val : undefined))
+    .refine(val => val === undefined || val === null || typeof val === 'number', { message: 'Le temps estimé doit être un nombre' }),
 });
 
-type TaskFormData = z.infer<typeof taskSchema>;
+type TaskFormData = Omit<z.infer<typeof taskSchema>, 'estimated_time'> & { estimated_time?: number };
 
 interface CreateTaskProps {
   projectId: string;
@@ -44,17 +50,21 @@ interface CreateTaskProps {
 
 export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProps) {
   const form = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
+    resolver: zodResolver(taskSchema as any),
     defaultValues: {
       title: "",
       description: "",
       priority: "medium",
+      due_date: undefined,
+      start_time: undefined,
+      estimated_time: undefined,
     },
   });
 
   const onSubmit = async (data: TaskFormData) => {
+    console.log('[CreateTask] onSubmit appelé avec :', data);
     try {
-      await taskService.createTask({
+      const result = await taskService.createTask({
         ...data,
         description: data.description ?? null,
         due_date: data.due_date ?? null,
@@ -65,9 +75,19 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
         assigned_to: null,
         tags: [],
       });
+      console.log('[CreateTask] Tâche créée avec succès :', result);
       onSuccess();
       toast.success("Tâche créée avec succès");
+      form.reset({
+        title: "",
+        description: "",
+        priority: "medium",
+        due_date: undefined,
+        start_time: undefined,
+        estimated_time: undefined,
+      });
     } catch (error) {
+      console.error('[CreateTask] Erreur lors de la création de la tâche :', error);
       toast.error("Erreur lors de la création de la tâche");
     }
   };
@@ -161,13 +181,15 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
             <FormItem>
               <FormLabel htmlFor="estimated_time">Temps estimé (en minutes)</FormLabel>
               <FormControl>
-                <Input id="estimated_time" type="number" min={0} {...field} />
+                <Input id="estimated_time" type="number" min={1} {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Créer la tâche</Button>
+        <Button type="submit" disabled={form.formState.isSubmitting} data-testid="submit-task-btn">
+          Créer la tâche
+        </Button>
       </form>
     </Form>
   );

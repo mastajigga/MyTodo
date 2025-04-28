@@ -17,6 +17,12 @@ describe('TaskCard', () => {
     user_id: 'user1',
     project_id: 'project1',
     project: { id: 'project1', name: 'Projet Test' },
+    assigned_user: {
+      id: 'user1',
+      full_name: 'John Doe',
+      email: 'john.doe@example.com',
+      avatar_url: '',
+    },
   };
 
   it('affiche le badge de priorité', () => {
@@ -45,5 +51,34 @@ describe('TaskCard', () => {
   it('a un aria-label sur la carte', () => {
     render(<TaskCard task={baseTask} />);
     expect(screen.getByLabelText(/ouvrir la tâche/i)).toBeInTheDocument();
+  });
+
+  it("affiche les informations de l'utilisateur assigné", () => {
+    render(<TaskCard task={baseTask} />);
+    screen.debug();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+  });
+
+  describe('Gestion des priorités', () => {
+    const priorityTranslations = {
+      low: 'Basse',
+      medium: 'Moyenne',
+      high: 'Haute',
+      urgent: 'Urgente',
+    };
+    const PRIORITY_COLORS = {
+      low: 'bg-green-100 text-green-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      high: 'bg-orange-100 text-orange-800',
+      urgent: 'bg-red-100 text-red-800',
+    };
+    (['low', 'medium', 'high', 'urgent'] as const).forEach(priority => {
+      it(`affiche correctement la priorité ${priority}` , () => {
+        render(<TaskCard task={{ ...baseTask, priority }} />);
+        const priorityBadge = screen.getByText(priorityTranslations[priority]);
+        expect(priorityBadge).toBeInTheDocument();
+        expect(priorityBadge.className).toContain(PRIORITY_COLORS[priority]);
+      });
+    });
   });
 }); 
