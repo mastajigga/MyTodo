@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ProjectService } from '@/services/project.service';
 import { toast } from 'sonner';
 import { useWorkspaceContext } from '@/contexts/workspace-context';
+import { useSupabase } from '@/lib/supabase/supabase-provider';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -31,6 +32,7 @@ interface CreateProjectFormProps {
 export function CreateProjectForm({ onSuccess }: CreateProjectFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { workspace } = useWorkspaceContext();
+  const { supabase } = useSupabase();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,7 +53,8 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps) {
         name: data.name,
         description: data.description || null,
         workspace_id: workspace.id,
-      });
+        status: 'in_progress',
+      }, supabase);
       onSuccess();
     } catch (error) {
       toast.error('Erreur lors de la création du projet');

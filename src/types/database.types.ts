@@ -88,6 +88,29 @@ export interface Database {
         Row: {
           id: string
           name: string
+          description: string | null
+          workspace_id: string
+          status: 'in_progress' | 'completed' | 'cancelled'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          workspace_id: string
+          status?: 'in_progress' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          workspace_id?: string
+          status?: 'in_progress' | 'completed' | 'cancelled'
+          created_at?: string
+          updated_at?: string
         }
       }
     }

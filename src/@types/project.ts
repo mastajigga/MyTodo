@@ -17,7 +17,7 @@ export type CreateProjectData = {
   name: string;
   description?: string | null;
   workspace_id: string;
-  status?: string | null;
+  status: 'in_progress' | 'completed' | 'cancelled';
   position?: number;
   created_by?: string;
   is_archived?: boolean;
