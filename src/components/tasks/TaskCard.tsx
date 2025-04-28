@@ -79,7 +79,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             <div className="flex items-center ml-2" aria-label="Utilisateur assigné">
               <Avatar className="h-6 w-6">
                 {task.assigned_user.avatar_url ? (
-                  <AvatarImage src={task.assigned_user.avatar_url} alt={task.assigned_user.full_name} />
+                  <AvatarImage src={task.assigned_user.avatar_url ?? undefined} alt={task.assigned_user.full_name ?? ''} />
                 ) : (
                   <AvatarFallback>{task.assigned_user.full_name?.[0] ?? '?'}</AvatarFallback>
                 )}
