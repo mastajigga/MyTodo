@@ -12,6 +12,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Database } from '@/lib/database.types';
 import { Workspace } from '@/types/workspace';
+import { Project } from '@/types/project';
 
 const container = {
   hidden: { opacity: 0 },
@@ -37,6 +38,7 @@ export default function WorkspaceDetailPage({
   const supabase = createClientComponentClient<Database>();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -57,6 +59,24 @@ export default function WorkspaceDetailPage({
     };
 
     fetchWorkspace();
+  }, [params.id, supabase]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, description, workspace_id, status, created_at, updated_at')
+        .eq('workspace_id', params.id);
+      if (!error) {
+        setProjects(
+          (data || []).map((p: any) => ({
+            ...p,
+            status: p.status || 'in_progress',
+          }))
+        );
+      }
+    };
+    fetchProjects();
   }, [params.id, supabase]);
 
   if (loading) {
@@ -112,7 +132,7 @@ export default function WorkspaceDetailPage({
                 </p>
               </div>
               <ProjectHeader workspaceId={workspace.id} />
-              <ProjectList workspaceId={workspace.id} />
+              <ProjectList workspaceId={workspace.id} projects={projects} />
             </div>
           </Card>
         </motion.div>
