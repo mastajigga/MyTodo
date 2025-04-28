@@ -6,16 +6,16 @@ describe('Type Definitions', () => {
     type DbWorkspaceType = Database['public']['Tables']['workspaces']['Row']['type'];
     
     // Test de compilation TypeScript pour les types de workspace
-    const workspaceTypes: DbWorkspaceType[] = ['family', 'team', 'personal'];
+    const workspaceTypes: DbWorkspaceType[] = ['family', 'professional', 'private'];
     expect(workspaceTypes).toContain('family');
-    expect(workspaceTypes).toContain('team');
-    expect(workspaceTypes).toContain('personal');
+    expect(workspaceTypes).toContain('professional');
+    expect(workspaceTypes).toContain('private');
 
     // Test de compilation TypeScript pour les types d'application
-    const appWorkspaceTypes: WorkspaceType[] = ['family', 'team', 'personal'];
+    const appWorkspaceTypes: WorkspaceType[] = ['family', 'professional', 'private'];
     expect(appWorkspaceTypes).toContain('family');
-    expect(appWorkspaceTypes).toContain('team');
-    expect(appWorkspaceTypes).toContain('personal');
+    expect(appWorkspaceTypes).toContain('professional');
+    expect(appWorkspaceTypes).toContain('private');
   });
 
   it('should validate task types', () => {

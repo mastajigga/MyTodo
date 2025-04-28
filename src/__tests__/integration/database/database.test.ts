@@ -72,7 +72,7 @@ describe('Tests de Structure de la Base de Données', () => {
           name: 'Test Workspace',
           description: 'Test Description',
           created_by: testUser.id,
-          type: 'personal'
+          type: 'private'
         })
         .select()
         .single()
@@ -90,7 +90,7 @@ describe('Tests de Structure de la Base de Données', () => {
           name: 'Test Workspace',
           description: 'Duplicate',
           created_by: testUser.id,
-          type: 'personal'
+          type: 'private'
         })
 
       expect(error).not.toBeNull()

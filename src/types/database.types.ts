@@ -118,7 +118,14 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      invite_workspace_member: {
+        Args: {
+          workspace_id: string
+          member_email: string
+          role: string
+        }
+        Returns: any
+      }
     }
     Enums: {
       [_ in never]: never

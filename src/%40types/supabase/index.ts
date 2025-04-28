@@ -1,0 +1,1 @@
+type: 'family' | 'professional' | 'private' 

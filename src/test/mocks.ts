@@ -41,7 +41,7 @@ export const mockWorkspace = {
   id: '1',
   name: 'Espace de travail de test',
   description: 'Description de l\'espace de travail de test',
-  type: 'personal',
+  type: 'private',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

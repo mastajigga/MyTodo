@@ -23,7 +23,7 @@ interface Workspace {
   id: string
   name: string
   description: string | null
-  type: 'personal' | 'team'
+  type: 'private' | 'professional'
 }
 
 export function WorkspaceSettings({ workspace }: { workspace: Workspace }) {

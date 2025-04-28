@@ -19,14 +19,14 @@ interface WorkspaceWithCounts extends Workspace {
 }
 
 const workspaceTypeLabels: Record<WorkspaceType, string> = {
-  personal: 'Personnel',
-  team: 'Équipe',
+  private: 'Personnel',
+  professional: 'Équipe',
   family: 'Famille'
 };
 
 const workspaceTypeColors: Record<WorkspaceType, string> = {
-  personal: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  team: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  private: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  professional: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
   family: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
 };
 
