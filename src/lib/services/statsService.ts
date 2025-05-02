@@ -31,13 +31,13 @@ export const statsService = {
       }
       const { data: hasAccess, error: accessError } = await supabase
         .from('workspace_members')
-        .select('user_id')
+        .select('user_id, role')
         .eq('workspace_id', workspaceId)
         .eq('user_id', userId)
-        .single();
+        .limit(1);
       console.log('[DEBUG][getTaskStats] Résultat accès workspace_members:', hasAccess, accessError);
 
-      if (!hasAccess) {
+      if (!hasAccess?.length) {
         console.warn('[DEBUG][getTaskStats] Utilisateur sans accès à ce workspace');
         return {
           current: 0,
@@ -49,8 +49,18 @@ export const statsService = {
       // Récupérer les tâches du workspace via la jointure sur projects
       const { data: tasks, error } = await supabase
         .from('tasks')
-        .select('status, projects!inner(workspace_id)')
-        .eq('projects.workspace_id', workspaceId)
+        .select(`
+          id,
+          title,
+          description,
+          status,
+          project:project_id (
+            id,
+            name,
+            workspace_id
+          )
+        `)
+        .eq('project.workspace_id', workspaceId)
         .is('deleted_at', null);
       console.log('[DEBUG][getTaskStats] Résultat requête tasks:', tasks, error);
 

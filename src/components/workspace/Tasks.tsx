@@ -23,6 +23,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider'
+import { useSupabase } from '@/lib/supabase/useSupabase'
 
 type TasksProps = {
   listId: string
@@ -30,6 +31,7 @@ type TasksProps = {
 }
 
 export function Tasks({ listId, workspaceId }: TasksProps) {
+  const { supabase } = useSupabase()
   const { loading, getTasks, createTask, updateTask, deleteTask, reorderTasks } = useTask()
   const [tasks, setTasks] = useState<Task[]>([])
   const { openCreateTaskDialog } = useCreateTaskDialog()
@@ -38,17 +40,38 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
   const [newTaskDueDate, setNewTaskDueDate] = useState<string>('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+        console.log('[Tasks] UID utilisateur connecté:', user.id)
+      } else {
+        console.log('[Tasks] Aucun utilisateur connecté')
+      }
+    }
+    getCurrentUser()
+  }, [supabase.auth])
 
   useEffect(() => {
     loadTasks()
-  }, [listId])
+  }, [listId, workspaceId])
 
   const loadTasks = async () => {
-    const fetchedTasks = await getTasks(listId)
+    console.log('[Tasks] Chargement des tâches pour projectId (listId):', listId, 'et workspaceId:', workspaceId)
+    const fetchedTasks = await getTasks(workspaceId, listId)
+    console.log('[Tasks] Tâches brutes reçues:', fetchedTasks)
     setTasks(fetchedTasks)
   }
 
   const handleCreateTask = async (taskData: any) => {
+    if (!userId) {
+      console.error("L'utilisateur doit être connecté pour créer une tâche")
+      return
+    }
+
     const newTask = await createTask({
       title: taskData.title ?? '',
       description: taskData.description ?? null,
@@ -58,12 +81,9 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
       start_time: null,
       estimated_time: null,
       workspace_id: workspaceId,
-      project_id: null,
-      created_by: 'user-id', // À remplacer par l'ID utilisateur réel
-      assigned_to: null,
-      tags: [],
-      all_project_ids: [],
-      // list_id et completed supprimés
+      position: 0,
+      created_by: userId,
+      project_id: listId // listId représente project_id dans ce contexte
     })
 
     if (newTask) {

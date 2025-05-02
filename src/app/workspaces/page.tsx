@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateWorkspaceButton } from '@/components/workspace/CreateWorkspaceButton';
-import { WorkspaceList } from '@/components/workspace/WorkspaceList';
+import { WorkspaceList } from '@/components/workspaces/WorkspaceList';
+import { AddTestWorkspaceButton } from '@/components/workspace/AddTestWorkspaceButton';
 
 export default function WorkspacesPage() {
   return (
@@ -16,6 +17,7 @@ export default function WorkspacesPage() {
       </div>
 
       <div className="grid gap-4 sm:gap-6">
+        <AddTestWorkspaceButton />
         <Card className="backdrop-blur-sm bg-card/50">
           <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <CardTitle>Espaces de travail</CardTitle>

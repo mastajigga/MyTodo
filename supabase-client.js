@@ -7,16 +7,26 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function main() {
   try {
-    // Créer la table todos avec une requête SQL directe
+    // Créer la table tasks avec une requête SQL directe
     const { data: createTableData, error: createTableError } = await supabase
       .from('_sql')
       .select('*')
       .eq('query', `
-        CREATE TABLE IF NOT EXISTS todos (
-          id SERIAL PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS tasks (
+          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
           title TEXT NOT NULL,
-          completed BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          description TEXT,
+          status TEXT NOT NULL DEFAULT 'todo',
+          priority TEXT NOT NULL DEFAULT 'medium',
+          project_id UUID NOT NULL,
+          position INTEGER NOT NULL DEFAULT 0,
+          created_by UUID NOT NULL,
+          assigned_to UUID,
+          due_date TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT valid_status CHECK (status IN ('todo', 'in_progress', 'review', 'done')),
+          CONSTRAINT valid_priority CHECK (priority IN ('low', 'medium', 'high', 'urgent'))
         );
       `);
 
@@ -26,15 +36,20 @@ async function main() {
       console.log('Table créée avec succès:', createTableData);
     }
 
-    // Tester la connexion en essayant de lire les todos
-    const { data: todos, error: readError } = await supabase
-      .from('todos')
-      .select('*');
+    // Tester la connexion en essayant de lire les tâches
+    const { data: tasks, error: readError } = await supabase
+      .from('tasks')
+      .select(`
+        *,
+        created_by_user:profiles!created_by(id, full_name, avatar_url),
+        assigned_to_user:profiles!assigned_to(id, full_name, avatar_url),
+        project:projects(id, name)
+      `);
 
     if (readError) {
-      console.error('Erreur lors de la lecture des todos:', readError);
+      console.error('Erreur lors de la lecture des tâches:', readError);
     } else {
-      console.log('Todos récupérés avec succès:', todos);
+      console.log('Tâches récupérées avec succès:', tasks);
     }
 
   } catch (error) {

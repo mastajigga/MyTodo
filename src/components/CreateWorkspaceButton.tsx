@@ -19,7 +19,7 @@ import {
 import { workspaceService } from "@/lib/services/workspaceService";
 import { WorkspaceType } from "@/types/workspace";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useSupabase } from "@/lib/supabase/useSupabase";
@@ -31,9 +31,24 @@ export function CreateWorkspaceButton() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<WorkspaceType>("family");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("Vous devez être connecté pour créer un espace de travail");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -41,6 +56,7 @@ export function CreateWorkspaceButton() {
         name,
         type,
         description: description.trim() ? description : null,
+        created_by: userId,
       });
       toast.success("Espace de travail créé avec succès");
       setOpen(false);

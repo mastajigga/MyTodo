@@ -24,17 +24,23 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   project_id: string;
+  workspace_id: string;
+  position: number;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   due_date: string | null;
+  start_time: string | null;
+  estimated_time: number | null;
   created_by: string;
   assigned_to: string | null;
-  position: number;
+  tags: string[] | null;
   created_by_user?: User;
   assigned_to_user?: User | null;
   project?: {
     id: string;
     name: string;
+    workspace_id: string;
   };
   subtasks?: {
     id: string;
@@ -117,8 +123,12 @@ export type CreateTaskData = {
   status: TaskStatus;
   priority: TaskPriority;
   project_id: string;
-  due_date?: string | null;
-  position?: number;
+  workspace_id: string;
+  position: number;
   created_by: string;
   assigned_to?: string | null;
+  due_date?: string | null;
+  start_time?: string | null;
+  estimated_time?: number | null;
+  tags?: string[] | null;
 }; 

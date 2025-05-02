@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProjectService } from '@/services/project.service'
-import { Project, CreateProjectData, UpdateProjectData } from '@/types/project'
+import { Project, CreateProjectData, UpdateProjectData } from '@/@types/project'
 import { useSupabase } from '@/lib/supabase/useSupabase';
 
 export function useProjects(workspaceId: string) {
@@ -13,12 +13,8 @@ export function useProjects(workspaceId: string) {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data }) => {
-      console.log('[useProjects] utilisateur courant :', data.user);
-    });
+    supabase.auth.getUser();
   }, [supabase]);
-
-  console.log('[useProjects] workspaceId utilisé :', workspaceId);
 
   const {
     data: projects = [],
@@ -29,10 +25,6 @@ export function useProjects(workspaceId: string) {
     queryFn: () => ProjectService.getWorkspaceProjects(workspaceId, supabase),
     enabled: !!workspaceId && !!supabase
   })
-
-  useEffect(() => {
-    console.log('[useProjects] projets récupérés :', projects);
-  }, [projects]);
 
   const createProject = useMutation({
     mutationFn: (data: CreateProjectData) => ProjectService.createProject(data, supabase),

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { EntryService } from '@/services/entry.service'
-import { Entry } from '@/types/entry'
+import { Entry } from '@/@types/entry'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { SupabasePayload } from '@/lib/supabase/client'
 
 export function useEntries(workspaceId: string) {
   const queryClient = useQueryClient()
   const [realtimeEnabled, setRealtimeEnabled] = useState(true)
+  const supabase = createClientComponentClient()
 
   const {
     data: entries = [],
@@ -16,7 +19,7 @@ export function useEntries(workspaceId: string) {
     queryKey: ['entries', workspaceId],
     queryFn: async () => {
       console.log('Requête pour le workspace:', workspaceId);
-      const data = await EntryService.getWorkspaceEntries(workspaceId)
+      const data = await EntryService.getWorkspaceEntries(supabase, workspaceId)
       console.log('Données brutes des entrées:', data)
       console.log('Détails des entrées:', data.map(entry => ({
         id: entry.id,
@@ -33,7 +36,7 @@ export function useEntries(workspaceId: string) {
   useEffect(() => {
     if (!realtimeEnabled || !workspaceId) return
 
-    const subscription = EntryService.subscribeToEntries(workspaceId, (payload) => {
+    const subscription = EntryService.subscribeToEntries(supabase, workspaceId, (payload: Entry) => {
       console.log('Changement détecté:', payload)
       queryClient.invalidateQueries({ queryKey: ['entries', workspaceId] })
     })

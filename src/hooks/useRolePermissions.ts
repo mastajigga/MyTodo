@@ -3,6 +3,10 @@ import { supabase } from '@/lib/supabase/client'
 
 type Role = 'owner' | 'admin' | 'member'
 
+const isValidRole = (role: unknown): role is Role => {
+  return typeof role === 'string' && (role === 'owner' || role === 'admin' || role === 'member');
+}
+
 interface WorkspaceMember {
   workspace_id: string
   user_id: string
@@ -33,7 +37,11 @@ export function useRolePermissions(workspaceId: string) {
 
         if (error) throw error
 
-        setRole(data?.role || null)
+        if (data?.role && isValidRole(data.role)) {
+          setRole(data.role)
+        } else {
+          setRole(null)
+        }
       } catch (err: any) {
         setError(err.message)
       } finally {

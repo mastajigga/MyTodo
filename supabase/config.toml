@@ -1,5 +1,5 @@
 # Configuration pour la synchronisation Supabase
-project_id = "eahjdvmpnqwnupsqnxjz"
+project_id = "eahjdvmpmqwnupsqnxjz"
 
 [api]
 enabled = true

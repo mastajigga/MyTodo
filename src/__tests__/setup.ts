@@ -7,17 +7,28 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.test' });
 
 // Vérifier les variables d'environnement requises
-const requiredEnvVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+const requiredEnvVars = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY'
+];
+
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`La variable d'environnement ${envVar} est requise pour les tests`);
   }
 }
 
-// Créer le client Supabase global pour les tests
+// Créer le client Supabase global pour les tests avec la clé de service
 export const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  }
 );
 
 // Mock global de fetch pour les tests

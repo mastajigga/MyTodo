@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Workspace } from '@/types/workspace';
 import { workspaceService } from '@/lib/services/workspaceService';
 import { toast } from 'sonner';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface EditWorkspaceDialogProps {
   workspace: Workspace;
@@ -21,12 +22,14 @@ export function EditWorkspaceDialog({ workspace, isOpen, onClose, onSuccess }: E
   const [description, setDescription] = useState(workspace.description || '');
   const [isLoading, setIsLoading] = useState(false);
 
+  const supabase = createClientComponentClient();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await workspaceService.updateWorkspace(workspace.id, {
+      await workspaceService.updateWorkspace(supabase, workspace.id, {
         name,
         description: description || null
       });

@@ -31,21 +31,25 @@ export const StatsCard = ({ title, value, icon: Icon, trend }: StatsCardProps) =
   return (
     <motion.div
       variants={scaleIn}
-      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-6 backdrop-blur-sm border-none transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-1 dark:bg-gray-800/30`}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-6 backdrop-blur-sm border-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 dark:bg-gray-800/30`}
     >
       {/* Effet de brillance au survol */}
-      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-700 group-hover:translate-x-full group-hover:opacity-100" />
-
+      <motion.div
+        initial={{ opacity: 0, x: -100 }}
+        whileHover={{ opacity: 1, x: 100 }}
+        transition={{ duration: 0.7, ease: 'easeInOut' }}
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100"
+      />
       {/* Icône en arrière-plan */}
       <div className="absolute right-0 top-0 h-32 w-32 -translate-y-8 translate-x-8 transform">
         <div className="absolute inset-0 opacity-[0.15] transition-opacity duration-300 group-hover:opacity-[0.2]">
           <Icon className={`h-32 w-32 text-${iconColorClass}`} />
         </div>
       </div>
-
       <div className="relative">
         <h3 className="text-base font-medium text-gray-700 dark:text-gray-200">{title}</h3>
-        
         <div className="mt-4 flex items-baseline space-x-4">
           <motion.p 
             className="text-4xl font-bold text-gray-800 dark:text-white"
@@ -55,7 +59,6 @@ export const StatsCard = ({ title, value, icon: Icon, trend }: StatsCardProps) =
           >
             {value}
           </motion.p>
-          
           {trend && (
             <motion.div
               className={`flex items-center rounded-full ${

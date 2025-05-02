@@ -39,19 +39,18 @@ import { useProjects } from '@/hooks/useProjects';
 import { useRouter } from 'next/navigation';
 import { TaskSuccessModal } from './TaskSuccessModal';
 import { useRef, useState } from 'react';
-
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
-export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+import { TaskStatus, TaskPriority } from '@/@types/task';
 
 const formSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   description: z.string().nullable(),
-  status: z.enum(["todo", "in_progress", "done"]),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
+  status: z.enum(["todo", "in_progress", "review", "done"] as const),
+  priority: z.enum(["low", "medium", "high", "urgent"] as const),
   due_date: z.string().nullable(),
   start_time: z.string().nullable(),
-  estimated_time: z.number().min(1, "Le temps estimé est requis"),
+  estimated_time: z.number().nullable(),
   project_id: z.string().min(1, 'Le projet est requis'),
+  assigned_to: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -74,8 +73,9 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
       priority: "medium",
       due_date: null,
       start_time: null,
-      estimated_time: 0,
+      estimated_time: null,
       project_id: projects && projects.length > 0 ? projects[0].id : '',
+      assigned_to: null,
     },
   });
   const router = useRouter();
@@ -87,21 +87,13 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
     return <div className="p-4 text-center text-gray-500">Aucun espace de travail sélectionné.</div>;
   }
 
-  console.log('[CreateTaskDialog] workspace.id =', workspace?.id);
-  console.log('[CreateTaskDialog] projects =', projects);
-
   const onSubmit = async (data: FormData) => {
-    console.log('[CreateTaskDialog] onSubmit appelé avec :', data);
     if (!workspace?.id || !user?.id || !data.project_id) {
-      console.error('[CreateTaskDialog] workspace, user ou project_id manquant', { workspace, user, project_id: data.project_id });
       toast.error("Une erreur est survenue");
       return;
     }
 
     try {
-      const allProjectIds = projects ? projects.map(p => p.id) : [];
-      console.log('[CreateTaskDialog] project_id sélectionné :', data.project_id);
-      console.log('[CreateTaskDialog] Liste complète des project_ids envoyés :', allProjectIds);
       const result = await taskService.createTask({
         ...data,
         description: data.description ?? '',
@@ -109,12 +101,10 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
         start_time: data.start_time ?? null,
         workspace_id: workspace.id,
         project_id: data.project_id,
-        all_project_ids: allProjectIds,
         created_by: user.id,
-        assigned_to: null,
-        tags: [],
+        assigned_to: data.assigned_to,
+        position: 0,
       });
-      console.log('[CreateTaskDialog] Tâche créée avec succès :', result);
       toast.success("Tâche créée avec succès");
       form.reset();
       newTaskIdRef.current = result.id;
@@ -122,7 +112,6 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
       setTimeout(() => setShowSuccess(true), 200);
       if (onSuccess) onSuccess(result.id);
     } catch (error) {
-      console.error('[CreateTaskDialog] Erreur lors de la création de la tâche :', error);
       toast.error("Une erreur est survenue lors de la création de la tâche");
     }
   };
@@ -210,6 +199,7 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
                       <SelectContent>
                         <SelectItem value="todo">À faire</SelectItem>
                         <SelectItem value="in_progress">En cours</SelectItem>
+                        <SelectItem value="review">En revue</SelectItem>
                         <SelectItem value="done">Terminé</SelectItem>
                       </SelectContent>
                     </Select>
@@ -242,6 +232,30 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
               />
               <FormField
                 control={form.control}
+                name="project_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Projet</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un projet" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {projects?.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="due_date"
                 render={({ field }) => (
                   <FormItem>
@@ -258,9 +272,9 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
                 name="start_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel htmlFor="start_time">Heure de début</FormLabel>
+                    <FormLabel>Heure de début</FormLabel>
                     <FormControl>
-                      <Input id="start_time" type="datetime-local" {...field} value={field.value ?? ''} />
+                      <Input type="datetime-local" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -271,38 +285,15 @@ export function CreateTaskDialog({ onSuccess, onClose }: CreateTaskDialogProps) 
                 name="estimated_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel htmlFor="estimated_time">Temps estimé (en minutes)</FormLabel>
+                    <FormLabel>Temps estimé (en minutes)</FormLabel>
                     <FormControl>
-                      <Input id="estimated_time" type="number" min={1} {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        value={field.value ?? ''} 
+                        onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                      />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="project_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="project_id">Projet</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger id="project_id">
-                          <SelectValue placeholder="Sélectionnez un projet" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projects && projects.length > 0 ? (
-                          projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="" disabled>Aucun projet disponible</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

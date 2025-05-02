@@ -2,6 +2,7 @@ import { ProjectBase } from './index';
 
 export interface Project extends Omit<ProjectBase, 'color'> {
   color?: ProjectColor;
+  status: 'in_progress' | 'completed' | 'cancelled';
   workspace?: {
     id: string;
     name: string;

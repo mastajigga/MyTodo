@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WorkspaceType, CreateWorkspaceData } from "@/types/workspace";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSupabase } from "@/lib/supabase/useSupabase";
 import { useRouter } from "next/navigation";
 import { workspaceService } from "@/lib/services/workspaceService";
@@ -23,17 +23,39 @@ export default function CreateWorkspacePage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        setError("Erreur lors de la récupération de l'utilisateur");
+        return;
+      }
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, [supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!userId) {
+      setError("Vous devez être connecté pour créer un espace de travail");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Mapping explicite : description null si vide, type conversion si enum
       const workspaceInsert: WorkspaceInsert = {
         name: formData.name,
         description: formData.description?.trim() ? formData.description : null,
         type: formData.type,
+        created_by: userId
       };
       await workspaceService.createWorkspace(supabase, workspaceInsert);
       router.push("/workspaces");

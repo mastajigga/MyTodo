@@ -11,17 +11,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo, useRef } from 'react';
 import { CreateTaskDialog } from './CreateTaskDialog';
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  project: {
-    name: string;
-  };
-  created_at: string;
-}
+import { Task, TaskPriority } from '@/@types/task';
 
 interface TasksViewProps {
   tasks: Task[] | null;
@@ -36,23 +26,11 @@ export function TasksView({ tasks }: TasksViewProps) {
 
   // Filtrage des tâches selon le projet sélectionné
   const filteredTasks = useMemo(() => {
+    if (!tasks) return [];
     if (selectedProjectId === 'all') {
-      return (tasks || []).map(task => ({
-        ...task,
-        priority: (task as any).priority ?? 'medium',
-        updated_at: (task as any).updated_at ?? task.created_at ?? '',
-        user_id: (task as any).user_id ?? '',
-        project_id: (task as any).project_id ?? (task.project && typeof (task.project as any).id === 'string' ? (task.project as any).id : ''),
-      }) as import('@/types/task').Task);
+      return tasks;
     }
-    return (tasks || []).filter(task => task.project && typeof (task.project as any).id === 'string' && (task.project as any).id === selectedProjectId)
-      .map(task => ({
-        ...task,
-        priority: (task as any).priority ?? 'medium',
-        updated_at: (task as any).updated_at ?? task.created_at ?? '',
-        user_id: (task as any).user_id ?? '',
-        project_id: (task as any).project_id ?? (task.project && typeof (task.project as any).id === 'string' ? (task.project as any).id : ''),
-      }) as import('@/types/task').Task);
+    return tasks.filter(task => task.project_id === selectedProjectId);
   }, [tasks, selectedProjectId]);
 
   // Gestion du surlignage de la nouvelle tâche

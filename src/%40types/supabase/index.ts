@@ -1,1 +1,1 @@
-type: 'family' | 'professional' | 'private' 
+export type WorkspaceType = 'family' | 'professional' | 'private' 

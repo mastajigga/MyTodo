@@ -36,13 +36,18 @@ export const ProjectService = {
   },
 
   async getProject(id: string, supabase: SupabaseClient): Promise<Project> {
+    console.log('[ProjectService.getProject] Récupération du projet avec id:', id);
     const { data: project, error } = await supabase
       .from('projects')
       .select('*, tasks(*)')
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[ProjectService.getProject] Erreur:', error);
+      throw error;
+    }
+    console.log('[ProjectService.getProject] Projet récupéré:', project);
     return project;
   },
 

@@ -1,47 +1,38 @@
+import type { Database } from '@/lib/database.types'
+
+// Types pour les espaces de travail
+export type WorkspaceType = Database['public']['Enums']['workspace_type']
+export type Workspace = Database['public']['Tables']['workspaces']['Row']
+export type WorkspaceInsert = Database['public']['Tables']['workspaces']['Insert']
+export type WorkspaceUpdate = Database['public']['Tables']['workspaces']['Update']
+
+// Types pour les membres d'un espace de travail
+export type WorkspaceMember = Database['public']['Tables']['workspace_members']['Row']
+export type WorkspaceMemberInsert = Database['public']['Tables']['workspace_members']['Insert']
+export type WorkspaceMemberUpdate = Database['public']['Tables']['workspace_members']['Update']
+
+// Interface pour les statistiques d'un espace de travail
 export interface WorkspaceStats {
   members: number;
   projects: number;
   tasks: number;
-  activities: number;
 }
 
-export type WorkspaceType = 'family' | 'professional' | 'private';
-
-export interface Workspace {
-  id: string;
-  name: string;
-  description: string | null;
-  type: WorkspaceType;
-  created_at: string;
-  created_by: string;
-  members_count?: number;
-  projects_count?: number;
-  tasks_count?: number;
+// Interface pour un espace de travail avec ses statistiques
+export interface WorkspaceWithStats extends Workspace {
+  members_count: number;
+  projects_count: number;
+  tasks_count: number;
 }
 
-export interface CreateWorkspaceData {
-  name: string;
-  description?: string;
-  type: WorkspaceType;
-}
+// Interface pour la création d'un espace de travail
+export type CreateWorkspaceData = WorkspaceInsert
 
-export interface UpdateWorkspaceData {
-  name?: string;
-  description?: string | null;
-  type?: WorkspaceType;
-}
+// Interface pour la mise à jour d'un espace de travail
+export type UpdateWorkspaceData = WorkspaceUpdate
 
-export type WorkspaceMemberRole = 'owner' | 'admin' | 'member';
-
-export interface WorkspaceMember {
-  id: string;
-  workspace_id: string;
-  user_id: string;
-  role: WorkspaceMemberRole;
-  created_at: string;
-}
-
+// Interface pour l'invitation d'un membre
 export interface InviteWorkspaceMemberData {
   email: string;
-  role: WorkspaceMemberRole;
+  role: WorkspaceMember['role'];
 } 

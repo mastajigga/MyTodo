@@ -1,6 +1,8 @@
 import { Database } from '../../lib/database.types';
 import { supabase } from '@/lib/supabase/client';
-import { Task, TaskStatus, TASK_STATUS_MAP, TaskActivity } from '@/types/task';
+import { Task, TaskStatus, TASK_STATUS_MAP, TaskActivity } from '@/@types/task';
+import { commitGit } from '../utils/gitUtils'
+import type { CreateTaskData } from '@/@types/task';
 
 export type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
 export type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
@@ -18,13 +20,19 @@ function mapToTask(row: any): Task {
     estimated_time: row.estimated_time ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    user_id: row.user_id ?? row.created_by ?? '',
+    workspace_id: row.workspace_id ?? '',
     project_id: row.project_id,
+    position: row.position ?? 0,
+    deleted_at: row.deleted_at ?? null,
+    created_by: row.created_by ?? '',
+    assigned_to: row.assigned_to ?? null,
+    tags: row.tags ?? [],
     project: row.project ? {
       id: row.project.id,
       name: row.project.name,
+      workspace_id: row.project.workspace_id ?? row.workspace_id ?? '',
     } : undefined,
-    assigned_user: row.assigned_to_user ? {
+    assigned_to_user: row.assigned_to_user ? {
       id: row.assigned_to_user.id,
       full_name: row.assigned_to_user.full_name,
       email: row.assigned_to_user.email,
@@ -36,43 +44,21 @@ function mapToTask(row: any): Task {
 
 export const taskService = {
   async getTasks(projectId: string) {
-    // Construire la requête de base
     let query = supabase
       .from('tasks')
-      .select(`
-        *,
-        project:project_id (
-          id,
-          name
-        ),
-        created_by_user:created_by (
-          id,
-          email,
-          full_name,
-          avatar_url
-        ),
-        assigned_to_user:assigned_to (
-          id,
-          email,
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
-    // Si projectId n'est pas "all", filtrer par projet
     if (projectId !== 'all') {
       query = query.eq('project_id', projectId);
     }
 
     const { data: tasks, error: tasksError } = await query;
-
     if (tasksError) {
       throw tasksError;
     }
-
-    // Correction : mapping strict vers Task
-    return (tasks || []).map(mapToTask);
+    const mapped = (tasks || []).map(mapToTask);
+    return mapped;
   },
 
   async getTask(id: string) {
@@ -89,7 +75,7 @@ export const taskService = {
     return mapToTask(data);
   },
 
-  async createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) {
+  async createTask(task: CreateTaskData) {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -100,7 +86,7 @@ export const taskService = {
     const { data: existingTasks } = await supabase
       .from('tasks')
       .select('position')
-      .eq('project_id', task.project_id)
+      .eq('project_id', task.project_id || '')
       .order('position', { ascending: false })
       .limit(1);
 
@@ -108,10 +94,18 @@ export const taskService = {
       ? (existingTasks[0].position + 1) 
       : 0;
 
+    // Préparer l'objet à insérer en filtrant les champs non attendus
+    const {
+      tags, // on retire ce champ
+      ...insertTask
+    } = task;
+
     const { data, error } = await supabase
       .from('tasks')
       .insert({
-        ...task,
+        ...insertTask,
+        project_id: task.project_id || '',
+        workspace_id: task.workspace_id || '',
         position: newPosition,
         created_by: user.id
       })
@@ -120,6 +114,11 @@ export const taskService = {
 
     if (error) {
       throw error;
+    }
+
+    // Commit git automatique en dev
+    if (data && data.title) {
+      commitGit(`feat(task): ajout de la tâche "${data.title}"`)
     }
 
     return data;
@@ -152,14 +151,16 @@ export const taskService = {
   },
 
   async reorderTasks(projectId: string, taskIds: string[]) {
-    const updates = taskIds.map((id, index) => ({
+    const task_updates = taskIds.map((id, index) => ({
       id,
-      position: index,
+      position: index
     }));
 
     const { error } = await supabase
-      .from('tasks')
-      .upsert(updates);
+      .rpc('reorder_tasks', {
+        task_updates,
+        project_id_param: projectId
+      });
 
     if (error) {
       throw error;
@@ -320,36 +321,49 @@ export const taskService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(activity => ({
+      id: activity.id,
+      task_id: activity.task_id,
+      task_title: activity.task_title,
+      action: activity.action,
+      previous_status: activity.previous_status || undefined,
+      new_status: activity.new_status || undefined,
+      user_id: activity.user_id,
+      created_at: activity.created_at,
+      updated_at: activity.updated_at ?? activity.created_at,
+      user: activity.user && !Array.isArray(activity.user) ? activity.user : undefined
+    }));
   },
 
   async getWorkspaceTasks(workspaceId: string): Promise<Task[]> {
-    // D'abord, récupérer tous les projets du workspace
-    const { data: projects, error: projectsError } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('workspace_id', workspaceId);
-
-    if (projectsError) {
-      throw projectsError;
-    }
-
-    if (!projects || projects.length === 0) {
-      return [];
-    }
-
-    // Ensuite, récupérer toutes les tâches de ces projets
-    const projectIds = projects.map(project => project.id);
-    const { data: tasks, error: tasksError } = await supabase
+    const { data: tasks, error } = await supabase
       .from('tasks')
-      .select('*')
-      .in('project_id', projectIds)
+      .select(`
+        *,
+        project:project_id (
+          id,
+          name
+        ),
+        created_by_user:created_by (
+          id,
+          email,
+          full_name,
+          avatar_url
+        ),
+        assigned_to_user:assigned_to (
+          id,
+          email,
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
 
-    if (tasksError) {
-      throw tasksError;
+    if (error) {
+      throw error;
     }
 
-    return tasks || [];
+    return (tasks || []).map(mapToTask);
   }
 }; 

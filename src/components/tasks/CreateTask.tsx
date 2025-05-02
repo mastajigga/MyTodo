@@ -62,7 +62,6 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
   });
 
   const onSubmit = async (data: TaskFormData) => {
-    console.log('[CreateTask] onSubmit appelé avec :', data);
     try {
       const result = await taskService.createTask({
         ...data,
@@ -75,7 +74,6 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
         assigned_to: null,
         tags: [],
       });
-      console.log('[CreateTask] Tâche créée avec succès :', result);
       onSuccess();
       toast.success("Tâche créée avec succès");
       form.reset({
@@ -87,7 +85,6 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
         estimated_time: undefined,
       });
     } catch (error) {
-      console.error('[CreateTask] Erreur lors de la création de la tâche :', error);
       toast.error("Erreur lors de la création de la tâche");
     }
   };

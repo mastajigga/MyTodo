@@ -1,4 +1,4 @@
-import { WorkspaceType } from '@/@types/workspace';
+import { WorkspaceType } from '@/types/workspace';
 
 describe('WorkspaceType', () => {
   it('devrait accepter les valeurs valides', () => {

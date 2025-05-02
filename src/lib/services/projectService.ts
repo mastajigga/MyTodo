@@ -1,5 +1,6 @@
 import { Database } from '../../lib/database.types';
 import { supabase } from '@/lib/supabase/client';
+import { commitGit } from '../utils/gitUtils'
 
 export type Project = Database['public']['Tables']['projects']['Row'];
 export type ProjectFormValues = {
@@ -60,9 +61,9 @@ export const projectService = {
       name: project.name,
       description: project.description || null,
       workspace_id: project.workspace_id!,
-      created_by: user.id,
-      status: null,
-      is_archived: false
+      color: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -76,6 +77,11 @@ export const projectService = {
 
     if (error) {
       throw error;
+    }
+
+    // Commit git automatique en dev
+    if (data && data.name) {
+      commitGit(`feat(project): création du projet "${data.name}"`)
     }
 
     return data;

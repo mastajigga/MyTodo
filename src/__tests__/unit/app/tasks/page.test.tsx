@@ -1,18 +1,60 @@
 import { render, screen } from '@testing-library/react';
 import TasksPage from '@/app/tasks/page';
+import { mockSupabase } from '@/test/mocks/supabase';
+import { vi } from 'vitest';
+
+vi.mock('next/navigation', () => ({
+  cookies: () => ({
+    get: () => null
+  })
+}));
 
 vi.mock('@/components/tasks/KanbanBoard', () => ({
-  KanbanBoard: () => <div data-testid="kanban-board">Kanban Board Component</div>,
+  default: () => <div data-testid="kanban-board">Kanban Board Component</div>
 }));
 
 describe('TasksPage', () => {
-  it('renders page header with correct title', () => {
-    render(<TasksPage />);
-    expect(screen.getByText('Mes tâches')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('renders KanbanBoard component', () => {
-    render(<TasksPage />);
+  it('devrait afficher le titre de la page', async () => {
+    mockSupabase.from.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+      order: vi.fn().mockResolvedValue({
+        data: [],
+        error: null
+      }),
+      match: vi.fn().mockReturnThis()
+    }));
+
+    render(await TasksPage());
+    
+    expect(screen.getByText('Mes Tâches')).toBeInTheDocument();
+  });
+
+  it('devrait afficher le KanbanBoard', async () => {
+    mockSupabase.from.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+      order: vi.fn().mockResolvedValue({
+        data: [],
+        error: null
+      }),
+      match: vi.fn().mockReturnThis()
+    }));
+
+    render(await TasksPage());
+    
     expect(screen.getByTestId('kanban-board')).toBeInTheDocument();
   });
 }); 

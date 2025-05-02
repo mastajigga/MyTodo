@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
+import { useWorkspaceContext } from '@/contexts/workspace-context';
 
 const container = {
   hidden: { opacity: 0 },
@@ -34,89 +35,32 @@ const item = {
 };
 
 const workspaceTypeLabels: Record<WorkspaceType, string> = {
-  personal: 'Personnel',
-  team: 'Équipe'
+  family: 'Famille',
+  professional: 'Professionnel',
+  private: 'Privé'
 };
 
 const workspaceTypeColors: Record<WorkspaceType, string> = {
-  personal: 'text-blue-600',
-  team: 'text-green-600'
+  family: 'text-blue-600',
+  professional: 'text-green-600',
+  private: 'text-purple-600'
 };
 
 export function WorkspaceList() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClientComponentClient();
+  const { workspaces } = useWorkspaceContext();
 
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      try {
-        // Vérifier l'authentification
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          throw new Error('Non authentifié');
-        }
-
-        const data = await workspaceService.getUserWorkspaces();
-        if (data) {
-          setWorkspaces(data);
-        }
-      } catch (error) {
-        console.error('Error fetching workspaces:', error);
-        toast.error("Erreur lors de la récupération des espaces de travail");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWorkspaces();
-  }, [supabase]);
-
-  if (loading) {
+  if (!workspaces || workspaces.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="h-[200px] rounded-xl bg-muted animate-pulse"
-          />
-        ))}
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Aucun espace de travail trouvé</p>
       </div>
     );
   }
 
-  if (workspaces.length === 0) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center py-12"
-      >
-        <h3 className="text-lg font-medium text-foreground">Aucun espace de travail</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Commencez par créer votre premier espace de travail.
-        </p>
-      </motion.div>
-    );
-  }
-
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {workspaces.map((workspace) => (
-        <motion.div
-          key={workspace.id}
-          variants={item}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <div key={workspace.id}>
           <Link href={`/workspaces/${workspace.id}`}>
             <Card className="h-full transition-colors hover:bg-muted/50">
               <CardHeader>
@@ -127,8 +71,8 @@ export function WorkspaceList() {
                       {workspace.description || 'Aucune description'}
                     </CardDescription>
                   </div>
-                  <Badge className={workspaceTypeColors[workspace.type]}>
-                    {workspaceTypeLabels[workspace.type]}
+                  <Badge className={workspaceTypeColors[workspace.type as WorkspaceType]}>
+                    {workspaceTypeLabels[workspace.type as WorkspaceType]}
                   </Badge>
                 </div>
               </CardHeader>
@@ -139,8 +83,8 @@ export function WorkspaceList() {
               </CardContent>
             </Card>
           </Link>
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   );
 } 
