@@ -1,22 +1,11 @@
-export type NotificationType = 'mention' | 'assignment' | 'due_soon' | 'comment'
-
 export interface Notification {
-  id: string
-  user_id: string
-  type: NotificationType
-  content: string
-  read: boolean
-  task_id?: string
-  created_at: string
+  id: string;
+  user_id: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface CreateNotificationData {
-  user_id: string
-  type: NotificationType
-  content: string
-  task_id?: string
-}
-
-export interface UpdateNotificationData {
-  read?: boolean
-} 
+export type CreateNotificationData = Omit<Notification, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateNotificationData = Partial<CreateNotificationData>; 

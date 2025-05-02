@@ -29,7 +29,7 @@ export function EditWorkspaceDialog({ workspace, isOpen, onClose, onSuccess }: E
     setIsLoading(true);
 
     try {
-      await workspaceService.updateWorkspace(supabase, workspace.id, {
+      await workspaceService.updateWorkspace(workspace.id, {
         name,
         description: description || null
       });

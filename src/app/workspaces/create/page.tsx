@@ -16,7 +16,8 @@ export default function CreateWorkspacePage() {
   const [formData, setFormData] = useState<CreateWorkspaceData>({
     name: "",
     description: "",
-    type: "private"
+    type: "private",
+    created_by: ""
   });
 
   const { supabase } = useSupabase();
@@ -51,13 +52,12 @@ export default function CreateWorkspacePage() {
     }
 
     try {
-      const workspaceInsert: WorkspaceInsert = {
-        name: formData.name,
-        description: formData.description?.trim() ? formData.description : null,
-        type: formData.type,
-        created_by: userId
+      const newFormData: CreateWorkspaceData = {
+        ...formData,
+        created_by: userId || "",
+        description: formData.description?.trim() || null
       };
-      await workspaceService.createWorkspace(supabase, workspaceInsert);
+      await workspaceService.createWorkspace(newFormData);
       router.push("/workspaces");
     } catch (err: any) {
       setError(err.message || "Erreur lors de la création de l'espace de travail");
@@ -92,7 +92,7 @@ export default function CreateWorkspacePage() {
             <Label htmlFor="description">Description</Label>
             <Input
               id="description"
-              value={formData.description}
+              value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Description de l'espace de travail"
             />

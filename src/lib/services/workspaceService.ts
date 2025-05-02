@@ -76,11 +76,11 @@ export const workspaceService = {
 
     if (membershipError) throw membershipError
 
-    const workspaces = memberships.map(m => m.workspaces)
+    const workspaces = (memberships.map(m => m.workspaces).filter(w => w && typeof w === 'object' && !Array.isArray(w)) as Workspace[])
 
     // 2. Pour chaque workspace, récupérer les statistiques
     const workspacesWithStats = await Promise.all(
-      workspaces.map(async (workspace) => {
+      (workspaces as any[]).map(async (workspace) => {
         // 2.1 Compter les membres
         const { count: membersCount } = await supabase
           .from('workspace_members')
@@ -104,12 +104,12 @@ export const workspaceService = {
 
         return {
           ...workspace,
+          description: workspace.description ?? null,
+          type: workspace.type as WorkspaceType,
           created_by: workspace.owner_id,
-          _count: {
-            members: membersCount || 0,
-            projects: projectIds.length,
-            tasks: tasksCount || 0
-          }
+          members_count: membersCount || 0,
+          projects_count: projectIds.length,
+          tasks_count: tasksCount || 0
         }
       })
     )
@@ -151,12 +151,12 @@ export const workspaceService = {
 
     return {
       ...workspace,
-      created_by: workspace.owner_id,
-      _count: {
-        members: membersCount || 0,
-        projects: projectIds.length,
-        tasks: tasksCount || 0
-      }
+      description: workspace.description ?? null,
+      type: workspace.type as WorkspaceType,
+      created_by: (workspace as any).owner_id ?? '',
+      members_count: membersCount || 0,
+      projects_count: projectIds.length,
+      tasks_count: tasksCount || 0
     }
   },
 
@@ -164,8 +164,8 @@ export const workspaceService = {
   async createWorkspace(data: CreateWorkspaceData): Promise<Workspace> {
     const workspaceData = {
       name: data.name,
-      description: data.description || null,
-      type: data.type,
+      description: data.description ?? undefined,
+      type: data.type as WorkspaceType,
       owner_id: data.created_by
     }
     
@@ -218,8 +218,8 @@ export const workspaceService = {
   async updateWorkspace(id: string, data: UpdateWorkspaceData): Promise<Workspace> {
     const workspaceData = {
       name: data.name,
-      description: data.description || null,
-      type: data.type,
+      description: data.description ?? undefined,
+      type: data.type as WorkspaceType,
       updated_at: new Date().toISOString()
     }
     

@@ -1,6 +1,6 @@
 'use client';
 
-import { Task } from '@/types/task';
+import { Task } from '@/@types/task';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -75,17 +75,13 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             </Badge>
           )}
           {/* Affichage de l'utilisateur assigné */}
-          {task.assigned_user && (
-            <div className="flex items-center ml-2" aria-label="Utilisateur assigné">
-              <Avatar className="h-6 w-6">
-                {task.assigned_user.avatar_url ? (
-                  <AvatarImage src={task.assigned_user.avatar_url ?? undefined} alt={task.assigned_user.full_name ?? ''} />
-                ) : (
-                  <AvatarFallback>{task.assigned_user.full_name?.[0] ?? '?'}</AvatarFallback>
-                )}
-              </Avatar>
-              <span className="ml-1 text-xs text-muted-foreground">{task.assigned_user.full_name}</span>
+          {task.assigned_to_user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Assigné à :</span>
+              <span className="font-medium">{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
             </div>
+          ) : (
+            <span className="text-xs text-gray-400">Non assigné</span>
           )}
           {/* Affichage du compteur de sous-tâches */}
           {Array.isArray(task.subtasks) && task.subtasks.length > 0 && (

@@ -11,7 +11,7 @@ import { useProject } from '@/hooks/useProject';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import { useProjectMembers } from '@/hooks/useProjectMembers';
 import { Project as ProjectType } from '@/types/project';
-import { Task } from '@/types/task';
+import { Task } from '@/@types/task';
 
 interface ProjectProps {
   projectId: string;

@@ -321,18 +321,21 @@ export const taskService = {
       throw error;
     }
 
-    return (data || []).map(activity => ({
-      id: activity.id,
-      task_id: activity.task_id,
-      task_title: activity.task_title,
-      action: activity.action,
-      previous_status: activity.previous_status || undefined,
-      new_status: activity.new_status || undefined,
-      user_id: activity.user_id,
-      created_at: activity.created_at,
-      updated_at: activity.updated_at ?? activity.created_at,
-      user: activity.user && !Array.isArray(activity.user) ? activity.user : undefined
-    }));
+    return (data || []).map(activity => {
+      const base = {
+        id: activity.id,
+        task_id: activity.task_id,
+        task_title: activity.task_title,
+        action: activity.action,
+        previous_status: activity.previous_status || undefined,
+        new_status: activity.new_status || undefined,
+        user_id: activity.user_id,
+        created_at: activity.created_at,
+        user: activity.user && !Array.isArray(activity.user) ? activity.user : undefined,
+        // updated_at: activity.updated_at ?? undefined,
+      };
+      return base;
+    });
   },
 
   async getWorkspaceTasks(workspaceId: string): Promise<Task[]> {

@@ -27,7 +27,13 @@ export function useProjects(workspaceId: string) {
   })
 
   const createProject = useMutation({
-    mutationFn: (data: CreateProjectData) => ProjectService.createProject(data, supabase),
+    mutationFn: (data: CreateProjectData) => {
+      const safeData = {
+        ...data,
+        description: data.description === undefined ? null : data.description,
+      };
+      return ProjectService.createProject(safeData, supabase);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     }

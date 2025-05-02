@@ -66,7 +66,15 @@ export const taskService = {
           project_id: projectId,
           created_by: userId,
           status: 'todo',
-          priority: 'medium'
+          priority: 'medium',
+          position: 0,
+          description: '',
+          assigned_to: null,
+          deleted_at: null,
+          due_date: null,
+          start_time: null,
+          estimated_time: null,
+          tags: []
         })
         .select()
         .single()
@@ -93,7 +101,7 @@ export const taskService = {
    * @param status - Le nouveau statut de la tâche
    * @returns Une promesse contenant la tâche mise à jour
    */
-  updateTask: async (taskId: string, status: string): Promise<SupabaseResponse<Task>> => {
+  updateTask: async (taskId: string, status: 'todo' | 'in_progress' | 'review' | 'done' | 'completed'): Promise<SupabaseResponse<Task>> => {
     try {
       const supabase = getSupabaseClient()
       const { data, error } = await supabase

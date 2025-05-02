@@ -41,7 +41,11 @@ export const useTaskList = () => {
       if (error) throw error
 
       toast.success('Liste créée avec succès')
-      return taskList as TaskList
+      return {
+        ...taskList,
+        status: (taskList as any).status || 'active',
+        owner_id: (taskList as any).owner_id || '',
+      } as TaskList
     } catch (error) {
       toast.error('Erreur lors de la création de la liste')
       console.error('Erreur lors de la création de la liste:', error)
@@ -62,7 +66,11 @@ export const useTaskList = () => {
 
       if (error) throw error
 
-      return (taskLists || []) as TaskList[]
+      return (taskLists || []).map((t) => ({
+        ...t,
+        status: (t as any).status || 'active',
+        owner_id: (t as any).owner_id || '',
+      })) as TaskList[]
     } catch (error) {
       toast.error('Erreur lors de la récupération des listes')
       console.error('Erreur lors de la récupération des listes:', error)
@@ -89,7 +97,11 @@ export const useTaskList = () => {
       if (error) throw error
 
       toast.success('Liste mise à jour avec succès')
-      return taskList as TaskList
+      return {
+        ...taskList,
+        status: (taskList as any).status || 'active',
+        owner_id: (taskList as any).owner_id || '',
+      } as TaskList
     } catch (error) {
       toast.error('Erreur lors de la mise à jour de la liste')
       console.error('Erreur lors de la mise à jour de la liste:', error)
@@ -135,13 +147,13 @@ export const useTaskList = () => {
 
       // Créer les mises à jour en conservant toutes les propriétés existantes
       const updates = orderedIds.map((id, index) => {
-        const existingProject = existingProjects.find(project => project.id === id) as TaskList
+        const existingProject = existingProjects.find(project => project.id === id)
         if (!existingProject) throw new Error(`Projet non trouvé: ${id}`)
-        
         return {
           ...existingProject,
           updated_at: new Date().toISOString(),
-          status: existingProject.status || 'active'
+          status: (existingProject as any).status || 'active',
+          owner_id: (existingProject as any).owner_id || '',
         }
       })
 

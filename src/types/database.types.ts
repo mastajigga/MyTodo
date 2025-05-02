@@ -72,7 +72,7 @@ export interface Database {
         Row: {
           id: string
           name: string
-          description?: string
+          description: string | null
           type: string
           created_at: string
           updated_at: string
@@ -81,7 +81,7 @@ export interface Database {
         Insert: {
           id?: string
           name: string
-          description?: string
+          description?: string | null
           type: string
           created_at?: string
           updated_at?: string
@@ -90,7 +90,7 @@ export interface Database {
         Update: {
           id?: string
           name?: string
-          description?: string
+          description?: string | null
           type?: string
           created_at?: string
           updated_at?: string
@@ -155,6 +155,119 @@ export interface Database {
           updated_at?: string
         }
       }
+      task_tags: {
+        Row: {
+          id: string
+          name: string
+          color: string | null
+          workspace_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          color?: string | null
+          workspace_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          color?: string | null
+          workspace_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      task_activities: {
+        Row: {
+          id: string
+          task_id: string
+          task_title: string
+          action: string
+          previous_status: string | null
+          new_status: string | null
+          user_id: string
+          created_at: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          task_title: string
+          action: string
+          previous_status?: string | null
+          new_status?: string | null
+          user_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          task_title?: string
+          action?: string
+          previous_status?: string | null
+          new_status?: string | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string;
+          full_name: string | null;
+          email: string;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name?: string | null;
+          email: string;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string | null;
+          email?: string;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      },
+      comments: {
+        Row: {
+          id: string;
+          task_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          user_id?: string;
+          content?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      },
     }
     Views: {
       [_ in never]: never

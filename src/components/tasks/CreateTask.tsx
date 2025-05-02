@@ -73,6 +73,7 @@ export function CreateTask({ projectId, workspaceId, onSuccess }: CreateTaskProp
         created_by: "",
         assigned_to: null,
         tags: [],
+        position: 0,
       });
       onSuccess();
       toast.success("Tâche créée avec succès");

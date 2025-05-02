@@ -1,7 +1,7 @@
 'use client';
 
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
-import { CreateTaskData } from "@/types/task";
+import { CreateTaskData } from "@/@types/task";
 import { createContext, ReactNode, useContext, useState } from "react";
 
 interface CreateTaskDialogContextType {

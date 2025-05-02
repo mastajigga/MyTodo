@@ -214,7 +214,7 @@ export function Sidebar() {
               variants={sidebarVariants}
               className="fixed inset-y-0 left-0 z-[95] w-64 bg-gray-900 shadow-xl flex flex-col"
             >
-              <NavContent pathname={pathname} onLogout={handleLogout} />
+              <NavContent pathname={pathname || ''} onLogout={handleLogout} />
             </motion.div>
           </>
         )}

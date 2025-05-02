@@ -45,6 +45,7 @@ export function useTaskTag() {
         .from('task_tags')
         .insert([{
           ...tagData,
+          color: tagData.color ?? '#3b82f6',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }])
@@ -71,6 +72,7 @@ export function useTaskTag() {
         .from('task_tags')
         .update({
           ...tagData,
+          color: tagData.color ?? '#3b82f6',
           updated_at: new Date().toISOString()
         })
         .eq('id', id)

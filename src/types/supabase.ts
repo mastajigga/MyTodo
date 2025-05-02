@@ -1,5 +1,5 @@
 import type { Database as DatabaseTypes } from './database.types'
-import { Task } from './task'
+export type { Task } from './task'
 
 export type Tables<T extends keyof DatabaseTypes['public']['Tables']> = DatabaseTypes['public']['Tables'][T]
 export type TaskInsert = Tables<'tasks'>['Insert']
@@ -60,11 +60,7 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      tasks: {
-        Row: Task
-        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at'>>
-      }
+      tasks: Tables<'tasks'>['Row']
       workspaces: {
         Row: {
           id: string

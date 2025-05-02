@@ -5,7 +5,7 @@ import { useWorkspaceContext } from '@/contexts/workspace-context';
 import { taskService } from '@/services/task.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Task } from '@/types/task';
+import { Task } from '@/@types/task';
 import { motion } from "framer-motion"
 import { Users2, FolderKanban, CheckCircle2, Clock } from "lucide-react"
 

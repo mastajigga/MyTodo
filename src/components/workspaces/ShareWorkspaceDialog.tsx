@@ -27,7 +27,7 @@ export function ShareWorkspaceDialog({ workspace, isOpen, onClose }: ShareWorksp
     setIsLoading(true);
 
     try {
-      await workspaceService.inviteToWorkspace(supabase, workspace.id, email);
+      await workspaceService.inviteToWorkspace(workspace.id, email);
       toast.success('Invitation envoyée avec succès');
       setEmail('');
       onClose();

@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Project } from '@/types/project';
-import { Task } from '@/types/task';
+import { Task } from '@/@types/task';
 import { CheckCircle, Clock, AlertCircle, BarChart2 } from 'lucide-react';
 
 interface ProjectMetricsProps {

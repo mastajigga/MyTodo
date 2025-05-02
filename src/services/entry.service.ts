@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
-import { Entry, CreateEntryData, UpdateEntryData } from '@/types/entry'
+import { Entry, CreateEntryData, UpdateEntryData } from '@/@types/entry'
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 
 export const EntryService = {

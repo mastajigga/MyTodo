@@ -52,7 +52,7 @@ export function CreateWorkspaceButton() {
     setLoading(true);
 
     try {
-      await workspaceService.createWorkspace(supabase, {
+      await workspaceService.createWorkspace({
         name,
         type,
         description: description.trim() ? description : null,

@@ -1,5 +1,5 @@
 import { supabase, type SupabasePayload, type SupabaseSubscription } from '@/lib/supabase/client'
-import { Notification, CreateNotificationData, UpdateNotificationData } from '@/types/notification'
+import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
 
 export const notificationService = {
   async getNotifications(userId: string): Promise<Notification[]> {

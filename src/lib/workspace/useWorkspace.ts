@@ -19,8 +19,8 @@ export function useWorkspace() {
   const createWorkspace = useCallback(async (workspaceData: CreateWorkspaceData) => {
     const { data, error } = await supabase.rpc('create_workspace_with_owner', {
       workspace_name: workspaceData.name,
-      workspace_description: workspaceData.description || null,
-      workspace_type: workspaceData.type
+      workspace_description: String(workspaceData.description ?? ''),
+      workspace_type: workspaceData.type ?? 'private'
     })
 
     if (error) throw error

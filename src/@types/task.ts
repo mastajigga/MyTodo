@@ -64,21 +64,23 @@ export interface KanbanColumn {
   tasks: Task[];
 }
 
-export type TaskActivity = {
+export interface TaskActivity {
   id: string;
   task_id: string;
   task_title: string;
   action: string;
+  previous_status?: string;
+  new_status?: string;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   user?: {
     id: string;
     email: string;
-    full_name: string;
-    avatar_url: string;
+    full_name?: string;
+    avatar_url?: string;
   };
-};
+}
 
 export const TASK_STATUS_MAP: Record<TaskStatus, string> = {
   'todo': 'À faire',

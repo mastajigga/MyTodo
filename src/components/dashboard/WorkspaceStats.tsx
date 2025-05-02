@@ -3,7 +3,7 @@ import { useWorkspaceContext } from '@/contexts/workspace-context'
 import { taskService } from '@/services/task.service'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Task } from '@/types/task'
+import { Task } from '@/@types/task'
 import { motion } from "framer-motion"
 import { CheckCircle2, Clock, ListTodo } from "lucide-react"
 
