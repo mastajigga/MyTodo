@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,10 +16,22 @@ import { useSupabase } from '@/lib/supabase/supabase-provider';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 export function TopNav() {
   const { supabase } = useSupabase();
   const [user, setUser] = React.useState<any>(null);
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -75,7 +87,12 @@ export function TopNav() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent
+            className={`rounded-2xl shadow-2xl border-none backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 transition-all duration-200 ${isMobile ? 'w-full max-w-xs left-0' : 'w-56'}`}
+            side={isMobile ? 'left' : 'top'}
+            align="center"
+            forceMount
+          >
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none" data-testid="user-name">{fullName}</p>
@@ -86,9 +103,11 @@ export function TopNav() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem data-testid="profile-menu-item" onClick={() => router.push('/profile')} tabIndex={0} aria-label="Aller au profil">
+              <User className="mr-2 h-4 w-4" />
               Profil
             </DropdownMenuItem>
             <DropdownMenuItem data-testid="settings-menu-item" onClick={() => router.push('/settings')} tabIndex={0} aria-label="Aller aux paramètres">
+              <Settings className="mr-2 h-4 w-4" />
               Paramètres
             </DropdownMenuItem>
           </DropdownMenuContent>
