@@ -1,51 +1,86 @@
-import { Database } from './database.types'
+import type { Database as DatabaseTypes } from './database.types'
+export type { Task } from './task'
 
-// Types de base générés par Supabase
-export type Tables = Database['public']['Tables']
+export type Tables<T extends keyof DatabaseTypes['public']['Tables']> = DatabaseTypes['public']['Tables'][T]
+export type TaskInsert = Tables<'tasks'>['Insert']
+export type TaskUpdate = Tables<'tasks'>['Update']
 
-// Workspace types
-export enum WorkspaceType {
-  Family = 'family',
-  Professional = 'professional',
-  Private = 'private'
-}
+export type Workspace = Tables<'workspaces'>['Row']
+export type WorkspaceInsert = Tables<'workspaces'>['Insert']
+export type WorkspaceUpdate = Tables<'workspaces'>['Update']
 
-export type Workspace = Database['public']['Tables']['workspaces']['Row']
+export type WorkspaceType = 'family' | 'professional' | 'private'
 
-// Workspace member types
-export type WorkspaceMember = Database['public']['Tables']['workspace_members']['Row']
-
-// Constantes pour l'interface utilisateur
 export const workspaceTypeLabels: Record<WorkspaceType, string> = {
-  [WorkspaceType.Family]: 'Famille',
-  [WorkspaceType.Professional]: 'Professionnel',
-  [WorkspaceType.Private]: 'Privé'
+  family: 'Famille',
+  professional: 'Professionnel',
+  private: 'Privé'
 }
 
 export const workspaceTypeColors: Record<WorkspaceType, string> = {
-  [WorkspaceType.Family]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  [WorkspaceType.Professional]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  [WorkspaceType.Private]: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+  family: 'bg-blue-100 text-blue-800',
+  professional: 'bg-green-100 text-green-800',
+  private: 'bg-purple-100 text-purple-800'
 }
 
-// Types pour les opérations CRUD
+export interface WorkspaceWithStats extends Workspace {
+  _count: {
+    members: number
+    projects: number
+    tasks: number
+  }
+  created_by: string
+}
+
 export interface CreateWorkspaceData {
   name: string
-  description?: string
+  description?: string | null
   type: WorkspaceType
 }
 
 export interface UpdateWorkspaceData {
   name?: string
-  description?: string
+  description?: string | null
   type?: WorkspaceType
 }
 
-export type WorkspaceInsert = Database['public']['Tables']['workspaces']['Insert']
-export type WorkspaceUpdate = Database['public']['Tables']['workspaces']['Update']
-
-// Type utilitaire pour les réponses Supabase
 export type SupabaseResponse<T> = {
   data: T | null
   error: Error | null
+}
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      tasks: Tables<'tasks'>['Row']
+      workspaces: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+          updated_at: string
+          owner_id: string
+        }
+        Insert: Omit<Database['public']['Tables']['workspaces']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['workspaces']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
 } 

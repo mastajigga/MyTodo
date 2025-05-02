@@ -13,17 +13,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { projectService } from '@/lib/services/projectService';
 
 export default function ProjectDetailPage() {
-  const { projectId } = useParams();
+  const { projectId } = useParams() as { projectId: string };
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => projectService.getProject(projectId as string),
   });
 
-  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery<Task[]>({
+  const { data: rawTasks = [], isLoading: isLoadingTasks } = useQuery<Task[]>({
     queryKey: ['tasks', projectId],
-    queryFn: () => taskService.getTasks(projectId as string),
+    queryFn: async () => {
+      const tasks = await taskService.getTasks(projectId as string);
+      // On s'assure que tags est toujours un tableau
+      return tasks.map(task => ({
+        ...task,
+        tags: Array.isArray(task.tags) ? task.tags : [],
+      }));
+    },
   });
+  const tasks = rawTasks;
 
   const handleTaskMove = async (taskId: string, completed: boolean) => {
     try {
@@ -37,16 +45,16 @@ export default function ProjectDetailPage() {
   return (
     <div className="container py-8">
       <div className="relative mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent animate-fade-in">
           {project?.name || 'Chargement...'}
         </h1>
-        <p className="mt-2 text-muted-foreground">{project?.description}</p>
-        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full" />
-        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm" />
+        <p className="mt-2 text-muted-foreground animate-fade-in delay-100">{project?.description}</p>
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full animate-gradient-x" />
+        <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm animate-gradient-x" />
       </div>
 
       <div className="grid gap-6">
-        <Card className="backdrop-blur-sm bg-card/50">
+        <Card className="backdrop-blur-sm bg-card/50 shadow-2xl border-none animate-fade-in">
           <CardHeader className="space-y-1">
             <CardTitle>Gestion des tâches</CardTitle>
             <ProjectDetailHeader projectId={projectId as string} />
@@ -75,7 +83,7 @@ export default function ProjectDetailPage() {
                       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                     </div>
                   ) : (
-                    <TaskList tasks={tasks} onTaskMove={handleTaskMove} />
+                    <TaskList workspaceId={project?.workspace_id || ''} />
                   )}
                 </div>
               </TabsContent>

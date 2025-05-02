@@ -6,6 +6,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { WorkspaceProvider } from '@/contexts/workspace-context'
 import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { TopBarNavigation } from '@/components/layout/TopBarNavigation'
 import { usePathname } from 'next/navigation'
 
 interface ClientLayoutContentProps {
@@ -19,7 +20,7 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
 
   if (isAuthPage) {
     return (
-      <SupabaseProvider session={session}>
+      <SupabaseProvider>
         <QueryProvider>
           <WorkspaceProvider>
             <CreateTaskDialogProvider>
@@ -32,14 +33,15 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
   }
 
   return (
-    <SupabaseProvider session={session}>
+    <SupabaseProvider>
       <QueryProvider>
         <WorkspaceProvider>
           <CreateTaskDialogProvider>
-            <div className="min-h-screen flex bg-background">
-              <Sidebar />
-              <div className="flex-1 md:ml-64">
-                <main className="h-full p-4 pt-16 md:pt-4">
+            <div className="min-h-screen flex flex-col bg-background">
+              <TopBarNavigation />
+              <div className="flex-1 w-full flex">
+                <div className="md:hidden"><Sidebar /></div>
+                <main className="flex-1 h-full p-4 pt-16 md:pt-4">
                   {children}
                 </main>
               </div>

@@ -100,6 +100,12 @@ beforeAll(() => {
       delete: vi.fn(),
     }),
   }));
+
+  // Mock de createClientComponentClient
+  vi.mock('@supabase/auth-helpers-nextjs', () => ({
+    createClientComponentClient: () => mockSupabase,
+    createServerComponentClient: () => mockSupabase,
+  }));
 })
 
 afterAll(() => {

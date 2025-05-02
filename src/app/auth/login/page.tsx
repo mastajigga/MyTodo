@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+  const redirectTo = searchParams?.get('redirectTo') || '/dashboard';
   const supabase = createClientComponentClient();
 
   const [isLoading, setIsLoading] = useState(false);

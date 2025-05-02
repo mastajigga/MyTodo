@@ -1,6 +1,5 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/types/supabase'
-import { WorkspaceMemberRole } from '@/types/workspace'
 import {
   Workspace,
   WorkspaceMember,
@@ -33,7 +32,7 @@ export const workspaceService = {
         {
           workspace_id: workspace.id,
           user_id: user.id,
-          role: 'OWNER' as WorkspaceMemberRole
+          role: 'OWNER'
         }
       ])
 
@@ -75,13 +74,18 @@ export const workspaceService = {
   },
 
   async getUserWorkspaces(): Promise<Workspace[]> {
-    const { data: workspaces, error } = await supabase
-      .from('workspaces')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('workspace_members')
+      .select('workspaces(*)')
+      .eq('user_id', user.id);
 
     if (error) throw error;
-    return workspaces;
+    // On mappe pour ne garder que les workspaces
+    return (data || []).map((m: any) => m.workspaces).filter(Boolean);
   },
 
   async getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {

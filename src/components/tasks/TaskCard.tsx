@@ -1,6 +1,6 @@
 'use client';
 
-import { Task } from '@/types/task';
+import { Task } from '@/@types/task';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { PRIORITY_COLORS } from '@/lib/constants/task';
 import { TASK_PRIORITY_MAP } from '@/types/common';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { User } from '@/types/common';
 
 type TaskCardProps = {
   task: Task;
@@ -29,9 +30,17 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   const dueDate = task.due_date ? new Date(task.due_date) : null;
   // Détection d'un décalage automatique (ex: start_time existe ET estimated_time > 0)
   const isAutoShifted = !!task.start_time && typeof task.estimated_time === 'number' && task.estimated_time > 0;
+  // Harmonisation couleur urgent
+  const PRIORITY_COLORS_HARMONIZED = {
+    low: 'bg-green-100 text-green-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    high: 'bg-orange-100 text-orange-800',
+    urgent: 'bg-red-100 text-red-800',
+  };
 
   return (
     <Card 
+      id={`task-${task.id}`}
       className="group relative mb-2 cursor-pointer border bg-card/50 hover:bg-card/80 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
       onClick={onClick}
       tabIndex={0}
@@ -48,8 +57,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             variant="outline" 
             className={cn(
               "ml-2 transition-colors",
-              PRIORITY_COLORS[task.priority],
-              task.priority === 'urgent' && 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20'
+              PRIORITY_COLORS_HARMONIZED[task.priority]
             )}
             aria-label={`Priorité ${TASK_PRIORITY_MAP[task.priority]}`}
           >
@@ -65,6 +73,21 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
               <Info className="h-3 w-3" />
               Décalée
             </Badge>
+          )}
+          {/* Affichage de l'utilisateur assigné */}
+          {task.assigned_to_user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Assigné à :</span>
+              <span className="font-medium">{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
+            </div>
+          ) : (
+            <span className="text-xs text-gray-400">Non assigné</span>
+          )}
+          {/* Affichage du compteur de sous-tâches */}
+          {Array.isArray(task.subtasks) && task.subtasks.length > 0 && (
+            <span className="ml-2 text-xs text-muted-foreground" aria-label="Sous-tâches">
+              {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
+            </span>
           )}
         </div>
       </CardHeader>

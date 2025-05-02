@@ -23,7 +23,7 @@ import {
 import { toast } from 'sonner';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Plus } from 'lucide-react';
-import { WorkspaceType } from '@/@types/workspace';
+import { WorkspaceType } from '@/types/workspace';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function CreateWorkspaceButton() {

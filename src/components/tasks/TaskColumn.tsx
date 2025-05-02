@@ -1,5 +1,5 @@
 // TaskColumn.tsx
-import { Task, TaskStatus } from '@/types/task';
+import { Task, TaskStatus } from '@/@types/task';
 import { DroppableProvided, DroppableStateSnapshot } from '@hello-pangea/dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';

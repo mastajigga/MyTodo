@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Environment Files Rules
+
+These rules override the global ignore settings for environment files.
+
+- Allow editing of .env.local files
+- Allow editing of .env.test files
+- Keep sensitive information secure
+- Follow environment variable naming conventions
+
+```json
+{
+  "allowEditIgnoredFiles": true,
+  "patterns": [
+    ".env.local",
+    ".env.development",
+    ".env.test"
+  ]
+}
+```

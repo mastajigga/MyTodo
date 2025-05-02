@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { TaskService } from '@/services/task.service';
-import { Task } from '@/types/task';
+import { taskService } from '@/services/task.service';
+import { Task } from '@/@types/task';
+import { useProject } from './useProject';
 
 export const useProjectTasks = (projectId: string) => {
+  const { project } = useProject(projectId);
+
   const {
     data,
     isLoading,
@@ -10,10 +13,13 @@ export const useProjectTasks = (projectId: string) => {
   } = useQuery<Task[]>({
     queryKey: ['project-tasks', projectId],
     queryFn: async () => {
-      const tasks = await TaskService.getTasks(projectId);
+      if (!project?.workspace_id) {
+        return [];
+      }
+      const tasks = await taskService.getTasks(project.workspace_id, projectId);
       return tasks ?? [];
     },
-    enabled: !!projectId
+    enabled: !!projectId && !!project?.workspace_id
   });
 
   return {

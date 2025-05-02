@@ -12,10 +12,11 @@ import { fr } from 'date-fns/locale';
 import { CalendarIcon, UserIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { TASK_STATUS_MAP, Task } from '@/types/task';
+import { TASK_STATUS_MAP, Task } from '@/@types/task';
 
 export default function TaskDetailPage() {
-  const { taskId } = useParams();
+  const params = useParams() as Record<string, string>;
+  const taskId = params?.taskId;
 
   const { data: task, isLoading } = useQuery<Task>({
     queryKey: ['task', taskId],

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useWorkspace } from '@/hooks/useWorkspace'
-import type { WorkspaceType } from '@/types/supabase'
+import { WorkspaceType } from '@/types/supabase'
 import { workspaceTypeLabels, workspaceTypeColors } from '@/types/supabase'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -15,9 +15,9 @@ import { Textarea } from '@/components/ui/textarea'
 const workspaceSchema = z.object({
   name: z.string().min(1, { message: 'Le nom est requis' }),
   description: z.string().optional(),
-  type: z.enum(['family', 'professional', 'private'] as const, {
+  type: z.enum(['family', 'professional', 'private'], {
     required_error: 'Le type est requis'
-  }) satisfies z.ZodType<WorkspaceType>
+  })
 })
 
 type WorkspaceFormData = z.infer<typeof workspaceSchema>
@@ -38,7 +38,10 @@ export function CreateWorkspace() {
   const onSubmit = async (data: WorkspaceFormData) => {
     try {
       setIsLoading(true)
-      await createWorkspace(data)
+      await createWorkspace({
+        ...data,
+        type: data.type as WorkspaceType
+      })
       form.reset()
     } catch (error) {
       console.error('Erreur lors de la création:', error)

@@ -5,9 +5,20 @@ import dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.test' })
 
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Les variables d\'environnement NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont requises')
+}
+
 const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  }
 )
 
 describe('Tests de Structure de la Base de Données', () => {
@@ -19,45 +30,35 @@ describe('Tests de Structure de la Base de Données', () => {
 
   beforeAll(async () => {
     try {
-      // Tentative de connexion
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Supprimer l'utilisateur de test s'il existe déjà
+      const { data: existingUser } = await supabase
+        .from('auth.users')
+        .select('id')
+        .eq('email', 'testuser@gmail.com')
+        .single()
+
+      if (existingUser) {
+        await supabase.auth.admin.deleteUser(existingUser.id)
+      }
+
+      // Créer un nouvel utilisateur avec la clé de service
+      const { data: { user }, error: createUserError } = await supabase.auth.admin.createUser({
         email: 'testuser@gmail.com',
-        password: 'testPassword123!'
+        password: 'testPassword123!',
+        email_confirm: true
       })
 
-      if (signInError) {
-        console.log('Tentative de création d\'un nouvel utilisateur...')
-        // Si la connexion échoue, créer un nouvel utilisateur
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: 'testuser@gmail.com',
-          password: 'testPassword123!'
-        })
-
-        if (signUpError) {
-          console.error('Erreur lors de la création de l\'utilisateur:', signUpError)
-          throw signUpError
-        }
-
-        // Attendre que l'utilisateur soit confirmé
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        // Nouvelle tentative de connexion
-        const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword({
-          email: 'testuser@gmail.com',
-          password: 'testPassword123!'
-        })
-
-        if (newSignInError) throw newSignInError
-        testUser = newSignInData.user
-      } else {
-        testUser = signInData.user
+      if (createUserError) {
+        console.error('Erreur lors de la création de l\'utilisateur:', createUserError)
+        throw createUserError
       }
 
-      if (!testUser) {
-        throw new Error('Impossible d\'obtenir l\'utilisateur de test')
+      if (!user) {
+        throw new Error('L\'utilisateur n\'a pas été créé')
       }
 
-      console.log('Utilisateur de test authentifié avec succès:', testUser.id)
+      testUser = user
+      console.log('Utilisateur de test créé avec succès:', testUser.id)
     } catch (error) {
       console.error('Erreur d\'authentification détaillée:', error)
       throw error
@@ -72,7 +73,7 @@ describe('Tests de Structure de la Base de Données', () => {
           name: 'Test Workspace',
           description: 'Test Description',
           created_by: testUser.id,
-          type: 'personal'
+          type: 'private'
         })
         .select()
         .single()
@@ -90,7 +91,7 @@ describe('Tests de Structure de la Base de Données', () => {
           name: 'Test Workspace',
           description: 'Duplicate',
           created_by: testUser.id,
-          type: 'personal'
+          type: 'private'
         })
 
       expect(error).not.toBeNull()

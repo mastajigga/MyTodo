@@ -90,7 +90,7 @@ export function TaskTags({ workspaceId, taskId, onTagsChange, className }: TaskT
         <div
           key={tag.id}
           className="flex items-center gap-1 rounded-full px-3 py-1 text-sm"
-          style={{ backgroundColor: tag.color + '20', color: tag.color }}
+          style={{ backgroundColor: (tag.color || '#3b82f6') + '20', color: tag.color || '#3b82f6' }}
         >
           <Tag size={14} />
           <span>{tag.name}</span>

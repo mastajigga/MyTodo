@@ -24,17 +24,23 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   project_id: string;
+  workspace_id: string;
+  position: number;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   due_date: string | null;
+  start_time: string | null;
+  estimated_time: number | null;
   created_by: string;
   assigned_to: string | null;
-  position: number;
+  tags: string[] | null;
   created_by_user?: User;
   assigned_to_user?: User | null;
   project?: {
     id: string;
     name: string;
+    workspace_id: string;
   };
   subtasks?: {
     id: string;
@@ -58,21 +64,23 @@ export interface KanbanColumn {
   tasks: Task[];
 }
 
-export type TaskActivity = {
+export interface TaskActivity {
   id: string;
   task_id: string;
   task_title: string;
   action: string;
+  previous_status?: string;
+  new_status?: string;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   user?: {
     id: string;
     email: string;
-    full_name: string;
-    avatar_url: string;
+    full_name?: string;
+    avatar_url?: string;
   };
-};
+}
 
 export const TASK_STATUS_MAP: Record<TaskStatus, string> = {
   'todo': 'À faire',
@@ -117,8 +125,12 @@ export type CreateTaskData = {
   status: TaskStatus;
   priority: TaskPriority;
   project_id: string;
-  due_date?: string | null;
-  position?: number;
+  workspace_id: string;
+  position: number;
   created_by: string;
   assigned_to?: string | null;
+  due_date?: string | null;
+  start_time?: string | null;
+  estimated_time?: number | null;
+  tags?: string[] | null;
 }; 

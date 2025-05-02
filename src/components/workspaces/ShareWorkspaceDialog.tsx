@@ -8,6 +8,7 @@ import { Workspace } from '@/types/workspace';
 import { workspaceService } from '@/lib/services/workspaceService';
 import { toast } from 'sonner';
 import { Copy, Check } from 'lucide-react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface ShareWorkspaceDialogProps {
   workspace: Workspace;
@@ -19,6 +20,7 @@ export function ShareWorkspaceDialog({ workspace, isOpen, onClose }: ShareWorksp
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const supabase = createClientComponentClient();
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();

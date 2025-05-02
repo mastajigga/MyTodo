@@ -9,7 +9,6 @@ interface WorkspaceStats {
   members: number
   projects: number
   tasks: number
-  activities: number
 }
 
 export function useWorkspaceStats(workspace: Workspace | null) {
@@ -17,8 +16,7 @@ export function useWorkspaceStats(workspace: Workspace | null) {
   const [stats, setStats] = useState<WorkspaceStats>({
     members: 0,
     projects: 0,
-    tasks: 0,
-    activities: 0
+    tasks: 0
   })
 
   useEffect(() => {
@@ -44,17 +42,10 @@ export function useWorkspaceStats(workspace: Workspace | null) {
           .select('*', { count: 'exact', head: true })
           .eq('workspace_id', workspace.id)
 
-        // Récupérer le nombre d'activités
-        const { count: activitiesCount } = await supabase
-          .from('activities')
-          .select('*', { count: 'exact', head: true })
-          .eq('workspace_id', workspace.id)
-
         setStats({
           members: membersCount || 0,
           projects: projectsCount || 0,
-          tasks: tasksCount || 0,
-          activities: activitiesCount || 0
+          tasks: tasksCount || 0
         })
       } catch (error) {
         console.error('Erreur lors de la récupération des statistiques:', error)

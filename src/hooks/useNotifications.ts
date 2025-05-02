@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationService } from '@/services/notificationService'
-import { Notification, CreateNotificationData, UpdateNotificationData } from '@/types/notification'
+import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
 
 export function useNotifications(userId: string) {
   const queryClient = useQueryClient()

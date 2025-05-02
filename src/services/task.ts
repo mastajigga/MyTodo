@@ -1,10 +1,36 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 import { Task } from '@/types/task';
+import { supabaseTestClient } from '@/lib/supabase/test-client';
+
+type CreateTaskInput = {
+  title: string;
+  description: string | null;
+  status: 'todo' | 'in_progress' | 'done' | 'review';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  workspace_id: string;
+  project_id: string;
+  created_by: string;
+  assigned_to?: string | null;
+  deleted_at?: string | null;
+  due_date?: string | null;
+  estimated_time?: number | null;
+  position: number;
+  start_time?: string | null;
+  tags: string[];
+};
+
+const getClient = () => {
+  if (process.env.NODE_ENV === 'test') {
+    return supabaseTestClient;
+  }
+  return createClientComponentClient<Database>();
+};
 
 export const taskService = {
-  async createTask(data: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'assigned_to'>) {
-    const supabase = createClientComponentClient<Database>();
+  async createTask(data: CreateTaskInput) {
+    const supabase = getClient();
     const { data: task, error } = await supabase
       .from('tasks')
       .insert(data)
@@ -16,7 +42,7 @@ export const taskService = {
   },
 
   async getTask(id: string) {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = getClient();
     const { data: task, error } = await supabase
       .from('tasks')
       .select('*')
@@ -28,7 +54,7 @@ export const taskService = {
   },
 
   async updateTask(id: string, data: Partial<Task>) {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = getClient();
     const { data: task, error } = await supabase
       .from('tasks')
       .update(data)
@@ -41,7 +67,7 @@ export const taskService = {
   },
 
   async deleteTask(id: string) {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = getClient();
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -51,7 +77,7 @@ export const taskService = {
   },
 
   async getWorkspaceTasks(workspaceId: string) {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = getClient();
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('*')
@@ -62,7 +88,7 @@ export const taskService = {
   },
 
   async getProjectTasks(projectId: string) {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = getClient();
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('*')

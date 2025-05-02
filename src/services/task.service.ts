@@ -1,30 +1,8 @@
 'use client';
 
-import { supabase } from '@/lib/supabase/client';
-import { Task, CreateTaskData } from '@/types/task';
-import { Database } from '@/lib/database.types';
-
-type Tables = Database['public']['Tables'];
-type TaskRow = Tables['tasks']['Row'];
-type TaskInsert = Tables['tasks']['Insert'];
-type TaskUpdate = Tables['tasks']['Update'];
-
-export function getNextAvailableStartTime(tasks: Task[], newTask: Partial<Task>): string | null {
-  const sorted = tasks
-    .filter(t => t.id !== newTask.id)
-    .filter(t => t.start_time && t.estimated_time)
-    .sort((a, b) => new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime());
-
-  let proposedStart = newTask.start_time ? new Date(newTask.start_time) : new Date();
-  for (const task of sorted) {
-    const taskStart = new Date(task.start_time!);
-    const taskEnd = new Date(taskStart.getTime() + (task.estimated_time || 0) * 60000);
-    if (proposedStart >= taskStart && proposedStart < taskEnd) {
-      proposedStart = taskEnd;
-    }
-  }
-  return proposedStart.toISOString();
-}
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/database.types';
+import { Task, CreateTaskData } from '@/@types/task';
 
 function mapToTask(row: any): Task {
   return {
@@ -33,125 +11,151 @@ function mapToTask(row: any): Task {
     description: row.description ?? null,
     status: row.status,
     priority: row.priority,
+    project_id: row.project_id,
+    workspace_id: row.workspace_id,
+    position: row.position,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    deleted_at: row.deleted_at,
     due_date: row.due_date ?? null,
     start_time: row.start_time ?? null,
     estimated_time: row.estimated_time ?? null,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    user_id: row.user_id ?? row.created_by ?? '',
-    project_id: row.project_id,
+    created_by: row.created_by,
+    assigned_to: row.assigned_to,
+    tags: row.tags ?? null,
     project: row.project ? {
       id: row.project.id,
       name: row.project.name,
+      workspace_id: row.project.workspace_id,
     } : undefined,
+    created_by_user: row.created_by_user,
+    assigned_to_user: row.assigned_to_user,
   };
 }
 
-class TaskService {
-  async createTask(data: CreateTaskData): Promise<Task> {
-    let allTasks: Task[] = [];
-    if (data.project_id) {
-      const { data: fetchedTasks, error: fetchError } = await supabase
-        .from('tasks')
-        .select()
-        .eq('project_id', data.project_id)
-        .eq('workspace_id', data.workspace_id);
-      if (fetchError) {
-        throw fetchError;
-      }
-      allTasks = (fetchedTasks as any[]).map(mapToTask);
-    }
-    let start_time = data.start_time ?? null;
-    const priority = typeof data.priority === 'string' ? data.priority : 'medium';
-    if (data.estimated_time && data.estimated_time > 0) {
-      const safeData = { ...data, priority, due_date: data.due_date ?? undefined, project_id: data.project_id ?? undefined };
-      start_time = getNextAvailableStartTime(allTasks, safeData) ?? start_time;
-    }
-    const { data: taskRow, error } = await supabase
-      .from('tasks')
-      .insert({
-        ...data,
-        priority,
-        start_time,
-        estimated_time: data.estimated_time ?? null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        position: 0,
-      } as TaskInsert)
-      .select()
-      .single();
-    if (error) {
-      throw error;
-    }
-    return mapToTask(taskRow);
-  }
-
-  async updateTask(taskId: string, data: Partial<CreateTaskData>): Promise<Task> {
-    const { data: taskRow, error } = await supabase
-      .from('tasks')
-      .update({
-        ...data,
-        start_time: data.start_time ?? null,
-        estimated_time: data.estimated_time ?? null,
-        updated_at: new Date().toISOString(),
-      } as TaskUpdate)
-      .eq('id', taskId)
-      .select()
-      .single();
-    if (error) {
-      throw error;
-    }
-    return mapToTask(taskRow);
-  }
-
-  async deleteTask(taskId: string): Promise<void> {
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId);
-
-    if (error) {
-      throw error;
-    }
-  }
-
-  async getTask(taskId: string): Promise<Task> {
-    const { data: taskRow, error } = await supabase
-      .from('tasks')
-      .select()
-      .eq('id', taskId)
-      .single();
-    if (error) {
-      throw error;
-    }
-    return mapToTask(taskRow);
-  }
-
+export const taskService = {
   async getTasks(workspaceId: string, projectId?: string): Promise<Task[]> {
-    let query = supabase
+    const supabase = createClientComponentClient<Database>();
+    
+    try {
+      if (projectId) {
+        const { data: rows, error } = await supabase
+          .from('tasks')
+          .select(`
+            *,
+            project:projects(id, name, workspace_id),
+            created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+            assigned_to_user:profiles(id, email, full_name, avatar_url)
+          `)
+          .eq('project_id', projectId)
+          .is('deleted_at', null)
+          .order('position');
+
+        if (error) {
+          console.error('[TaskService] Erreur lors de la récupération des tâches:', error);
+          throw error;
+        }
+        return (rows as any[]).map(mapToTask);
+      }
+
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('workspace_id', workspaceId);
+
+      if (projectsError) {
+        console.error('[TaskService] Erreur lors de la récupération des projets:', projectsError);
+        throw projectsError;
+      }
+
+      if (!projects || projects.length === 0) {
+        return [];
+      }
+
+      const projectIds = projects.map(p => p.id);
+
+      const { data: rows, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          project:projects(id, name, workspace_id),
+          created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+          assigned_to_user:profiles(id, email, full_name, avatar_url)
+        `)
+        .in('project_id', projectIds)
+        .is('deleted_at', null)
+        .order('position');
+
+      if (error) {
+        console.error('[TaskService] Erreur lors de la récupération des tâches:', error);
+        throw error;
+      }
+      return (rows as any[]).map(mapToTask);
+    } catch (error) {
+      console.error('[TaskService] Erreur inattendue:', error);
+      throw error;
+    }
+  },
+
+  async getTask(id: string): Promise<Task> {
+    const supabase = createClientComponentClient<Database>();
+    const { data: taskRow, error } = await supabase
       .from('tasks')
-      .select()
-      .eq('workspace_id', workspaceId)
-      .order('position');
-    if (projectId) {
-      query = query.eq('project_id', projectId);
-    }
-    const { data: rows, error } = await query;
-    if (error) {
-      throw error;
-    }
-    return (rows as any[]).map(mapToTask);
-  }
+      .select(`
+        *,
+        project:projects(id, name),
+        created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+        assigned_to_user:profiles(id, email, full_name, avatar_url)
+      `)
+      .eq('id', id)
+      .single();
 
-  async reorderTasks(taskPositions: { id: string; position: number }[], projectId: string): Promise<void> {
-    const task_updates = taskPositions.map(tp => ({ id: tp.id, position: tp.position }));
+    if (error) throw error;
+    return mapToTask(taskRow);
+  },
+
+  async createTask(data: CreateTaskData): Promise<Task> {
+    const supabase = createClientComponentClient<Database>();
+    const { data: task, error } = await supabase
+      .from('tasks')
+      .insert(data)
+      .select(`
+        *,
+        project:projects(id, name),
+        created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+        assigned_to_user:profiles(id, email, full_name, avatar_url)
+      `)
+      .single();
+
+    if (error) throw error;
+    return mapToTask(task);
+  },
+
+  async updateTask(id: string, data: Partial<CreateTaskData>): Promise<Task> {
+    const supabase = createClientComponentClient<Database>();
+    const { data: task, error } = await supabase
+      .from('tasks')
+      .update(data)
+      .eq('id', id)
+      .select(`
+        *,
+        project:projects(id, name),
+        created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+        assigned_to_user:profiles(id, email, full_name, avatar_url)
+      `)
+      .single();
+
+    if (error) throw error;
+    return mapToTask(task);
+  },
+
+  async deleteTask(id: string): Promise<void> {
+    const supabase = createClientComponentClient<Database>();
     const { error } = await supabase
-      .rpc('reorder_tasks', { task_updates, project_id_param: projectId });
+      .from('tasks')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
   }
-}
-
-export const taskService = new TaskService(); 
+}; 

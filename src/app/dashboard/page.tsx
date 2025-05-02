@@ -10,6 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { statsService } from "@/lib/services/statsService";
 import { WorkspaceSelectorScreen } from '@/components/workspace/WorkspaceSelectorScreen';
 import { useSupabase } from '@/lib/supabase/supabase-provider';
+import { useState } from 'react';
+import { TopNav } from '@/components/layout/TopNav';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -88,63 +90,66 @@ export default function Dashboard() {
   ] : [];
 
   return (
-    <DashboardLayout>
-      <motion.div
-        variants={containerVariants}
-        initial="initial"
-        animate="animate"
-        className="container mx-auto p-6"
-      >
-        <motion.h1
-          variants={fadeInUp}
-          className="mb-8 text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500"
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-100 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+      <TopNav />
+      <div className="relative z-10 pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          variants={containerVariants}
+          initial="initial"
+          animate="animate"
+          className="p-0"
         >
-          Tableau de bord
-        </motion.h1>
+          <motion.h1
+            variants={fadeInUp}
+            className="mb-8 text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500"
+          >
+            Tableau de bord
+          </motion.h1>
 
-        {/* Statistiques */}
-        <motion.div variants={fadeInUp}>
-          <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
-            Statistiques de l'espace de travail actif
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Tâches terminées"
-              value={stats.completed}
-              icon={CheckCircle}
-            />
-            <StatsCard
-              title="En cours"
-              value={stats.current}
-              icon={Clock}
-            />
-            <StatsCard
-              title="En révision"
-              value={0}
-              icon={PenSquare}
-            />
-            <StatsCard
-              title="À faire"
-              value={stats.upcoming}
-              icon={Clock}
-            />
-          </div>
-        </motion.div>
+          {/* Statistiques */}
+          <motion.div variants={fadeInUp}>
+            <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
+              Statistiques de l'espace de travail actif
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                title="Tâches terminées"
+                value={stats.completed}
+                icon={CheckCircle}
+              />
+              <StatsCard
+                title="En cours"
+                value={stats.current}
+                icon={Clock}
+              />
+              <StatsCard
+                title="En révision"
+                value={0}
+                icon={PenSquare}
+              />
+              <StatsCard
+                title="À faire"
+                value={stats.upcoming}
+                icon={Clock}
+              />
+            </div>
+          </motion.div>
 
-        {/* Activités récentes */}
-        <motion.div variants={fadeInUp} className="mt-12">
-          <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
-            Activités
-          </h2>
-          {workspace ? (
-            <ActivityList activities={activities} />
-          ) : (
-            <p className="text-muted-foreground text-center py-8">
-              Sélectionnez un espace de travail pour voir les activités
-            </p>
-          )}
+          {/* Activités récentes */}
+          <motion.div variants={fadeInUp} className="mt-12">
+            <h2 className="mb-6 text-2xl font-semibold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-600 bg-clip-text text-transparent dark:from-white dark:via-purple-300 dark:to-purple-500">
+              Activités
+            </h2>
+            {workspace ? (
+              <ActivityList activities={activities} />
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                Sélectionnez un espace de travail pour voir les activités
+              </p>
+            )}
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </DashboardLayout>
+      </div>
+    </div>
   );
 } 

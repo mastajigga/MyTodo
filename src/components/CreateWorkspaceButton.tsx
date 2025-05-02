@@ -16,35 +16,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { workspaceService } from "@/services/workspace";
+import { workspaceService } from "@/lib/services/workspaceService";
 import { WorkspaceType } from "@/types/workspace";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { useSupabase } from "@/lib/supabase/useSupabase";
 
 export function CreateWorkspaceButton() {
+  const { supabase } = useSupabase();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<WorkspaceType>("personal");
+  const [type, setType] = useState<WorkspaceType>("family");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("Vous devez être connecté pour créer un espace de travail");
+      return;
+    }
     setLoading(true);
 
     try {
       await workspaceService.createWorkspace({
         name,
         type,
-        description
+        description: description.trim() ? description : null,
+        created_by: userId,
       });
       toast.success("Espace de travail créé avec succès");
       setOpen(false);
       setName("");
       setDescription("");
-      setType("personal");
+      setType("family");
     } catch (error) {
       console.error("Erreur lors de la création de l'espace de travail:", error);
       toast.error("Erreur lors de la création de l'espace de travail");
@@ -101,8 +119,9 @@ export function CreateWorkspaceButton() {
                 <SelectValue placeholder="Sélectionnez un type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="personal">Personnel</SelectItem>
-                <SelectItem value="team">Équipe</SelectItem>
+                <SelectItem value="family">Famille</SelectItem>
+                <SelectItem value="professional">Professionnel</SelectItem>
+                <SelectItem value="private">Privé</SelectItem>
               </SelectContent>
             </Select>
           </div>

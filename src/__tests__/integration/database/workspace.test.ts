@@ -15,7 +15,7 @@ describe('workspaceService', () => {
       const data: CreateWorkspaceData = {
         name: 'Test Workspace',
         description: 'Test Description',
-        type: 'personal'
+        type: 'private'
       }
 
       const workspace = await workspaceService.createWorkspace(data)
@@ -32,7 +32,7 @@ describe('workspaceService', () => {
       const data: CreateWorkspaceData = {
         name: 'Test Workspace',
         description: 'Test Description',
-        type: 'personal'
+        type: 'private'
       }
 
       const createdWorkspace = await workspaceService.createWorkspace(data)
@@ -48,7 +48,7 @@ describe('workspaceService', () => {
       const data: CreateWorkspaceData = {
         name: 'Test Workspace',
         description: 'Test Description',
-        type: 'personal'
+        type: 'private'
       }
 
       const createdWorkspace = await workspaceService.createWorkspace(data)
@@ -56,7 +56,7 @@ describe('workspaceService', () => {
       const updateData: UpdateWorkspaceData = {
         name: 'Updated Workspace',
         description: 'Updated Description',
-        type: 'team'
+        type: 'professional'
       }
 
       const updatedWorkspace = await workspaceService.updateWorkspace(createdWorkspace.id, updateData)
@@ -73,7 +73,7 @@ describe('workspaceService', () => {
       const data: CreateWorkspaceData = {
         name: 'Test Workspace',
         description: 'Test Description',
-        type: 'personal'
+        type: 'private'
       }
 
       const createdWorkspace = await workspaceService.createWorkspace(data)
@@ -89,7 +89,7 @@ describe('workspaceService', () => {
       const data: CreateWorkspaceData = {
         name: 'Test Workspace',
         description: 'Test Description',
-        type: 'personal'
+        type: 'private'
       }
 
       await workspaceService.createWorkspace(data)

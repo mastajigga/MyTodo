@@ -27,12 +27,6 @@ export default async function RootLayout({
   const { data: { session } } = await supabase.auth.getSession();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (user) {
-    logger.info('User logged in', { data: { userId: user.id } });
-  } else {
-    logger.info('Application started without user');
-  }
-
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>

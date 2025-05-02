@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useWorkspaceContext } from '@/contexts/workspace-context'
-import { TaskService } from '@/services/task.service'
+import { taskService } from '@/services/task.service'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Task } from '@/types/task'
+import { Task } from '@/@types/task'
 import { motion } from "framer-motion"
 import { CheckCircle2, Clock, ListTodo } from "lucide-react"
 
@@ -64,7 +64,7 @@ export function WorkspaceStats() {
     queryKey: ['workspace-tasks', workspace?.id],
     queryFn: async () => {
       if (!workspace?.id) return []
-      return TaskService.getWorkspaceTasks(workspace.id)
+      return taskService.getTasks(workspace.id)
     },
     enabled: !!workspace?.id,
   })

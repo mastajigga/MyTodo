@@ -1,28 +1,20 @@
 import { useState } from 'react'
-import { supabase } from '../supabase'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { toast } from 'sonner'
+import { Database } from '@/types/database.types'
 
-export type TaskTag = {
-  id: string
-  name: string
-  color: string
-  workspace_id: string
-  created_at: string
-  updated_at: string
-}
+type Tables = Database['public']['Tables']
+type TaskTagRow = Tables['task_tags']['Row']
+type TaskTagInsert = Tables['task_tags']['Insert']
+type TaskTagUpdate = Tables['task_tags']['Update']
 
-type CreateTaskTagData = {
-  name: string
-  color: string
-  workspace_id: string
-}
+export type TaskTag = TaskTagRow
 
-type UpdateTaskTagData = {
-  name: string
-  color: string
-}
+type CreateTaskTagData = Omit<TaskTagInsert, 'id' | 'created_at' | 'updated_at'>
+type UpdateTaskTagData = Omit<TaskTagUpdate, 'id' | 'workspace_id' | 'created_at' | 'updated_at'>
 
 export function useTaskTag() {
+  const { supabase } = useSupabase()
   const [loading, setLoading] = useState(false)
 
   const getTaskTags = async (workspaceId: string): Promise<TaskTag[]> => {
@@ -30,7 +22,7 @@ export function useTaskTag() {
       setLoading(true)
       const { data, error } = await supabase
         .from('task_tags')
-        .select('*')
+        .select()
         .eq('workspace_id', workspaceId)
         .order('name')
 
@@ -51,7 +43,12 @@ export function useTaskTag() {
       setLoading(true)
       const { data, error } = await supabase
         .from('task_tags')
-        .insert([tagData])
+        .insert([{
+          ...tagData,
+          color: tagData.color ?? '#3b82f6',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
         .select()
         .single()
 
@@ -73,7 +70,11 @@ export function useTaskTag() {
       setLoading(true)
       const { data, error } = await supabase
         .from('task_tags')
-        .update(tagData)
+        .update({
+          ...tagData,
+          color: tagData.color ?? '#3b82f6',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select()
         .single()
@@ -115,11 +116,24 @@ export function useTaskTag() {
   const assignTagToTask = async (taskId: string, tagId: string): Promise<boolean> => {
     try {
       setLoading(true)
-      const { error } = await supabase
-        .from('task_tag_assignments')
-        .insert([{ task_id: taskId, tag_id: tagId }])
+      // Mettre à jour le tableau tags de la tâche
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('tags')
+        .eq('id', taskId)
+        .single()
 
-      if (error) throw error
+      if (taskError) throw taskError
+
+      const currentTags = task.tags || []
+      if (!currentTags.includes(tagId)) {
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ tags: [...currentTags, tagId] })
+          .eq('id', taskId)
+
+        if (updateError) throw updateError
+      }
 
       return true
     } catch (error) {
@@ -134,12 +148,22 @@ export function useTaskTag() {
   const removeTagFromTask = async (taskId: string, tagId: string): Promise<boolean> => {
     try {
       setLoading(true)
-      const { error } = await supabase
-        .from('task_tag_assignments')
-        .delete()
-        .match({ task_id: taskId, tag_id: tagId })
+      // Retirer le tag du tableau tags de la tâche
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('tags')
+        .eq('id', taskId)
+        .single()
 
-      if (error) throw error
+      if (taskError) throw taskError
+
+      const currentTags = task.tags || []
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ tags: currentTags.filter(id => id !== tagId) })
+        .eq('id', taskId)
+
+      if (updateError) throw updateError
 
       return true
     } catch (error) {
@@ -154,14 +178,24 @@ export function useTaskTag() {
   const getTaskTagsByTaskId = async (taskId: string): Promise<TaskTag[]> => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('tags')
+        .eq('id', taskId)
+        .single()
+
+      if (taskError) throw taskError
+
+      if (!task.tags || task.tags.length === 0) return []
+
+      const { data: tags, error: tagsError } = await supabase
         .from('task_tags')
-        .select('*, task_tag_assignments!inner(*)')
-        .eq('task_tag_assignments.task_id', taskId)
+        .select()
+        .in('id', task.tags)
 
-      if (error) throw error
+      if (tagsError) throw tagsError
 
-      return data || []
+      return tags || []
     } catch (error) {
       console.error('Erreur lors de la récupération des étiquettes:', error)
       toast.error('Impossible de récupérer les étiquettes')

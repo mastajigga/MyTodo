@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
-import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
+import { SupabasePayload, SupabaseSubscription, supabase as defaultSupabase } from '@/lib/supabase/client';
 
 export const ProjectService = {
   async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
@@ -36,23 +36,29 @@ export const ProjectService = {
   },
 
   async getProject(id: string, supabase: SupabaseClient): Promise<Project> {
+    console.log('[ProjectService.getProject] Récupération du projet avec id:', id);
     const { data: project, error } = await supabase
       .from('projects')
       .select('*, tasks(*)')
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[ProjectService.getProject] Erreur:', error);
+      throw error;
+    }
+    console.log('[ProjectService.getProject] Projet récupéré:', project);
     return project;
   },
 
   async getWorkspaceProjects(workspaceId: string, supabase: SupabaseClient): Promise<Project[]> {
+    console.log('[ProjectService.getWorkspaceProjects] workspaceId utilisé :', workspaceId);
     const { data: projects, error } = await supabase
       .from('projects')
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
-
+    console.log('[ProjectService.getWorkspaceProjects] projets récupérés :', projects);
     if (error) throw error;
     return projects;
   },
@@ -87,8 +93,12 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabase: SupabaseClient): SupabaseSubscription {
-    return supabase
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient?: SupabaseClient): SupabaseSubscription {
+    const client = supabaseClient || defaultSupabase;
+    if (!client) {
+      throw new Error('Supabase client non initialisé');
+    }
+    return client
       .channel(`projects:${workspaceId}`)
       .on('postgres_changes', {
         event: '*',

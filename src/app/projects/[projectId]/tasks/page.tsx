@@ -3,41 +3,30 @@
 import { PageHeader } from '@/components/shared/PageHeader';
 import { TaskList } from '@/components/tasks/TaskList';
 import { useEffect, useState } from 'react';
-import { Task } from '@/types/task';
-import { taskService } from '@/lib/services/taskService';
-import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
+import { projectService } from '@/lib/services/projectService';
 
 export default function ProjectTasksPage() {
-  const { projectId } = useParams();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const params = useParams() as Record<string, string>;
+  const projectId = params?.projectId;
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (projectId) {
-      loadTasks();
-    }
+    const fetchProject = async () => {
+      if (!projectId) return;
+      setLoading(true);
+      try {
+        const project = await projectService.getProject(projectId);
+        setWorkspaceId(project?.workspace_id || null);
+      } catch (error) {
+        setWorkspaceId(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProject();
   }, [projectId]);
-
-  const loadTasks = async () => {
-    try {
-      const tasks = await taskService.getTasks(projectId as string);
-      setTasks(tasks);
-    } catch (error) {
-      toast.error('Erreur lors du chargement des tâches');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTaskMove = async (taskId: string, completed: boolean) => {
-    try {
-      await taskService.updateTaskStatus(taskId, completed ? 'done' : 'todo');
-      await loadTasks();
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour de la tâche');
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -46,12 +35,12 @@ export default function ProjectTasksPage() {
         description="Gérez et suivez les tâches de ce projet"
       />
       <div className="mt-8">
-        {isLoading ? (
+        {loading || !workspaceId ? (
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <TaskList tasks={tasks} onTaskMove={handleTaskMove} />
+          <TaskList workspaceId={workspaceId} />
         )}
       </div>
     </div>

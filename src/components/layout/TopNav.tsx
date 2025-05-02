@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,10 +13,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabase } from '@/lib/supabase/supabase-provider';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
 
 export function TopNav() {
   const { supabase } = useSupabase();
-  const user = supabase.auth.getUser();
+  const [user, setUser] = React.useState<any>(null);
+  const router = useRouter();
+  const isMobile = useIsMobile();
+
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data?.user || null);
+    });
+  }, [supabase]);
+
+  const fullName = user?.user_metadata?.full_name || user?.email || '';
+  const email = user?.email || '';
+  const initials = fullName
+    ? fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : (email[0] || '').toUpperCase();
 
   return (
     <div className="h-16 border-b bg-white px-6 flex items-center justify-between" data-testid="top-nav">
@@ -33,52 +60,7 @@ export function TopNav() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label="Notifications"
-          data-testid="notifications-button"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white" data-testid="notifications-count">
-            2
-          </span>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="relative h-8 w-8 rounded-full"
-              data-testid="user-menu-button"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                <AvatarFallback>UN</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none" data-testid="user-name">Utilisateur</p>
-                <p className="text-xs leading-none text-muted-foreground" data-testid="user-email">
-                  user@example.com
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem data-testid="profile-menu-item">
-              Profil
-            </DropdownMenuItem>
-            <DropdownMenuItem data-testid="settings-menu-item">
-              Paramètres
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Menu utilisateur déplacé dans la top bar principale */}
     </div>
   );
 } 

@@ -52,7 +52,6 @@ export function ImportTasks({ projectId, workspaceId, onSuccess }: ImportTasksPr
         await taskService.createTask({
           ...task,
           project_id: projectId,
-          workspace_id: workspaceId,
         });
       }
 

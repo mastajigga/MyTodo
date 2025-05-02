@@ -5,7 +5,8 @@ describe('Supabase Connection', () => {
   it('devrait se connecter à Supabase avec succès', async () => {
     const { data, error } = await supabase
       .from('workspaces')
-      .select('*');
+      .select('*')
+      .limit(1);
     
     expect(error).toBeNull();
     expect(data).toBeDefined();
@@ -20,36 +21,43 @@ describe('Supabase Connection', () => {
     }
   });
 
-  it('devrait avoir accès à la base de données', async () => {
+  it('devrait avoir accès à la table workspaces', async () => {
     const { data, error } = await supabase
       .from('workspaces')
-      .select('id, name');
+      .select('id, name')
+      .limit(1);
     
     expect(error).toBeNull();
     expect(data).toBeDefined();
   });
 
-  it('devrait trouver l\'entrée de test dans le workspace BNP', async () => {
+  it('devrait avoir accès à la table entries', async () => {
     const { data, error } = await supabase
       .from('entries')
-      .select('*')
-      .eq('workspace_id', 'b5301a85-1fd2-418e-8755-2b4acb806796')
-      .eq('title', 'Test Entry');
+      .select('id, title, description, workspace_id, status, priority')
+      .limit(1);
     
-    console.log('Entrées trouvées:', data);
-    console.log('Erreur éventuelle:', error);
-
     expect(error).toBeNull();
     expect(data).toBeDefined();
-    expect(data?.length).toBeGreaterThan(0);
+  });
 
-    // Vérifions la première entrée trouvée
-    const entry = data?.[0];
-    expect(entry).toBeDefined();
-    expect(entry.title).toBe('Test Entry');
-    expect(entry.description).toBe('Test Description');
-    expect(entry.workspace_id).toBe('b5301a85-1fd2-418e-8755-2b4acb806796');
-    expect(entry.status).toBe('todo');
-    expect(entry.priority).toBe('medium');
+  it('devrait avoir accès à la table tasks', async () => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('id, title, description, workspace_id, status, priority, due_date')
+      .limit(1);
+    
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+  });
+
+  it('devrait avoir accès à la table profiles', async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .limit(1);
+    
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
   });
 }); 

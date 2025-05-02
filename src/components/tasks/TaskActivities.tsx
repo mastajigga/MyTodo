@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { taskService } from '@/lib/services/taskService';
-import { TaskActivity } from '@/types/task';
+import { TaskActivity } from '@/@types/task';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';

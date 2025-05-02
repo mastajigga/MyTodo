@@ -1,23 +1,21 @@
 import { useState } from 'react'
 import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { toast } from 'sonner'
+import { Database } from '@/types/database.types'
 
-export type TaskList = {
-  id: string
-  name: string
-  description: string | null
-  workspace_id: string
-  created_by: string
-  created_at: string
-  updated_at: string
-  position: number
-}
+type Tables = Database['public']['Tables']
+type ProjectRow = Tables['projects']['Row']
+type ProjectInsert = Tables['projects']['Insert']
+type ProjectUpdate = Tables['projects']['Update']
 
+export type TaskList = ProjectRow
 export type CreateTaskListData = {
   name: string
-  description?: string
+  description?: string | null
   workspace_id: string
   position?: number
+  color?: string | null
+  status?: string | null
 }
 
 export type UpdateTaskListData = Partial<CreateTaskListData>
@@ -30,20 +28,24 @@ export const useTaskList = () => {
     try {
       setLoading(true)
       const { data: taskList, error } = await supabase
-        .from('task_lists')
+        .from('projects')
         .insert({
-          name: data.name,
-          description: data.description,
-          workspace_id: data.workspace_id,
-          position: data.position || 0,
+          ...data,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: data.status || 'active'
         })
-        .select('*')
+        .select()
         .single()
 
       if (error) throw error
 
       toast.success('Liste créée avec succès')
-      return taskList
+      return {
+        ...taskList,
+        status: (taskList as any).status || 'active',
+        owner_id: (taskList as any).owner_id || '',
+      } as TaskList
     } catch (error) {
       toast.error('Erreur lors de la création de la liste')
       console.error('Erreur lors de la création de la liste:', error)
@@ -57,14 +59,18 @@ export const useTaskList = () => {
     try {
       setLoading(true)
       const { data: taskLists, error } = await supabase
-        .from('task_lists')
-        .select('*')
+        .from('projects')
+        .select()
         .eq('workspace_id', workspaceId)
-        .order('position')
+        .order('created_at')
 
       if (error) throw error
 
-      return taskLists
+      return (taskLists || []).map((t) => ({
+        ...t,
+        status: (t as any).status || 'active',
+        owner_id: (t as any).owner_id || '',
+      })) as TaskList[]
     } catch (error) {
       toast.error('Erreur lors de la récupération des listes')
       console.error('Erreur lors de la récupération des listes:', error)
@@ -78,16 +84,24 @@ export const useTaskList = () => {
     try {
       setLoading(true)
       const { data: taskList, error } = await supabase
-        .from('task_lists')
-        .update(data)
+        .from('projects')
+        .update({
+          ...data,
+          updated_at: new Date().toISOString(),
+          status: data.status || 'active'
+        })
         .eq('id', id)
-        .select('*')
+        .select()
         .single()
 
       if (error) throw error
 
       toast.success('Liste mise à jour avec succès')
-      return taskList
+      return {
+        ...taskList,
+        status: (taskList as any).status || 'active',
+        owner_id: (taskList as any).owner_id || '',
+      } as TaskList
     } catch (error) {
       toast.error('Erreur lors de la mise à jour de la liste')
       console.error('Erreur lors de la mise à jour de la liste:', error)
@@ -101,7 +115,7 @@ export const useTaskList = () => {
     try {
       setLoading(true)
       const { error } = await supabase
-        .from('task_lists')
+        .from('projects')
         .delete()
         .eq('id', id)
 
@@ -121,15 +135,31 @@ export const useTaskList = () => {
   const reorderTaskLists = async (workspaceId: string, orderedIds: string[]): Promise<boolean> => {
     try {
       setLoading(true)
-      const updates = orderedIds.map((id, index) => ({
-        id,
-        position: index,
-      }))
+      
+      // Récupérer les projets existants
+      const { data: existingProjects, error: fetchError } = await supabase
+        .from('projects')
+        .select()
+        .in('id', orderedIds)
+
+      if (fetchError) throw fetchError
+      if (!existingProjects) throw new Error('Impossible de récupérer les projets')
+
+      // Créer les mises à jour en conservant toutes les propriétés existantes
+      const updates = orderedIds.map((id, index) => {
+        const existingProject = existingProjects.find(project => project.id === id)
+        if (!existingProject) throw new Error(`Projet non trouvé: ${id}`)
+        return {
+          ...existingProject,
+          updated_at: new Date().toISOString(),
+          status: (existingProject as any).status || 'active',
+          owner_id: (existingProject as any).owner_id || '',
+        }
+      })
 
       const { error } = await supabase
-        .from('task_lists')
+        .from('projects')
         .upsert(updates)
-        .eq('workspace_id', workspaceId)
 
       if (error) throw error
 

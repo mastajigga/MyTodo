@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { PathParams } from 'msw'
-import { Task, TaskPriority, TaskStatus } from '@/types/task'
+import type { Database } from '@/types/database.types'
 
 const user = {
   id: '1',
@@ -19,13 +19,13 @@ const projects = [
   }
 ]
 
-const tasks: Task[] = [
+const tasks: Database['public']['Tables']['tasks']['Row'][] = [
   {
     id: '1',
     title: 'Task 1',
     description: 'Description of task 1',
-    status: 'todo' as TaskStatus,
-    priority: 'medium' as TaskPriority,
+    status: 'todo',
+    priority: 'medium',
     project_id: '1',
     created_at: '2024-01-01T00:00:00.000Z',
     updated_at: '2024-01-01T00:00:00.000Z',
@@ -33,11 +33,36 @@ const tasks: Task[] = [
     created_by: '1',
     assigned_to: '1',
     position: 1,
-    created_by_user: user,
-    assigned_to_user: user,
-    project: projects[0]
+    workspace_id: '1',
+    deleted_at: null,
+    start_time: null,
+    estimated_time: null,
+    tags: [],
+  },
+  {
+    id: '2',
+    title: 'Task 2',
+    description: 'Description of task 2',
+    status: 'done',
+    priority: 'high',
+    project_id: '1',
+    created_at: '2024-01-01T00:00:00.000Z',
+    updated_at: '2024-01-01T00:00:00.000Z',
+    due_date: '2024-02-01T00:00:00.000Z',
+    created_by: '1',
+    assigned_to: '1',
+    position: 2,
+    workspace_id: '1',
+    deleted_at: null,
+    start_time: null,
+    estimated_time: null,
+    tags: [],
   }
 ]
+
+type Task = Database['public']['Tables']['tasks']['Row']
+type TaskStatus = Task['status']
+type TaskPriority = Task['priority']
 
 export const handlers = [
   http.post('/api/auth/login', () => {
@@ -70,29 +95,39 @@ export const handlers = [
         id: '1',
         title: 'Task 1',
         description: 'Description de la tâche 1',
-        status: 'todo' as TaskStatus,
-        priority: 'medium' as TaskPriority,
-        project_id: null,
+        status: 'todo',
+        priority: 'medium',
+        project_id: '1',
+        workspace_id: '1',
+        position: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        deleted_at: null,
         due_date: null,
+        start_time: null,
+        estimated_time: null,
         created_by: '1',
         assigned_to: '1',
-        position: 0
+        tags: []
       },
       {
         id: '2',
         title: 'Task 2',
         description: 'Description de la tâche 2',
-        status: 'done' as TaskStatus,
-        priority: 'high' as TaskPriority,
-        project_id: null,
+        status: 'done',
+        priority: 'high',
+        project_id: '1',
+        workspace_id: '1',
+        position: 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        deleted_at: null,
         due_date: null,
+        start_time: null,
+        estimated_time: null,
         created_by: '1',
         assigned_to: '1',
-        position: 1
+        tags: []
       }
     ]
     return HttpResponse.json(tasks)
@@ -111,15 +146,20 @@ export const handlers = [
       id: taskIdString,
       title: `Task ${taskIdString}`,
       description: `Description ${taskIdString}`,
-      status: 'todo' as TaskStatus,
-      priority: 'low' as TaskPriority,
+      status: 'todo',
+      priority: 'low',
       project_id: '1',
-      due_date: new Date().toISOString(),
-      created_by: '1',
-      assigned_to: '1',
+      workspace_id: '1',
       position: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      deleted_at: null,
+      due_date: new Date().toISOString(),
+      start_time: null,
+      estimated_time: null,
+      created_by: '1',
+      assigned_to: '1',
+      tags: []
     }
     return HttpResponse.json(task)
   }),
@@ -135,17 +175,22 @@ export const handlers = [
 
     const newTask: Task = {
       id: Math.random().toString(),
-      title: taskData.title,
-      description: taskData.description || '',
-      status: (taskData.status || 'todo') as TaskStatus,
-      priority: (taskData.priority || 'medium') as TaskPriority,
-      project_id: taskData.project_id || null,
+      title: taskData.title!,
+      description: taskData.description ?? '',
+      status: (taskData.status || 'todo'),
+      priority: (taskData.priority || 'medium'),
+      project_id: (taskData.project_id || '1'),
+      workspace_id: '1',
+      position: taskData.position || 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      deleted_at: null,
       due_date: taskData.due_date || null,
+      start_time: null,
+      estimated_time: null,
       created_by: taskData.created_by || '1',
       assigned_to: taskData.assigned_to || '1',
-      position: taskData.position || 0
+      tags: []
     }
     return HttpResponse.json({
       message: 'Tâche créée avec succès',
@@ -174,16 +219,21 @@ export const handlers = [
     const updatedTask: Task = {
       id: taskIdString,
       title: updates.title || '',
-      description: updates.description || '',
-      status: (updates.status || 'todo') as TaskStatus,
-      priority: (updates.priority || 'medium') as TaskPriority,
-      project_id: updates.project_id || null,
+      description: updates.description ?? '',
+      status: (updates.status || 'todo'),
+      priority: (updates.priority || 'medium'),
+      project_id: updates.project_id || '1',
+      workspace_id: '1',
+      position: updates.position || 0,
       created_at: updates.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      deleted_at: null,
       due_date: updates.due_date || null,
+      start_time: null,
+      estimated_time: null,
       created_by: updates.created_by || '1',
       assigned_to: updates.assigned_to || '1',
-      position: updates.position || 0
+      tags: []
     }
     return HttpResponse.json({
       message: 'Tâche mise à jour avec succès',

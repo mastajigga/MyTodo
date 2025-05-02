@@ -1,8 +1,8 @@
-import { WorkspaceType } from '@/@types/workspace';
+import { WorkspaceType } from '@/types/workspace';
 
 describe('WorkspaceType', () => {
   it('devrait accepter les valeurs valides', () => {
-    const validTypes: WorkspaceType[] = ['personal', 'team', 'family'];
+    const validTypes: WorkspaceType[] = ['private', 'professional', 'family'];
     validTypes.forEach(type => {
       // TypeScript vérifiera que chaque type est valide
       const workspace = {

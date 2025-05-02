@@ -95,7 +95,7 @@ export function ProjectList({ workspaceId, projects }: ProjectListProps) {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6"
         >
           {projects.map((project, index) => {
-            const safeProject = { ...project, description: project.description ?? null };
+            const safeProject = { ...project, description: project.description ?? null, status: project.status || 'in_progress' };
             return (
               <motion.div
                 key={safeProject.id}
@@ -192,7 +192,7 @@ export function ProjectList({ workspaceId, projects }: ProjectListProps) {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea {...field} />
+                      <Textarea {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

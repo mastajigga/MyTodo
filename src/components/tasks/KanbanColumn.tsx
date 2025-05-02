@@ -1,5 +1,5 @@
 import { DroppableProvided, Draggable } from '@hello-pangea/dnd';
-import { KanbanColumn as IKanbanColumn } from '@/types/task';
+import { KanbanColumn as IKanbanColumn } from '@/@types/task';
 import { TaskCard } from './TaskCard';
 import { cn } from '@/lib/utils';
 

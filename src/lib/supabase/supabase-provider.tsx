@@ -2,7 +2,7 @@
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { Database } from '../database.types'
 import type { User } from '@supabase/auth-helpers-nextjs'
 
@@ -18,32 +18,37 @@ export default function SupabaseProvider({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClientComponentClient<Database>()
   const router = useRouter()
+  
+  // Créer une seule instance du client Supabase
+  const supabase = useMemo(() => createClientComponentClient<Database>(), [])
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     console.log('[DEBUG] Initialisation du provider Supabase');
+    let mounted = true;
+
     const fetchUser = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
+        if (!mounted) return;
+
         if (!sessionData?.session) {
-          if (typeof window === 'undefined') {
-            // Serveur
-            console.info('[SERVEUR] Utilisateur non connecté');
-          } else {
-            // Client
-            console.log('[CLIENT] Utilisateur non connecté');
-          }
+          console.log('[CLIENT] Utilisateur non connecté');
           setUser(null);
           return;
         }
+
         const { data: { user }, error } = await supabase.auth.getUser();
+        if (!mounted) return;
+        
         if (error) throw error;
         setUser(user);
       } catch (error) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-        setUser(null);
+        if (mounted) {
+          setUser(null);
+        }
       }
     };
 
@@ -51,37 +56,49 @@ export default function SupabaseProvider({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[DEBUG] Changement d\'état d\'authentification:', event);
+      
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
-          if (typeof window === 'undefined') {
-            console.info('[SERVEUR] Utilisateur non connecté');
-          } else {
-            console.log('[CLIENT] Utilisateur non connecté');
+        if (!session) {
+          console.log('[CLIENT] Session invalide après connexion');
+          if (mounted) {
+            setUser(null);
+            router.refresh();
           }
-          setUser(null);
-          router.refresh();
           return;
         }
+
         const { data: { user }, error } = await supabase.auth.getUser();
+        if (!mounted) return;
+
         if (!error && user) {
           setUser(user);
           router.refresh();
         }
       } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        router.refresh();
+        if (mounted) {
+          setUser(null);
+          router.refresh();
+        }
       }
     });
 
     return () => {
-      subscription.unsubscribe()
+      mounted = false;
+      subscription.unsubscribe();
     }
-  }, [router, supabase])
+  }, [router, supabase]) // supabase est maintenant stable grâce à useMemo
 
   useEffect(() => {
-    console.log('[DEBUG] Utilisateur dans le provider :', user);
+    if (user) {
+      console.log('[DEBUG] Utilisateur dans le provider :', {
+        id: user.id,
+        email: user.email
+      });
+    } else {
+      console.log('[DEBUG] Utilisateur dans le provider : null');
+    }
   }, [user]);
 
   return (

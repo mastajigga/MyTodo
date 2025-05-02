@@ -1,0 +1,1 @@
+export type WorkspaceType = 'family' | 'professional' | 'private' 

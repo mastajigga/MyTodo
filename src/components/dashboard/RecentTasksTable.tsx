@@ -15,7 +15,7 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
-import { Task, TaskStatus } from '@/types/task'
+import { Task, TaskStatus } from '@/@types/task'
 
 const statusMap = {
   todo: { label: 'À faire', color: 'bg-blue-500' },

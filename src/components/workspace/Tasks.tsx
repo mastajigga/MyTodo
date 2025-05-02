@@ -23,6 +23,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider'
+import { useSupabase } from '@/lib/supabase/useSupabase'
 
 type TasksProps = {
   listId: string
@@ -30,6 +31,7 @@ type TasksProps = {
 }
 
 export function Tasks({ listId, workspaceId }: TasksProps) {
+  const { supabase } = useSupabase()
   const { loading, getTasks, createTask, updateTask, deleteTask, reorderTasks } = useTask()
   const [tasks, setTasks] = useState<Task[]>([])
   const { openCreateTaskDialog } = useCreateTaskDialog()
@@ -38,23 +40,50 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
   const [newTaskDueDate, setNewTaskDueDate] = useState<string>('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+        console.log('[Tasks] UID utilisateur connecté:', user.id)
+      } else {
+        console.log('[Tasks] Aucun utilisateur connecté')
+      }
+    }
+    getCurrentUser()
+  }, [supabase.auth])
 
   useEffect(() => {
     loadTasks()
-  }, [listId])
+  }, [listId, workspaceId])
 
   const loadTasks = async () => {
-    const fetchedTasks = await getTasks(listId)
+    console.log('[Tasks] Chargement des tâches pour projectId (listId):', listId, 'et workspaceId:', workspaceId)
+    const fetchedTasks = await getTasks(workspaceId, listId)
+    console.log('[Tasks] Tâches brutes reçues:', fetchedTasks)
     setTasks(fetchedTasks)
   }
 
   const handleCreateTask = async (taskData: any) => {
+    if (!userId) {
+      console.error("L'utilisateur doit être connecté pour créer une tâche")
+      return
+    }
+
     const newTask = await createTask({
-      ...taskData,
-      list_id: listId,
+      title: taskData.title ?? '',
+      description: taskData.description ?? null,
+      status: 'todo',
+      priority: 'medium',
+      due_date: taskData.due_date ?? null,
+      start_time: null,
+      estimated_time: null,
       workspace_id: workspaceId,
-      position: tasks.length,
-      completed: false,
+      position: 0,
+      created_by: userId,
+      project_id: listId // listId représente project_id dans ce contexte
     })
 
     if (newTask) {
@@ -69,7 +98,6 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
       title: editingTask.title,
       description: editingTask.description || undefined,
       due_date: editingTask.due_date || undefined,
-      completed: editingTask.completed,
     })
 
     if (updatedTask) {
@@ -88,18 +116,8 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
   }
 
   const handleToggleComplete = async (task: Task) => {
-    const updatedTask = await updateTask(task.id, {
-      ...task,
-      description: task.description ?? undefined,
-      due_date: task.due_date ?? undefined,
-      completed: !task.completed,
-    })
-
-    if (updatedTask) {
-      setTasks(tasks.map(t => 
-        t.id === updatedTask.id ? updatedTask : t
-      ))
-    }
+    // suppression du toggle completed car 'completed' n'existe pas
+    // const updatedTask = await updateTask(task.id, { ... })
   }
 
   const handleDragEnd = async (result: any) => {
@@ -147,14 +165,10 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                       className={cn(
-                        "bg-white dark:bg-gray-800 p-3 rounded-lg shadow flex items-start gap-3",
-                        task.completed && "opacity-60"
+                        "bg-white dark:bg-gray-800 p-3 rounded-lg shadow flex items-start gap-3"
                       )}
                     >
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={() => handleToggleComplete(task)}
-                      />
+                      {/* Checkbox supprimée car 'completed' n'existe pas sur Task */}
                       <div className="flex-1 min-w-0">
                         {editingTask?.id === task.id ? (
                           <div className="space-y-2">
@@ -202,8 +216,7 @@ export function Tasks({ listId, workspaceId }: TasksProps) {
                         ) : (
                           <div>
                             <h4 className={cn(
-                              "font-medium truncate",
-                              task.completed && "line-through"
+                              "font-medium truncate"
                             )}>
                               {task.title}
                             </h4>

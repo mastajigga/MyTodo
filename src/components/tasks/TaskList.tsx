@@ -1,123 +1,115 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState } from 'react';
-import { Task } from '@/types/task';
-import { TaskCard } from './TaskCard';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { cn } from '@/lib/utils';
-import { STATUS_COLUMNS } from '@/lib/constants/task';
-import { useTasksByStatus } from '@/hooks/useTasksByStatus';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { PRIORITY_COLORS } from '@/lib/constants/task';
-import { TASK_PRIORITY_MAP } from '@/types/common';
-import { Info } from 'lucide-react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '../../types/supabase';
+import type { Task } from '../../types/task';
 
-export interface TaskListProps {
-  tasks: Task[];
-  onTaskMove?: (taskId: string, completed: boolean) => void;
-}
+export const TaskList = ({ workspaceId }: { workspaceId: string }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<Task['status'] | null>(null);
+  const [prioritySort, setPrioritySort] = useState<'asc' | 'desc' | null>(null);
+  const supabase = createClientComponentClient<Database>();
 
-/**
- * TaskList component displays tasks in a kanban board layout with drag and drop functionality
- * @component
- * @param {TaskListProps} props - Component props
- * @param {Task[]} props.tasks - Array of tasks to display
- * @param {Function} props.onTaskMove - Callback function when a task is moved
- * @returns {JSX.Element | null} Rendered task list or null if not enabled
- */
-export const TaskList = ({ tasks, onTaskMove }: TaskListProps) => {
-  const [enabled, setEnabled] = useState(false);
-  const tasksByStatus = useTasksByStatus(tasks);
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
-
-  // Enable drag and drop only on client side
   useEffect(() => {
-    setEnabled(true);
-  }, []);
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact' })
+          .eq('workspace_id', workspaceId)
+          .order('created_at', { ascending: false });
 
-  if (!enabled) {
-    return null;
-  }
+        if (error) throw error;
+        setTasks(data || []);
+      } catch (err) {
+        setError('Erreur lors du chargement des tâches');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    onTaskMove?.(result.draggableId, false);
-  };
+    fetchTasks();
+  }, [workspaceId, supabase]);
 
-  const handleTaskToggle = (taskId: string) => {
-    const newCompletedTasks = new Set(completedTasks);
-    if (completedTasks.has(taskId)) {
-      newCompletedTasks.delete(taskId);
-    } else {
-      newCompletedTasks.add(taskId);
-    }
-    setCompletedTasks(newCompletedTasks);
-    onTaskMove?.(taskId, !completedTasks.has(taskId));
-  };
+  if (loading) return <div>Chargement...</div>;
+  if (error) return <div>{error}</div>;
+  if (tasks.length === 0) return <div>Aucune tâche disponible</div>;
+
+  const filteredTasks = tasks
+    .filter(task => 
+      (!statusFilter || task.status === statusFilter) &&
+      (!searchQuery || task.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (!prioritySort) return 0;
+      const priorityOrder: Record<Task['priority'], number> = { 
+        low: 1, 
+        medium: 2, 
+        high: 3, 
+        urgent: 4 
+      };
+      return prioritySort === 'asc' 
+        ? priorityOrder[a.priority] - priorityOrder[b.priority]
+        : priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
 
   return (
     <div className="space-y-4">
-      {tasks.map((task) => {
-        const isAutoShifted = !!task.start_time && typeof task.estimated_time === 'number' && task.estimated_time > 0;
-        return (
-          <Card key={task.id} className="p-4">
-            <div className="flex items-center space-x-4">
-              <Checkbox
-                checked={completedTasks.has(task.id)}
-                onCheckedChange={() => handleTaskToggle(task.id)}
-                aria-label={`Marquer la tâche "${task.title}" comme ${completedTasks.has(task.id) ? 'non terminée' : 'terminée'}`}
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className={`font-medium ${completedTasks.has(task.id) ? 'line-through text-muted-foreground' : ''}`}>{task.title}</h3>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'transition-colors',
-                      PRIORITY_COLORS[task.priority],
-                      task.priority === 'urgent' && 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/20'
-                    )}
-                    aria-label={`Priorité ${TASK_PRIORITY_MAP[task.priority]}`}
-                  >
-                    {TASK_PRIORITY_MAP[task.priority]}
-                  </Badge>
-                  {isAutoShifted && (
-                    <Badge
-                      variant="secondary"
-                      className="ml-1 flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200"
-                      aria-label="Tâche automatiquement décalée pour éviter un chevauchement"
-                      title="Cette tâche a été automatiquement décalée pour éviter un chevauchement."
-                    >
-                      <Info className="h-3 w-3" />
-                      Décalée
-                    </Badge>
-                  )}
+      <div className="flex gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Rechercher"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="px-4 py-2 border rounded"
+          aria-label="Rechercher une tâche"
+        />
+        
+        <button
+          onClick={() => setStatusFilter(statusFilter === 'todo' ? null : 'todo')}
+          className="px-4 py-2 border rounded"
+          aria-label="Filtrer par statut"
+        >
+          Filtrer
+        </button>
+        
+        <button
+          onClick={() => setPrioritySort(prioritySort === 'asc' ? 'desc' : 'asc')}
+          className="px-4 py-2 border rounded"
+          aria-label="Trier par priorité"
+        >
+          Trier par priorité
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {filteredTasks.map((task: Task) => (
+          <div key={task.id} className="p-4 border rounded">
+            <h3 className="text-lg font-semibold">{task.title}</h3>
+            <div className="mt-2 space-y-2">
+              <p>Statut: {task.status === 'todo' ? 'À faire' : task.status === 'in_progress' ? 'En cours' : 'Terminé'}</p>
+              <p>Priorité: {task.priority}</p>
+              {task.assignee && <p>Assigné à: {task.assignee.full_name}</p>}
+              {task.due_date && <p>Date limite: {new Date(task.due_date).toLocaleDateString()}</p>}
+              {task.tags.length > 0 && (
+                <div className="flex gap-2">
+                  {task.tags.map((tag: string) => (
+                    <span key={tag} className="px-2 py-1 text-sm bg-gray-100 rounded">
+                      {tag}
+                    </span>
+                  ))}
                 </div>
-                {task.start_time && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Débute : {new Date(task.start_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
-                  </p>
-                )}
-                {typeof task.estimated_time === 'number' && task.estimated_time > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Durée estimée : {Math.floor(task.estimated_time / 60)}h{task.estimated_time % 60}m
-                  </p>
-                )}
-                {task.description && (
-                  <p className={`text-sm ${completedTasks.has(task.id) ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>{task.description}</p>
-                )}
-              </div>
+              )}
             </div>
-          </Card>
-        );
-      })}
-      {tasks.length === 0 && (
-        <div className="text-center text-muted-foreground py-8">
-          Aucune tâche à afficher
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }; 

@@ -1,55 +1,37 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { TaskStatus, TaskPriority } from '@/types/task'
+import { Database } from '@/types/database.types'
 
-export type Task = {
-  id: string
-  title: string
-  description: string | null
-  status: TaskStatus
-  priority: TaskPriority
-  due_date: string | null
-  created_at: string
-  updated_at: string
-  created_by: string
-  assigned_to: string | null
-  project_id: string
-  position: number
-}
+type Tables = Database['public']['Tables']
+type TaskRow = Tables['tasks']['Row']
+type TaskInsert = Tables['tasks']['Insert']
+type TaskUpdate = Tables['tasks']['Update']
 
-type CreateTaskData = {
-  title: string
-  description?: string
-  due_date?: string
-  list_id: string
-  workspace_id: string
-  position: number
-  completed: boolean
-}
-
-type UpdateTaskData = {
-  title: string
-  description?: string
-  due_date?: string
-  completed: boolean
-}
+export type Task = TaskRow
 
 export function useTask() {
   const [loading, setLoading] = useState(false)
 
-  const getTasks = async (listId: string): Promise<Task[]> => {
+  const getTasks = async (workspaceId: string, projectId?: string): Promise<Task[]> => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      let query = supabase
         .from('tasks')
         .select('*')
-        .eq('list_id', listId)
-        .order('position')
+        .eq('workspace_id', workspaceId)
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: false })
+
+      if (projectId && projectId !== 'all') {
+        query = query.eq('project_id', projectId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
 
-      return data || []
+      return data as Task[]
     } catch (error) {
       console.error('Erreur lors de la récupération des tâches:', error)
       toast.error('Impossible de récupérer les tâches')
@@ -59,7 +41,7 @@ export function useTask() {
     }
   }
 
-  const createTask = async (taskData: CreateTaskData): Promise<Task | null> => {
+  const createTask = async (taskData: TaskInsert): Promise<Task | null> => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -71,7 +53,7 @@ export function useTask() {
       if (error) throw error
 
       toast.success('Tâche créée avec succès')
-      return data
+      return data as Task
     } catch (error) {
       console.error('Erreur lors de la création de la tâche:', error)
       toast.error('Impossible de créer la tâche')
@@ -81,7 +63,7 @@ export function useTask() {
     }
   }
 
-  const updateTask = async (id: string, taskData: UpdateTaskData): Promise<Task | null> => {
+  const updateTask = async (id: string, taskData: TaskUpdate): Promise<Task | null> => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -94,7 +76,7 @@ export function useTask() {
       if (error) throw error
 
       toast.success('Tâche mise à jour avec succès')
-      return data
+      return data as Task
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la tâche:', error)
       toast.error('Impossible de mettre à jour la tâche')
@@ -125,21 +107,38 @@ export function useTask() {
     }
   }
 
-  const reorderTasks = async (listId: string, taskIds: string[]): Promise<boolean> => {
+  const reorderTasks = async (workspaceId: string, taskIds: string[]): Promise<boolean> => {
     try {
       setLoading(true)
-      const updates = taskIds.map((id, index) => ({
-        id,
-        position: index,
-      }))
+      
+      // D'abord, récupérer les tâches existantes
+      const { data: existingTasks, error: fetchError } = await supabase
+        .from('tasks')
+        .select('*')
+        .in('id', taskIds)
 
-      const { error } = await supabase.rpc('reorder_tasks', {
-        task_updates: updates,
-        list_id_param: listId,
+      if (fetchError) throw fetchError
+      if (!existingTasks) throw new Error('Impossible de récupérer les tâches')
+
+      // Créer les mises à jour en conservant toutes les propriétés existantes
+      const updates = taskIds.map((id, index) => {
+        const existingTask = existingTasks.find(task => task.id === id)
+        if (!existingTask) throw new Error(`Tâche non trouvée: ${id}`)
+        
+        return {
+          ...existingTask,
+          position: index,
+          updated_at: new Date().toISOString()
+        }
       })
+
+      const { error } = await supabase
+        .from('tasks')
+        .upsert(updates)
 
       if (error) throw error
 
+      toast.success('Ordre des tâches mis à jour')
       return true
     } catch (error) {
       console.error('Erreur lors de la réorganisation des tâches:', error)
@@ -156,6 +155,6 @@ export function useTask() {
     createTask,
     updateTask,
     deleteTask,
-    reorderTasks,
+    reorderTasks
   }
 } 

@@ -157,7 +157,7 @@ export function Sidebar() {
 
       // Suppression de tous les cookies du domaine
       document.cookie.split(';').forEach((c) => {
-        const cookieName = c.split('=')[0].trim();
+        const cookieName = (c.split('=')[0] || '').trim();
         document.cookie = `${cookieName}=; Max-Age=0; path=/;`;
       });
 
@@ -190,10 +190,7 @@ export function Sidebar() {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Version desktop */}
-      <div className="hidden md:flex fixed h-full w-64 flex-col bg-gray-900" data-testid="sidebar">
-        <NavContent pathname={pathname} onLogout={handleLogout} />
-      </div>
+      {/* Version desktop : remplacée par TopBarNavigation */}
 
       {/* Version mobile avec animation */}
       <AnimatePresence>
@@ -217,7 +214,7 @@ export function Sidebar() {
               variants={sidebarVariants}
               className="fixed inset-y-0 left-0 z-[95] w-64 bg-gray-900 shadow-xl flex flex-col"
             >
-              <NavContent pathname={pathname} onLogout={handleLogout} />
+              <NavContent pathname={pathname || ''} onLogout={handleLogout} />
             </motion.div>
           </>
         )}

@@ -6,7 +6,7 @@ const WorkspaceSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
-  type: z.enum(['family', 'team', 'personal']),
+  type: z.enum(['family', 'professional', 'private']),
   owner_id: z.string(),
   created_by: z.string(),
   created_at: z.string(),

@@ -2,7 +2,7 @@
 
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useState } from 'react';
-import { Task, KanbanColumn, DEFAULT_KANBAN_COLUMNS, TaskStatus } from '@/types/task';
+import { Task, KanbanColumn, TaskStatus, DEFAULT_KANBAN_COLUMNS } from '@/@types/task';
 import { taskService } from '@/lib/services/taskService';
 import { KanbanColumn as Column } from './KanbanColumn';
 import { toast } from 'sonner';
@@ -12,7 +12,13 @@ interface TaskBoardProps {
 }
 
 export function TaskBoard({ projectId }: TaskBoardProps) {
-  const [columns, setColumns] = useState<KanbanColumn[]>(DEFAULT_KANBAN_COLUMNS as KanbanColumn[]);
+  const [columns, setColumns] = useState<KanbanColumn[]>(() => 
+    DEFAULT_KANBAN_COLUMNS.map(col => ({ 
+      ...col, 
+      id: col.id as TaskStatus,
+      tasks: [] 
+    }))
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTasks = useCallback(async () => {
@@ -23,7 +29,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
         ...column,
         id: column.id as TaskStatus,
         tasks: tasks.filter((task) => task.status === column.id)
-      })) as KanbanColumn[];
+      }));
       setColumns(updatedColumns);
     } catch (error) {
       toast.error('Impossible de charger les tâches');

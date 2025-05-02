@@ -1,19 +1,178 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TasksView } from '@/components/tasks/TasksView';
+import { TaskList } from '@/components/tasks/TaskList';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { TasksView } from '@/components/tasks/TasksView';
+import { Database } from '@/lib/database.types';
+import { Task, TaskStatus, TaskPriority } from '@/@types/task';
+import { TasksPageClient } from '@/components/tasks/TasksPageClient';
 
 export default async function TasksPage() {
-  const supabase = createServerComponentClient({ cookies });
-  
-  const { data: tasks, error } = await supabase
-    .from('tasks')
-    .select('*, project:projects(name)')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Erreur lors de la récupération des tâches:', error);
-    return <div>Une erreur est survenue lors du chargement des tâches.</div>;
+  const supabase = createServerComponentClient<Database>({ cookies });
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return <div>Une erreur est survenue lors du chargement de l'utilisateur.</div>;
   }
 
-  return <TasksView tasks={tasks} />;
+  type WorkspaceMemberWithWorkspace = { workspace: { id: string } };
+  const { data: workspaces, error: workspacesError } = await supabase
+    .from('workspace_members')
+    .select(`workspace:workspaces!workspace_id(id)`)
+    .eq('user_id', user.id)
+    .eq('workspace_id', 'b5301a85-1fd2-418e-8755-2b4acb806796')
+    .single<WorkspaceMemberWithWorkspace>();
+  if (workspacesError) {
+    return <div>Une erreur est survenue lors du chargement du workspace.</div>;
+  }
+  if (!workspaces?.workspace?.id) {
+    return <div>Aucun workspace disponible.</div>;
+  }
+  const workspaceId = workspaces.workspace.id;
+
+  type Project = { id: string; name: string };
+  const { data: projects, error: projectsError } = await supabase
+    .from('projects')
+    .select('id, name')
+    .eq('workspace_id', workspaceId)
+    .returns<Project[]>();
+  if (projectsError) {
+    return <div>Une erreur est survenue lors du chargement des projets.</div>;
+  }
+  const projectIds = projects.map(project => project.id);
+  if (projectIds.length === 0) {
+    return (
+      <div className="container py-8">
+        <Header />
+        <Card className="backdrop-blur-sm bg-card/50 mt-8">
+          <CardHeader className="space-y-1">
+            <CardTitle>Gestion des tâches</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-6">Aucun projet disponible.</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  type TaskWithRelations = {
+    id: string;
+    title: string;
+    description: string | null;
+    status: string;
+    priority: string;
+    project_id: string;
+    position: number;
+    created_by: string;
+    assigned_to: string | null;
+    due_date: string | null;
+    created_at: string;
+    updated_at: string;
+    tags: string[] | null;
+    deleted_at: string | null;
+    start_time: string | null;
+    estimated_time: number | null;
+    created_by_user: {
+      id: string;
+      email: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    } | null;
+    assigned_to_user: {
+      id: string;
+      email: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    } | null;
+    project: {
+      id: string;
+      name: string;
+      workspace_id: string;
+    } | null;
+  };
+
+  const { data: tasksData, error } = await supabase
+    .from('tasks')
+    .select(`
+      id,
+      title,
+      description,
+      status,
+      priority,
+      project_id,
+      position,
+      created_by,
+      assigned_to,
+      due_date,
+      created_at,
+      updated_at,
+      tags,
+      deleted_at,
+      start_time,
+      estimated_time,
+      created_by_user:profiles!created_by(id, email, full_name, avatar_url),
+      assigned_to_user:profiles!assigned_to(id, email, full_name, avatar_url),
+      project:projects!project_id(id, name, workspace_id)
+    `)
+    .in('project_id', projectIds)
+    .is('deleted_at', null)
+    .order('position')
+    .returns<TaskWithRelations[]>();
+  if (error) {
+    return <div>Une erreur est survenue lors du chargement des tâches.</div>;
+  }
+  const tasks = tasksData?.map(task => ({
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status as TaskStatus,
+    priority: task.priority as TaskPriority,
+    project_id: task.project_id,
+    workspace_id: task.project?.workspace_id || workspaceId,
+    position: task.position,
+    created_at: task.created_at,
+    updated_at: task.updated_at,
+    deleted_at: task.deleted_at,
+    due_date: task.due_date,
+    start_time: task.start_time,
+    estimated_time: task.estimated_time,
+    created_by: task.created_by,
+    assigned_to: task.assigned_to,
+    tags: task.tags,
+    created_by_user: task.created_by_user ? {
+      id: task.created_by_user.id,
+      email: task.created_by_user.email,
+      full_name: task.created_by_user.full_name,
+      avatar_url: task.created_by_user.avatar_url
+    } : undefined,
+    assigned_to_user: task.assigned_to_user ? {
+      id: task.assigned_to_user.id,
+      email: task.assigned_to_user.email,
+      full_name: task.assigned_to_user.full_name,
+      avatar_url: task.assigned_to_user.avatar_url
+    } : null,
+    project: task.project ? {
+      id: task.project.id,
+      name: task.project.name,
+      workspace_id: task.project.workspace_id
+    } : undefined
+  })) || [];
+
+  return (
+    <TasksPageClient tasks={tasks} workspaceId={workspaceId} />
+  );
+}
+
+function Header() {
+  return (
+    <div className="relative mb-12 animate-fade-in">
+      <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-600 bg-clip-text text-transparent animate-gradient-x">
+        Mes tâches
+      </h1>
+      <p className="mt-2 text-muted-foreground animate-fade-in delay-100">Toutes vos tâches, organisées par projet.</p>
+      <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full animate-gradient-x" />
+      <div className="absolute -bottom-2 left-0 w-32 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full blur-sm animate-gradient-x" />
+    </div>
+  );
 } 

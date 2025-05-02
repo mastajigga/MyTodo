@@ -181,7 +181,7 @@ export function TaskLists({ workspaceId }: TaskListsProps) {
                                 onChange={(e) =>
                                   setEditingList({
                                     ...editingList,
-                                    description: e.target.value || null,
+                                    description: e.target.value || undefined,
                                   })
                                 }
                               />
