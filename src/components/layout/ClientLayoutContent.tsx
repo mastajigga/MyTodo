@@ -27,6 +27,10 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
     }
   }, [isAuthPage, session, router])
 
+  if (!isAuthPage && !session) {
+    return null
+  }
+
   if (isAuthPage) {
     return (
       <SupabaseProvider>

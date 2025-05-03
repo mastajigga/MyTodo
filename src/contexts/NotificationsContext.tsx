@@ -17,7 +17,6 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
   const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
-    console.debug('[NotificationsProvider] user:', user)
     if (!user) {
       // Cleanup si user devient null
       if (subscriptionRef.current) {
