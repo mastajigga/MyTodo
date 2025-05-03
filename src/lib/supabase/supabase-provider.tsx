@@ -31,6 +31,7 @@ export default function SupabaseProvider({
     const fetchUser = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
+        console.log('[DEBUG] Session récupérée:', sessionData);
         if (!mounted) return;
 
         if (!sessionData?.session) {
@@ -89,6 +90,17 @@ export default function SupabaseProvider({
       subscription.unsubscribe();
     }
   }, [router, supabase]) // supabase est maintenant stable grâce à useMemo
+
+  // Forcer une récupération de session après 2 secondes si user est toujours null
+  useEffect(() => {
+    if (user !== null) return;
+    const timeout = setTimeout(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        console.log('[DEBUG] Session forcée après délai:', data);
+      });
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [user, supabase]);
 
   useEffect(() => {
     if (user) {
