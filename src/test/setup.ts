@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom'
 import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import * as matchers from '@testing-library/jest-dom/matchers'
+// import * as matchers from '@testing-library/jest-dom/matchers' // supprimé car non compatible v5+
 import { TextEncoder, TextDecoder } from 'util'
 import { mockSupabase, resetSupabaseMocks } from './mocks/supabase'
 import { AuthError } from '@supabase/supabase-js'
-
-expect.extend(matchers)
 
 // Mock des API du navigateur
 global.TextEncoder = TextEncoder
