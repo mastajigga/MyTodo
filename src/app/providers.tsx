@@ -6,6 +6,7 @@ import { WorkspaceProvider } from '@/contexts/workspace-context';
 import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider';
 import { KeyboardShortcutsProvider } from '@/components/providers/KeyboardShortcutsProvider';
 import { useState } from 'react';
+import SupabaseProvider from '@/lib/supabase/supabase-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -19,21 +20,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }));
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <KeyboardShortcutsProvider>
-          <WorkspaceProvider>
-            <CreateTaskDialogProvider>
-              {children}
-            </CreateTaskDialogProvider>
-          </WorkspaceProvider>
-        </KeyboardShortcutsProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SupabaseProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <KeyboardShortcutsProvider>
+            <WorkspaceProvider>
+              <CreateTaskDialogProvider>
+                {children}
+              </CreateTaskDialogProvider>
+            </WorkspaceProvider>
+          </KeyboardShortcutsProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SupabaseProvider>
   );
 } 
