@@ -1,6 +1,3 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase as useProviderSupabase } from './supabase-provider';
 
-export function useSupabase() {
-  const supabase = createClientComponentClient();
-  return { supabase };
-} 
+export const useSupabase = useProviderSupabase; 

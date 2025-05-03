@@ -1,10 +1,12 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+// import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 import { Workspace, WorkspaceInsert, WorkspaceUpdate } from '@/types/workspace';
 
-const supabase = createClientComponentClient();
+// const supabase = createClientComponentClient();
 
 export const workspaceService = {
-  async create(workspace: WorkspaceInsert): Promise<Workspace> {
+  async create(workspace: WorkspaceInsert, supabase: SupabaseClient<Database>): Promise<Workspace> {
     try {
       const { data, error } = await supabase
         .from('workspaces')
@@ -20,7 +22,7 @@ export const workspaceService = {
     }
   },
 
-  async update(id: string, workspace: WorkspaceUpdate): Promise<Workspace> {
+  async update(id: string, workspace: WorkspaceUpdate, supabase: SupabaseClient<Database>): Promise<Workspace> {
     try {
       const { data, error } = await supabase
         .from('workspaces')
@@ -37,7 +39,7 @@ export const workspaceService = {
     }
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, supabase: SupabaseClient<Database>): Promise<void> {
     try {
       const { error } = await supabase
         .from('workspaces')
@@ -51,7 +53,7 @@ export const workspaceService = {
     }
   },
 
-  async getById(id: string): Promise<Workspace | null> {
+  async getById(id: string, supabase: SupabaseClient<Database>): Promise<Workspace | null> {
     try {
       const { data, error } = await supabase
         .from('workspaces')
@@ -67,7 +69,7 @@ export const workspaceService = {
     }
   },
 
-  async getAll(): Promise<Workspace[]> {
+  async getAll(supabase: SupabaseClient<Database>): Promise<Workspace[]> {
     try {
       const { data, error } = await supabase
         .from('workspaces')
@@ -81,7 +83,7 @@ export const workspaceService = {
     }
   },
 
-  async getByUserId(userId: string): Promise<Workspace[]> {
+  async getByUserId(userId: string, supabase: SupabaseClient<Database>): Promise<Workspace[]> {
     try {
       const { data, error } = await supabase
         .from('workspaces')
@@ -96,7 +98,7 @@ export const workspaceService = {
     }
   },
 
-  async getWorkspaceMembers(workspaceId: string) {
+  async getWorkspaceMembers(workspaceId: string, supabase: SupabaseClient<Database>) {
     const { data, error } = await supabase
       .from('workspace_members')
       .select(`

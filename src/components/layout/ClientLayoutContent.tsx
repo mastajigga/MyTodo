@@ -34,15 +34,9 @@ export function ClientLayoutContent({ session, children }: ClientLayoutContentPr
   if (isAuthPage) {
     return (
       <SupabaseProvider>
-        <NotificationsProvider>
-          <QueryProvider>
-            <WorkspaceProvider>
-              <CreateTaskDialogProvider>
-                {children}
-              </CreateTaskDialogProvider>
-            </WorkspaceProvider>
-          </QueryProvider>
-        </NotificationsProvider>
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </SupabaseProvider>
     )
   }

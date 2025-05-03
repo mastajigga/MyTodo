@@ -2,13 +2,13 @@
 
 import { LogOut, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
 
 export function SignOutButton() {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
   const router = useRouter();
 
   const handleSignOut = async () => {

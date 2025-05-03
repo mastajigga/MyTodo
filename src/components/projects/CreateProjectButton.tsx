@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { Plus } from 'lucide-react';
 
 export function CreateProjectButton() {
@@ -22,7 +22,7 @@ export function CreateProjectButton() {
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

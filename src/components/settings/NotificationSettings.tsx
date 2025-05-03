@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 export function NotificationSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [taskReminders, setTaskReminders] = useState(true);
   const [projectUpdates, setProjectUpdates] = useState(true);
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

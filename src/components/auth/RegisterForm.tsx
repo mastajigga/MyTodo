@@ -5,10 +5,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
@@ -25,7 +25,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
 
   const {
     register,

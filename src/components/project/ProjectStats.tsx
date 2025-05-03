@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { Card } from '@/components/ui/card';
 import { Loader2, Users, FolderGit2, Clock, CheckCircle2 } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export default function ProjectStats() {
     completedProjects: 0
   });
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   useEffect(() => {
     async function fetchStats() {

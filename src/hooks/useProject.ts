@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { ProjectService } from '@/services/project.service';
 import { Project } from '@/types/project';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 export const useProject = (projectId: string) => {
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   const {
     data: project,

@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { AuthError } from '@supabase/supabase-js'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 const loginSchema = z.object({
   email: z.string().min(1, "L'email est requis").email('Email invalide'),
@@ -36,7 +36,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
 
   const {
     register,

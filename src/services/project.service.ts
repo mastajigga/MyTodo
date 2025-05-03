@@ -1,6 +1,6 @@
-import { SupabaseClient } from '@supabase/auth-helpers-nextjs';
+import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
-import { SupabasePayload, SupabaseSubscription, supabase as defaultSupabase } from '@/lib/supabase/client';
+import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
 
 export const ProjectService = {
   async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
@@ -93,12 +93,8 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient?: SupabaseClient): SupabaseSubscription {
-    const client = supabaseClient || defaultSupabase;
-    if (!client) {
-      throw new Error('Supabase client non initialisé');
-    }
-    return client
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient: SupabaseClient): SupabaseSubscription {
+    return supabaseClient
       .channel(`projects:${workspaceId}`)
       .on('postgres_changes', {
         event: '*',

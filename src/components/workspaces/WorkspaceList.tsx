@@ -7,9 +7,9 @@ import { WorkspaceType, Workspace } from '@/types/workspace';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 import { useWorkspaceContext } from '@/contexts/workspace-context';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 const container = {
   hidden: { opacity: 0 },

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Workspace } from '@/types/workspace';
 import {
   AlertDialog,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 interface DeleteWorkspaceDialogProps {
   workspace: Workspace;
@@ -31,7 +31,7 @@ export function DeleteWorkspaceDialog({
 }: DeleteWorkspaceDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   async function handleDelete() {
     try {

@@ -1,8 +1,9 @@
-import { supabase, type SupabasePayload, type SupabaseSubscription } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
 
 export const notificationService = {
-  async getNotifications(userId: string): Promise<Notification[]> {
+  async getNotifications(supabase: SupabaseClient, userId: string): Promise<Notification[]> {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
@@ -13,7 +14,7 @@ export const notificationService = {
     return data
   },
 
-  async createNotification(notificationData: CreateNotificationData): Promise<Notification> {
+  async createNotification(supabase: SupabaseClient, notificationData: CreateNotificationData): Promise<Notification> {
     const { data, error } = await supabase
       .from('notifications')
       .insert(notificationData)
@@ -24,7 +25,7 @@ export const notificationService = {
     return data
   },
 
-  async updateNotification(id: string, notificationData: UpdateNotificationData): Promise<Notification> {
+  async updateNotification(supabase: SupabaseClient, id: string, notificationData: UpdateNotificationData): Promise<Notification> {
     const { data, error } = await supabase
       .from('notifications')
       .update(notificationData)
@@ -36,7 +37,7 @@ export const notificationService = {
     return data
   },
 
-  async deleteNotification(id: string): Promise<void> {
+  async deleteNotification(supabase: SupabaseClient, id: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .delete()
@@ -45,7 +46,7 @@ export const notificationService = {
     if (error) throw error
   },
 
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(supabase: SupabaseClient, userId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -55,7 +56,11 @@ export const notificationService = {
     if (error) throw error
   },
 
-  subscribeToNotifications(userId: string, callback: (notification: Notification) => void): SupabaseSubscription {
+  subscribeToNotifications(
+    supabase: SupabaseClient,
+    userId: string,
+    callback: (notification: Notification) => void
+  ): SupabaseSubscription {
     return supabase
       .channel(`notifications:${userId}`)
       .on('postgres_changes', {
@@ -69,3 +74,4 @@ export const notificationService = {
       .subscribe()
   }
 } 
+//comment

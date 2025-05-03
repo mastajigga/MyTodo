@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import type { Database } from '../../types/supabase';
 import type { Task } from '../../types/task';
 
@@ -13,7 +13,7 @@ export const TaskList = ({ workspaceId }: { workspaceId: string }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Task['status'] | null>(null);
   const [prioritySort, setPrioritySort] = useState<'asc' | 'desc' | null>(null);
-  const supabase = createClientComponentClient<Database>();
+  const { supabase } = useSupabase();
 
   useEffect(() => {
     const fetchTasks = async () => {

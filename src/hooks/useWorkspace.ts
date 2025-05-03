@@ -3,11 +3,11 @@
 import { useContext } from 'react';
 import { WorkspaceContext } from '@/contexts/workspace-context';
 import type { Workspace, CreateWorkspaceData } from '@/types/supabase';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 export function useWorkspace() {
   const context = useContext(WorkspaceContext);
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
   
   if (!context) {
     throw new Error('useWorkspace must be used within a WorkspaceProvider');

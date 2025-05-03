@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { useAuth } from '@/lib/auth/useAuth'
 import {
   Table,
@@ -42,7 +42,7 @@ const getStatusConfig = (status: TaskStatus) => {
 }
 
 export function RecentTasksTable() {
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
   const { user } = useAuth()
 
   const { data: tasks, isLoading, error } = useQuery({

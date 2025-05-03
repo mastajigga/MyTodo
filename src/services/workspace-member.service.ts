@@ -1,6 +1,6 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-
-const supabase = createClientComponentClient();
+// import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
 export interface WorkspaceMember {
   id: string;
@@ -20,7 +20,7 @@ export interface InviteData {
 }
 
 export const WorkspaceMemberService = {
-  async getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+  async getWorkspaceMembers(workspaceId: string, supabase: SupabaseClient<Database>): Promise<WorkspaceMember[]> {
     const { data: members, error } = await supabase
       .from('workspace_members')
       .select(`
@@ -43,7 +43,7 @@ export const WorkspaceMemberService = {
     }));
   },
 
-  async inviteToWorkspace({ workspaceId, email }: InviteData): Promise<void> {
+  async inviteToWorkspace({ workspaceId, email }: InviteData, supabase: SupabaseClient<Database>): Promise<void> {
     // Vérifier si l'utilisateur existe
     const { data: user, error: userError } = await supabase
       .from('users')
@@ -79,7 +79,7 @@ export const WorkspaceMemberService = {
     if (addError) throw addError;
   },
 
-  async addWorkspaceMember(workspaceId: string, email: string, role: WorkspaceMember['role']): Promise<WorkspaceMember> {
+  async addWorkspaceMember(workspaceId: string, email: string, role: WorkspaceMember['role'], supabase: SupabaseClient<Database>): Promise<WorkspaceMember> {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id')
@@ -102,7 +102,7 @@ export const WorkspaceMemberService = {
     return member;
   },
 
-  async updateMemberRole(memberId: string, role: WorkspaceMember['role']): Promise<WorkspaceMember> {
+  async updateMemberRole(memberId: string, role: WorkspaceMember['role'], supabase: SupabaseClient<Database>): Promise<WorkspaceMember> {
     const { data: member, error } = await supabase
       .from('workspace_members')
       .update({ role })
@@ -114,7 +114,7 @@ export const WorkspaceMemberService = {
     return member;
   },
 
-  async removeWorkspaceMember(memberId: string): Promise<void> {
+  async removeWorkspaceMember(memberId: string, supabase: SupabaseClient<Database>): Promise<void> {
     const { error } = await supabase
       .from('workspace_members')
       .delete()

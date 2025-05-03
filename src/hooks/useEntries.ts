@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { EntryService } from '@/services/entry.service'
 import { Entry } from '@/@types/entry'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { SupabasePayload } from '@/lib/supabase/client'
 
 export function useEntries(workspaceId: string) {
   const queryClient = useQueryClient()
   const [realtimeEnabled, setRealtimeEnabled] = useState(true)
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
 
   const {
     data: entries = [],

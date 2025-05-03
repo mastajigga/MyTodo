@@ -11,7 +11,7 @@ interface NotificationsContextType {
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined)
 
 export const NotificationsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useSupabase()
+  const { supabase, user } = useSupabase()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const subscriptionRef = useRef<any>(null)
@@ -27,7 +27,7 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
       return
     }
     let active = true
-    notificationService.getNotifications(user.id).then(data => {
+    notificationService.getNotifications(supabase, user.id).then(data => {
       if (active) setNotifications(data)
     })
     // Cleanup ancienne souscription si elle existe
@@ -36,7 +36,7 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
       subscriptionRef.current = null
     }
     // Nouvelle souscription
-    subscriptionRef.current = notificationService.subscribeToNotifications(user.id, (notif) => {
+    subscriptionRef.current = notificationService.subscribeToNotifications(supabase, user.id, (notif) => {
       setNotifications(prev => [notif, ...prev])
     })
     return () => {
@@ -46,7 +46,7 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
         subscriptionRef.current = null
       }
     }
-  }, [user])
+  }, [user, supabase])
 
   useEffect(() => {
     setUnreadCount(notifications.filter(n => !n.read).length)
@@ -64,3 +64,5 @@ export const useNotificationsContext = () => {
   if (!ctx) throw new Error('useNotificationsContext must be used within NotificationsProvider')
   return ctx
 } 
+
+//comment

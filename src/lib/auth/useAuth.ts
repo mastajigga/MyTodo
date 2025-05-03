@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs'
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
   const router = useRouter()
 
   const fetchUser = useCallback(async () => {

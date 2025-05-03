@@ -5,14 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSupabase } from '@/lib/supabase/supabase-provider';
 
 export function ProfileSettings() {
   const { user } = useSupabase();
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

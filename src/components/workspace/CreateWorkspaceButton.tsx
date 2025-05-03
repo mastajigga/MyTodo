@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { Plus } from 'lucide-react';
 import { WorkspaceType } from '@/types/workspace';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,7 +32,7 @@ export function CreateWorkspaceButton() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<WorkspaceType>('private');
-  const supabase = createClientComponentClient();
+  const { supabase } = useSupabase();
   const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

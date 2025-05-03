@@ -1,6 +1,7 @@
 import { Database } from '../../lib/database.types';
-import { supabase } from '@/lib/supabase/client';
+// import { supabase } from '@/lib/supabase/client';
 import { commitGit } from '../utils/gitUtils'
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type Project = Database['public']['Tables']['projects']['Row'];
 export type ProjectFormValues = {
@@ -11,7 +12,7 @@ export type ProjectFormValues = {
 export type ProjectUpdate = Database['public']['Tables']['projects']['Update'];
 
 export const projectService = {
-  async getProjects(workspaceId?: string) {
+  async getProjects(supabase: SupabaseClient, workspaceId?: string) {
     let query = supabase
       .from('projects')
       .select(`
@@ -33,7 +34,7 @@ export const projectService = {
     return data;
   },
 
-  async getProject(id: string) {
+  async getProject(supabase: SupabaseClient, id: string) {
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -50,7 +51,7 @@ export const projectService = {
     return data;
   },
 
-  async createProject(project: ProjectFormValues) {
+  async createProject(supabase: SupabaseClient, project: ProjectFormValues) {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -87,7 +88,7 @@ export const projectService = {
     return data;
   },
 
-  async updateProject(id: string, project: ProjectUpdate) {
+  async updateProject(supabase: SupabaseClient, id: string, project: ProjectUpdate) {
     const { data, error } = await supabase
       .from('projects')
       .update(project)
@@ -105,7 +106,7 @@ export const projectService = {
     return data;
   },
 
-  async deleteProject(id: string) {
+  async deleteProject(supabase: SupabaseClient, id: string) {
     const { error } = await supabase
       .from('projects')
       .delete()
@@ -116,7 +117,7 @@ export const projectService = {
     }
   },
 
-  async getProjectById(id: string) {
+  async getProjectById(supabase: SupabaseClient, id: string) {
     const { data, error } = await supabase
       .from('projects')
       .select(`

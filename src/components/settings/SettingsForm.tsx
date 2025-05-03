@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ type SettingsFormData = z.infer<typeof settingsSchema>
 
 export function SettingsForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClientComponentClient()
+  const { supabase } = useSupabase()
   const router = useRouter()
 
   const form = useForm<SettingsFormData>({

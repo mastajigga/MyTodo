@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useSupabase } from '@/lib/supabase/supabase-provider'
 
-const supabase = createClientComponentClient();
+const { supabase } = useSupabase();
 
 interface ProjectActivity {
   id: string;
