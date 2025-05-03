@@ -160,7 +160,7 @@ export function useTaskTag() {
       const currentTags = task.tags || []
       const { error: updateError } = await supabase
         .from('tasks')
-        .update({ tags: currentTags.filter(id => id !== tagId) })
+        .update({ tags: currentTags.filter((id: string) => id !== tagId) })
         .eq('id', taskId)
 
       if (updateError) throw updateError

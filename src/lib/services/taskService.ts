@@ -42,6 +42,13 @@ function mapToTask(row: any): Task {
   };
 }
 
+function isUser(user: any): user is { id: string; email: string; full_name?: string; avatar_url?: string } {
+  return user && typeof user === 'object'
+    && typeof user.id === 'string'
+    && typeof user.email === 'string'
+    && !('message' in user);
+}
+
 export const taskService = {
   async getTasks(projectId: string) {
     let query = supabase
@@ -322,7 +329,11 @@ export const taskService = {
     }
 
     return (data || []).map(activity => {
-      const base = {
+      let user: TaskActivity['user'] = undefined;
+      if (isUser(activity.user)) {
+        user = activity.user as TaskActivity['user'];
+      }
+      return {
         id: activity.id,
         task_id: activity.task_id,
         task_title: activity.task_title,
@@ -331,10 +342,9 @@ export const taskService = {
         new_status: activity.new_status || undefined,
         user_id: activity.user_id,
         created_at: activity.created_at,
-        user: activity.user && !Array.isArray(activity.user) ? activity.user : undefined,
+        user,
         // updated_at: activity.updated_at ?? undefined,
       };
-      return base;
     });
   },
 

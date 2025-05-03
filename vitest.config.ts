@@ -1,10 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import * as react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [(react as any)()],
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
