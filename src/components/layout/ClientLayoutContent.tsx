@@ -7,8 +7,9 @@ import { WorkspaceProvider } from '@/contexts/workspace-context'
 import { CreateTaskDialogProvider } from '@/components/providers/CreateTaskDialogProvider'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBarNavigation } from '@/components/layout/TopBarNavigation'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { NotificationsProvider } from '@/contexts/NotificationsContext'
+import { useEffect } from 'react'
 
 interface ClientLayoutContentProps {
   session: Session | null
@@ -17,7 +18,14 @@ interface ClientLayoutContentProps {
 
 export function ClientLayoutContent({ session, children }: ClientLayoutContentProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const isAuthPage = pathname?.startsWith('/auth')
+
+  useEffect(() => {
+    if (!isAuthPage && !session) {
+      router.replace('/auth/login')
+    }
+  }, [isAuthPage, session, router])
 
   if (isAuthPage) {
     return (
