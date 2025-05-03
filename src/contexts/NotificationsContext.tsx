@@ -1,3 +1,4 @@
+// Ligne ajoutée pour forcer la synchro MCP
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { notificationService } from '@/services/notificationService'
 import { Notification } from '@/@types/notification'
@@ -63,6 +64,4 @@ export const useNotificationsContext = () => {
   const ctx = useContext(NotificationsContext)
   if (!ctx) throw new Error('useNotificationsContext must be used within NotificationsProvider')
   return ctx
-} 
-
-//comment
+}

@@ -1,3 +1,4 @@
+// Ligne ajoutée pour forcer la synchro MCP
 'use client'
 
 import { Session } from '@supabase/supabase-js'
