@@ -94,15 +94,22 @@ export const ProjectService = {
   },
 
   subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient: SupabaseClient): SupabaseSubscription {
-    return supabaseClient
-      .channel(`projects:${workspaceId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'projects',
-        filter: `workspace_id=eq.${workspaceId}`
-      }, (payload: SupabasePayload) => {
-        callback(payload.new as Project);
+    return (supabaseClient as any)
+      .from('projects')
+      .on('INSERT', (payload: any) => {
+        if (payload.new && payload.new.workspace_id === workspaceId) {
+          callback(payload.new as Project);
+        }
+      })
+      .on('UPDATE', (payload: any) => {
+        if (payload.new && payload.new.workspace_id === workspaceId) {
+          callback(payload.new as Project);
+        }
+      })
+      .on('DELETE', (payload: any) => {
+        if (payload.old && payload.old.workspace_id === workspaceId) {
+          callback(payload.old as Project);
+        }
       })
       .subscribe();
   },

@@ -52,16 +52,22 @@ export const EntryService = {
   },
 
   subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription {
-    return supabase
-      .channel(`entries:${workspaceId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'entries',
-        filter: `workspace_id=eq.${workspaceId}`
-      }, (payload: SupabasePayload) => {
-        console.log('Changement détecté:', payload)
-        callback(payload.new as Entry)
+    return (supabase as any)
+      .from('entries')
+      .on('INSERT', (payload: any) => {
+        if (payload.new && payload.new.workspace_id === workspaceId) {
+          callback(payload.new as Entry)
+        }
+      })
+      .on('UPDATE', (payload: any) => {
+        if (payload.new && payload.new.workspace_id === workspaceId) {
+          callback(payload.new as Entry)
+        }
+      })
+      .on('DELETE', (payload: any) => {
+        if (payload.old && payload.old.workspace_id === workspaceId) {
+          callback(payload.old as Entry)
+        }
       })
       .subscribe()
   }

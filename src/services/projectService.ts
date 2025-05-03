@@ -78,25 +78,38 @@ export async function deleteProject(id: string, supabase: SupabaseClient): Promi
 }
 
 export function subscribeToProjects(workspaceId: string, callback: (projects: Project[]) => void, supabase: SupabaseClient): () => void {
-  const subscription = supabase.channel('projects_channel')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'projects',
-        filter: `workspace_id=eq.${workspaceId}`
-      },
-      async () => {
-        const { data } = await supabase.from('projects')
+  const subscription = (supabase as any)
+    .from('projects')
+    .on('INSERT', (payload: any) => {
+      if (payload.new && payload.new.workspace_id === workspaceId) {
+        supabase.from('projects')
           .select('*')
           .eq('workspace_id', workspaceId)
-        
-        if (data) {
-          callback(data)
-        }
+          .then(({ data }) => {
+            if (data) callback(data)
+          })
       }
-    )
+    })
+    .on('UPDATE', (payload: any) => {
+      if (payload.new && payload.new.workspace_id === workspaceId) {
+        supabase.from('projects')
+          .select('*')
+          .eq('workspace_id', workspaceId)
+          .then(({ data }) => {
+            if (data) callback(data)
+          })
+      }
+    })
+    .on('DELETE', (payload: any) => {
+      if (payload.old && payload.old.workspace_id === workspaceId) {
+        supabase.from('projects')
+          .select('*')
+          .eq('workspace_id', workspaceId)
+          .then(({ data }) => {
+            if (data) callback(data)
+          })
+      }
+    })
     .subscribe()
 
   return () => {

@@ -61,15 +61,22 @@ export const notificationService = {
     userId: string,
     callback: (notification: Notification) => void
   ): SupabaseSubscription {
-    return supabase
-      .channel(`notifications:${userId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`
-      }, (payload: SupabasePayload) => {
-        callback(payload.new as Notification)
+    return (supabase as any)
+      .from('notifications')
+      .on('INSERT', (payload: any) => {
+        if (payload.new && payload.new.user_id === userId) {
+          callback(payload.new as Notification)
+        }
+      })
+      .on('UPDATE', (payload: any) => {
+        if (payload.new && payload.new.user_id === userId) {
+          callback(payload.new as Notification)
+        }
+      })
+      .on('DELETE', (payload: any) => {
+        if (payload.old && payload.old.user_id === userId) {
+          callback(payload.old as Notification)
+        }
       })
       .subscribe()
   }
