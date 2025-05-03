@@ -1,3 +1,4 @@
+// Ligne ajoutée pour forcer la synchro MCP
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { notificationService } from '@/services/notificationService'
 import { Notification } from '@/@types/notification'
