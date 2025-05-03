@@ -78,6 +78,10 @@ export async function deleteProject(id: string, supabase: SupabaseClient): Promi
 }
 
 export function subscribeToProjects(workspaceId: string, callback: (projects: Project[]) => void, supabase: SupabaseClient): () => void {
+  if (!supabase || typeof (supabase as any).from !== 'function') {
+    console.error('[subscribeToProjects] supabase est undefined ou mal initialisé');
+    return () => {};
+  }
   const subscription = (supabase as any)
     .from('projects')
     .on('INSERT', (payload: any) => {

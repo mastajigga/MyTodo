@@ -60,7 +60,11 @@ export const notificationService = {
     supabase: SupabaseClient,
     userId: string,
     callback: (notification: Notification) => void
-  ): SupabaseSubscription {
+  ): SupabaseSubscription | undefined {
+    if (!supabase || typeof (supabase as any).from !== 'function') {
+      console.error('[subscribeToNotifications] supabase est undefined ou mal initialisé');
+      return;
+    }
     return (supabase as any)
       .from('notifications')
       .on('INSERT', (payload: any) => {

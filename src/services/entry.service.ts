@@ -51,7 +51,11 @@ export const EntryService = {
     if (error) throw error
   },
 
-  subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription {
+  subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription | undefined {
+    if (!supabase || typeof (supabase as any).from !== 'function') {
+      console.error('[subscribeToEntries] supabase est undefined ou mal initialisé');
+      return;
+    }
     return (supabase as any)
       .from('entries')
       .on('INSERT', (payload: any) => {

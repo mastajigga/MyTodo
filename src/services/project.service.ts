@@ -93,7 +93,11 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient: SupabaseClient): SupabaseSubscription {
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient: SupabaseClient): SupabaseSubscription | undefined {
+    if (!supabaseClient || typeof (supabaseClient as any).from !== 'function') {
+      console.error('[subscribeToProjects] supabaseClient est undefined ou mal initialisé');
+      return;
+    }
     return (supabaseClient as any)
       .from('projects')
       .on('INSERT', (payload: any) => {

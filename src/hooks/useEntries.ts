@@ -34,7 +34,7 @@ export function useEntries(workspaceId: string) {
 
   // Mise en place de la synchronisation en temps réel
   useEffect(() => {
-    if (!realtimeEnabled || !workspaceId) return
+    if (!realtimeEnabled || !workspaceId || !supabase || typeof (supabase as any).from !== 'function') return
 
     const subscription = EntryService.subscribeToEntries(supabase, workspaceId, (payload: Entry) => {
       console.log('Changement détecté:', payload)
@@ -42,9 +42,11 @@ export function useEntries(workspaceId: string) {
     })
 
     return () => {
-      subscription.unsubscribe()
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe()
+      }
     }
-  }, [workspaceId, queryClient, realtimeEnabled])
+  }, [workspaceId, queryClient, realtimeEnabled, supabase])
 
   // Statistiques pour les KPIs
   const doneEntries = entries.filter(entry => entry.status === 'done');

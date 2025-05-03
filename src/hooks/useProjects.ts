@@ -62,16 +62,18 @@ export function useProjects(workspaceId: string) {
   })
 
   useEffect(() => {
-    if (!realtimeEnabled) return
+    if (!realtimeEnabled || !supabase || typeof (supabase as any).from !== 'function') return;
 
     const subscription = ProjectService.subscribeToProjects(workspaceId, () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
-    })
+    }, supabase)
 
     return () => {
-      subscription.unsubscribe()
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe()
+      }
     }
-  }, [workspaceId, queryClient, realtimeEnabled])
+  }, [workspaceId, queryClient, realtimeEnabled, supabase])
 
   return {
     projects,
