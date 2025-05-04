@@ -54,7 +54,7 @@ export const EntryService = {
 
   subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription | undefined {
     return supabaseRealtime
-      .channel('entries_realtime')
+      .channel(`entries_realtime_${workspaceId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

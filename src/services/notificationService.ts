@@ -63,7 +63,7 @@ export const notificationService = {
     callback: (notification: Notification) => void
   ): SupabaseSubscription | undefined {
     return supabaseRealtime
-      .channel('notifications_realtime')
+      .channel(`notifications_realtime_${userId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

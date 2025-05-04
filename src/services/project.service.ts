@@ -96,7 +96,7 @@ export const ProjectService = {
 
   subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
     return supabaseRealtime
-      .channel('projects_realtime')
+      .channel(`projects_realtime_${workspaceId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
