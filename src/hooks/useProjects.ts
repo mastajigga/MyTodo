@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProjectService } from '@/services/project.service'
 import { Project, CreateProjectData, UpdateProjectData } from '@/@types/project'
@@ -10,6 +10,7 @@ export function useProjects(workspaceId: string) {
   const queryClient = useQueryClient()
   const [realtimeEnabled, setRealtimeEnabled] = useState(true)
   const { supabase } = useSupabase();
+  const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
     if (!supabase) return;
@@ -62,18 +63,25 @@ export function useProjects(workspaceId: string) {
   })
 
   useEffect(() => {
-    if (!realtimeEnabled || !supabase || typeof (supabase as any).from !== 'function') return;
-
-    const subscription = ProjectService.subscribeToProjects(workspaceId, () => {
+    if (!realtimeEnabled || !workspaceId) return;
+    // Cleanup avant nouvelle souscription
+    if (subscriptionRef.current) {
+      console.debug('[useProjects] Cleanup ancienne souscription realtime')
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    console.debug('[useProjects] Nouvelle souscription realtime pour workspaceId', workspaceId)
+    subscriptionRef.current = ProjectService.subscribeToProjects(workspaceId, () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
-    }, supabase)
-
+    })
     return () => {
-      if (subscription && typeof subscription.unsubscribe === 'function') {
-        subscription.unsubscribe()
+      if (subscriptionRef.current) {
+        console.debug('[useProjects] Cleanup souscription realtime au démontage')
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
       }
     }
-  }, [workspaceId, queryClient, realtimeEnabled, supabase])
+  }, [workspaceId, queryClient, realtimeEnabled])
 
   return {
     projects,
