@@ -30,7 +30,7 @@ describe('ProjectService', () => {
       queryBuilder.eq.mockReturnThis();
       queryBuilder.single.mockResolvedValue(createMockSupabaseResponse(mockProject));
 
-      const result = await ProjectService.getProject('1');
+      const result = await ProjectService.getProject('1', mockSupabaseClient);
       expect(result).toEqual(mockProject);
     });
   });

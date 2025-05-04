@@ -63,23 +63,21 @@ export const notificationService = {
     callback: (notification: Notification) => void
   ): SupabaseSubscription | undefined {
     const channelName = `notifications_realtime_${userId}`;
-    const channel = getOrCreateChannel(channelName);
-    channel.on('postgres_changes', {
+    const onConfig = {
       event: '*',
       schema: 'public',
       table: 'notifications',
       filter: `user_id=eq.${userId}`
-    }, (payload: SupabasePayload) => {
+    };
+    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Notification)
       } else if (payload.old) {
         callback(payload.old as Notification)
       }
     });
-    channel.subscribe();
     return {
       unsubscribe: () => {
-        channel.unsubscribe();
         removeChannel(channelName);
       }
     } as SupabaseSubscription;

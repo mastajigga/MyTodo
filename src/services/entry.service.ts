@@ -54,23 +54,21 @@ export const EntryService = {
 
   subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription | undefined {
     const channelName = `entries_realtime_${workspaceId}`;
-    const channel = getOrCreateChannel(channelName);
-    channel.on('postgres_changes', {
+    const onConfig = {
       event: '*',
       schema: 'public',
       table: 'entries',
       filter: `workspace_id=eq.${workspaceId}`
-    }, (payload: SupabasePayload) => {
+    };
+    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Entry)
       } else if (payload.old) {
         callback(payload.old as Entry)
       }
     });
-    channel.subscribe();
     return {
       unsubscribe: () => {
-        channel.unsubscribe();
         removeChannel(channelName);
       }
     } as SupabaseSubscription;

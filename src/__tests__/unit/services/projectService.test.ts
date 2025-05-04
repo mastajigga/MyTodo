@@ -31,7 +31,7 @@ describe('projectService', () => {
       queryBuilder.eq.mockReturnThis();
       queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await getProject('123');
+      const result = await getProject('123', mockSupabase);
 
       expect(result).toEqual(mockProject);
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');
@@ -44,7 +44,7 @@ describe('projectService', () => {
       queryBuilder.eq.mockReturnThis();
       queryBuilder.single.mockResolvedValue({ data: null, error: new Error('Not found') });
 
-      await expect(getProject('123')).rejects.toThrow('Not found');
+      await expect(getProject('123', mockSupabase)).rejects.toThrow('Not found');
     });
   });
 
@@ -69,7 +69,7 @@ describe('projectService', () => {
       queryBuilder.select.mockReturnThis();
       queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await createProject(newProject);
+      const result = await createProject(newProject, mockSupabase);
 
       expect(result).toEqual(mockProject);
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');
@@ -100,7 +100,7 @@ describe('projectService', () => {
       queryBuilder.select.mockReturnThis();
       queryBuilder.single.mockResolvedValue({ data: mockProject, error: null });
 
-      const result = await updateProject('123', updatedProject);
+      const result = await updateProject('123', updatedProject, mockSupabase);
 
       expect(result).toEqual(mockProject);
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');
@@ -120,7 +120,7 @@ describe('projectService', () => {
       queryBuilder.select.mockReturnThis();
       queryBuilder.single.mockResolvedValue({ data: null, error: new Error('Update failed') });
 
-      const result = await updateProject('123', updatedProject);
+      const result = await updateProject('123', updatedProject, mockSupabase);
 
       expect(result).toBeNull();
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');
@@ -135,7 +135,7 @@ describe('projectService', () => {
       queryBuilder.delete.mockReturnThis();
       queryBuilder.eq.mockResolvedValue({ error: null });
 
-      const result = await deleteProject('123');
+      const result = await deleteProject('123', mockSupabase);
 
       expect(result).toBe(true);
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');
@@ -149,7 +149,7 @@ describe('projectService', () => {
       const deleteBuilder = { eq: vi.fn().mockResolvedValue({ error }) };
       queryBuilder.delete.mockReturnValue(deleteBuilder);
 
-      const result = await deleteProject('123');
+      const result = await deleteProject('123', mockSupabase);
 
       expect(result).toBe(false);
       expect(mockSupabase.from).toHaveBeenCalledWith('projects');

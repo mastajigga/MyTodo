@@ -96,24 +96,22 @@ export const ProjectService = {
 
   subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
     const channelName = `projects_realtime_${workspaceId}`;
-    const channel = getOrCreateChannel(channelName);
-    channel.on('postgres_changes', {
+    const onConfig = {
       event: '*',
       schema: 'public',
       table: 'projects',
       filter: `workspace_id=eq.${workspaceId}`
-    }, (payload: SupabasePayload) => {
+    };
+    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Project);
       } else if (payload.old) {
         callback(payload.old as Project);
       }
     });
-    channel.subscribe();
     // Retourne un objet avec unsubscribe qui nettoie aussi le channel
     return {
       unsubscribe: () => {
-        channel.unsubscribe();
         removeChannel(channelName);
       }
     } as SupabaseSubscription;
