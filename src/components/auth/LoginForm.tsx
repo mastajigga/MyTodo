@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -36,7 +36,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const router = useRouter()
-  const { supabase } = useSupabase()
+  const { supabase, user } = useSupabase()
 
   const {
     register,
@@ -63,8 +63,6 @@ export function LoginForm() {
       }
 
       toast.success('Connexion réussie')
-      router.push('/dashboard')
-      router.refresh()
     } catch (error) {
       if (error instanceof AuthError) {
         setErrorMessage(getErrorMessage(error))
@@ -76,6 +74,12 @@ export function LoginForm() {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     try {
