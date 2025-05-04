@@ -13,7 +13,7 @@ export function getOrCreateChannel(name: string, onConfig?: { event: string, sch
   const channel = supabaseRealtime.channel(name);
   let handler = null;
   if (onConfig && handlerFn) {
-    handler = channel.on('postgres_changes', onConfig, handlerFn);
+    handler = channel.on('postgres_changes' as any, onConfig, handlerFn);
   }
   channel.subscribe();
   channelMap.set(name, { channel, handler });

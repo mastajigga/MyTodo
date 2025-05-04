@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, Info } from 'lucide-react';
+import { Calendar, Clock, Info, Pencil } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PRIORITY_COLORS } from '@/lib/constants/task';
@@ -13,6 +13,7 @@ import { TASK_PRIORITY_MAP } from '@/types/common';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/common';
+import Link from 'next/link';
 
 type TaskCardProps = {
   task: Task;
@@ -47,6 +48,15 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       aria-label={`Ouvrir la tâche ${task.title}`}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick?.(); }}
     >
+      {/* Icône modifier en haut à droite */}
+      <Link
+        href={`/projects/${task.project_id}/tasks/${task.id}`}
+        className="absolute top-3 right-3 z-10 rounded-full bg-white/80 dark:bg-gray-900/80 p-1.5 shadow transition-all duration-200 hover:bg-primary/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary"
+        aria-label="Modifier la tâche"
+        tabIndex={0}
+      >
+        <Pencil className="h-4 w-4 text-primary group-hover:animate-spin-slow transition-transform duration-200" />
+      </Link>
       <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <h3 className="font-semibold group-hover:text-primary transition-colors">

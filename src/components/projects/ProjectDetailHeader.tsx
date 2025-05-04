@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
 import { useCreateTaskDialog } from '@/components/providers/CreateTaskDialogProvider';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -51,10 +52,11 @@ export function ProjectDetailHeader({ projectId }: ProjectDetailHeaderProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const router = useRouter();
   const { openCreateTaskDialog } = useCreateTaskDialog();
+  const { supabase } = useSupabase();
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', projectId],
-    queryFn: () => projectService.getProject(projectId),
+    queryFn: () => projectService.getProject(supabase, projectId),
   });
 
   const form = useForm<ProjectFormValues>({
@@ -63,7 +65,7 @@ export function ProjectDetailHeader({ projectId }: ProjectDetailHeaderProps) {
 
   const onSubmit = async (data: ProjectFormValues) => {
     try {
-      await projectService.updateProject(projectId, data);
+      await projectService.updateProject(supabase, projectId, data);
       toast.success('Projet mis à jour avec succès');
       setEditDialogOpen(false);
     } catch (error) {
@@ -73,7 +75,7 @@ export function ProjectDetailHeader({ projectId }: ProjectDetailHeaderProps) {
 
   const handleDelete = async () => {
     try {
-      await projectService.deleteProject(projectId);
+      await projectService.deleteProject(supabase, projectId);
       toast.success('Projet supprimé avec succès');
       router.push('/projects');
     } catch (error) {

@@ -1,6 +1,6 @@
 // import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
+import type { Database } from '@/lib/database.types';
 
 export interface WorkspaceMember {
   id: string;

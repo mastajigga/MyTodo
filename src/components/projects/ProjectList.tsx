@@ -20,6 +20,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Pencil, Trash2, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { Project } from '@/types/project';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 interface ProjectListProps {
   workspaceId?: string;
@@ -30,6 +31,7 @@ export function ProjectList({ workspaceId, projects }: ProjectListProps) {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { supabase } = useSupabase();
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -49,7 +51,7 @@ export function ProjectList({ workspaceId, projects }: ProjectListProps) {
     if (!editingProject) return;
     
     try {
-      await projectService.updateProject(editingProject.id, data);
+      await projectService.updateProject(supabase, editingProject.id, data);
       toast.success('Projet modifié avec succès');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsEditDialogOpen(false);
@@ -61,7 +63,7 @@ export function ProjectList({ workspaceId, projects }: ProjectListProps) {
 
   const handleDelete = async (projectId: string) => {
     try {
-      await projectService.deleteProject(projectId);
+      await projectService.deleteProject(supabase, projectId);
       toast.success('Projet supprimé avec succès');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch (error) {

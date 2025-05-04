@@ -11,6 +11,7 @@ import {
 import { MoreVertical, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 interface MemberListProps {
   workspaceId: string;
@@ -21,6 +22,7 @@ interface MemberListProps {
 export function MemberList({ workspaceId, currentUserId, isCurrentUserAdmin }: MemberListProps) {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const { supabase } = useSupabase();
 
   useEffect(() => {
     loadMembers();
@@ -28,7 +30,7 @@ export function MemberList({ workspaceId, currentUserId, isCurrentUserAdmin }: M
 
   const loadMembers = async () => {
     try {
-      const members = await WorkspaceMemberService.getWorkspaceMembers(workspaceId);
+      const members = await WorkspaceMemberService.getWorkspaceMembers(workspaceId, supabase);
       setMembers(members);
     } catch (error) {
       toast.error("Erreur lors du chargement des membres");
@@ -39,7 +41,7 @@ export function MemberList({ workspaceId, currentUserId, isCurrentUserAdmin }: M
 
   const handleRoleChange = async (memberId: string, newRole: WorkspaceMember['role']) => {
     try {
-      await WorkspaceMemberService.updateMemberRole(memberId, newRole);
+      await WorkspaceMemberService.updateMemberRole(memberId, newRole, supabase);
       toast.success("Rôle mis à jour avec succès");
       loadMembers();
     } catch (error) {
@@ -49,7 +51,7 @@ export function MemberList({ workspaceId, currentUserId, isCurrentUserAdmin }: M
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      await WorkspaceMemberService.removeWorkspaceMember(memberId);
+      await WorkspaceMemberService.removeWorkspaceMember(memberId, supabase);
       toast.success("Membre retiré avec succès");
       setMembers(members.filter(m => m.id !== memberId));
     } catch (error) {

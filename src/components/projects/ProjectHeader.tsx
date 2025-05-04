@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSupabase } from '@/lib/supabase/supabase-provider';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -56,7 +56,7 @@ export function ProjectHeader({ workspaceId }: ProjectHeaderProps) {
 
   const onSubmit = async (data: ProjectFormValues) => {
     try {
-      await projectService.createProject(data);
+      await projectService.createProject(supabase, data);
       toast.success('Projet créé avec succès');
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setOpen(false);

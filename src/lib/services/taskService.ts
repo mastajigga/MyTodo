@@ -69,16 +69,20 @@ export const taskService = {
   },
 
   async getTask(id: string) {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[getTask] Appel avec id:', id);
+    }
     const { data, error } = await supabase
       .from('tasks')
       .select('*, subtasks(*), comments(*)')
       .eq('id', id)
       .single();
-
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[getTask] Résultat:', { data, error });
+    }
     if (error) {
       throw error;
     }
-
     return mapToTask(data);
   },
 

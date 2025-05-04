@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { WorkspaceMemberService } from "@/services/workspace-member.service"
 import { toast } from "sonner"
 import { useState } from "react"
+import { useSupabase } from '@/lib/supabase/useSupabase'
 
 interface InviteDialogProps {
   workspaceId: string
@@ -27,6 +28,7 @@ interface InviteWorkspaceMemberData {
 export function InviteDialog({ workspaceId, isOpen, onClose }: InviteDialogProps) {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const { supabase } = useSupabase()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +40,7 @@ export function InviteDialog({ workspaceId, isOpen, onClose }: InviteDialogProps
         workspaceId
       }
       
-      await WorkspaceMemberService.inviteToWorkspace(inviteData)
+      await WorkspaceMemberService.inviteToWorkspace(inviteData, supabase)
       toast.success("Invitation envoyée avec succès")
       onClose()
       setEmail("")

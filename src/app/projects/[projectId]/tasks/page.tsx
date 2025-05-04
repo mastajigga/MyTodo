@@ -5,19 +5,21 @@ import { TaskList } from '@/components/tasks/TaskList';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { projectService } from '@/lib/services/projectService';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 export default function ProjectTasksPage() {
   const params = useParams() as Record<string, string>;
   const projectId = params?.projectId;
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { supabase } = useSupabase();
 
   useEffect(() => {
     const fetchProject = async () => {
       if (!projectId) return;
       setLoading(true);
       try {
-        const project = await projectService.getProject(projectId);
+        const project = await projectService.getProject(supabase, projectId);
         setWorkspaceId(project?.workspace_id || null);
       } catch (error) {
         setWorkspaceId(null);
@@ -26,7 +28,7 @@ export default function ProjectTasksPage() {
       }
     };
     fetchProject();
-  }, [projectId]);
+  }, [projectId, supabase]);
 
   return (
     <div className="container mx-auto px-4 py-8">
