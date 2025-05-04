@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
+import { supabaseRealtime } from '@/lib/supabase/realtime-client';
 
 export const ProjectService = {
   async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
@@ -93,25 +94,18 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void, supabaseClient: SupabaseClient): SupabaseSubscription | undefined {
-    if (!supabaseClient || typeof (supabaseClient as any).from !== 'function') {
-      console.error('[subscribeToProjects] supabaseClient est undefined ou mal initialisé');
-      return;
-    }
-    return (supabaseClient as any)
-      .from('projects')
-      .on('INSERT', (payload: any) => {
-        if (payload.new && payload.new.workspace_id === workspaceId) {
+  subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
+    return supabaseRealtime
+      .channel('projects_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'projects',
+        filter: `workspace_id=eq.${workspaceId}`
+      }, (payload: SupabasePayload) => {
+        if (payload.new) {
           callback(payload.new as Project);
-        }
-      })
-      .on('UPDATE', (payload: any) => {
-        if (payload.new && payload.new.workspace_id === workspaceId) {
-          callback(payload.new as Project);
-        }
-      })
-      .on('DELETE', (payload: any) => {
-        if (payload.old && payload.old.workspace_id === workspaceId) {
+        } else if (payload.old) {
           callback(payload.old as Project);
         }
       })

@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { Entry, CreateEntryData, UpdateEntryData } from '@/@types/entry'
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
+import { supabaseRealtime } from '@/lib/supabase/realtime-client'
 
 export const EntryService = {
   async getWorkspaceEntries(supabase: SupabaseClient, workspaceId: string): Promise<Entry[]> {
@@ -52,24 +53,17 @@ export const EntryService = {
   },
 
   subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription | undefined {
-    if (!supabase || typeof (supabase as any).from !== 'function') {
-      console.error('[subscribeToEntries] supabase est undefined ou mal initialisé');
-      return;
-    }
-    return (supabase as any)
-      .from('entries')
-      .on('INSERT', (payload: any) => {
-        if (payload.new && payload.new.workspace_id === workspaceId) {
+    return supabaseRealtime
+      .channel('entries_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'entries',
+        filter: `workspace_id=eq.${workspaceId}`
+      }, (payload: SupabasePayload) => {
+        if (payload.new) {
           callback(payload.new as Entry)
-        }
-      })
-      .on('UPDATE', (payload: any) => {
-        if (payload.new && payload.new.workspace_id === workspaceId) {
-          callback(payload.new as Entry)
-        }
-      })
-      .on('DELETE', (payload: any) => {
-        if (payload.old && payload.old.workspace_id === workspaceId) {
+        } else if (payload.old) {
           callback(payload.old as Entry)
         }
       })

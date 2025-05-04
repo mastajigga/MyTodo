@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
+import { supabaseRealtime } from '@/lib/supabase/realtime-client'
 
 export const notificationService = {
   async getNotifications(supabase: SupabaseClient, userId: string): Promise<Notification[]> {
@@ -61,24 +62,17 @@ export const notificationService = {
     userId: string,
     callback: (notification: Notification) => void
   ): SupabaseSubscription | undefined {
-    if (!supabase || typeof (supabase as any).from !== 'function') {
-      console.error('[subscribeToNotifications] supabase est undefined ou mal initialisé');
-      return;
-    }
-    return (supabase as any)
-      .from('notifications')
-      .on('INSERT', (payload: any) => {
-        if (payload.new && payload.new.user_id === userId) {
+    return supabaseRealtime
+      .channel('notifications_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      }, (payload: SupabasePayload) => {
+        if (payload.new) {
           callback(payload.new as Notification)
-        }
-      })
-      .on('UPDATE', (payload: any) => {
-        if (payload.new && payload.new.user_id === userId) {
-          callback(payload.new as Notification)
-        }
-      })
-      .on('DELETE', (payload: any) => {
-        if (payload.old && payload.old.user_id === userId) {
+        } else if (payload.old) {
           callback(payload.old as Notification)
         }
       })
