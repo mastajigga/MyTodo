@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
-import { supabaseRealtime } from '@/lib/supabase/realtime-client';
+import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client';
 
 export const ProjectService = {
   async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
@@ -95,21 +95,28 @@ export const ProjectService = {
   },
 
   subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
-    return supabaseRealtime
-      .channel(`projects_realtime_${workspaceId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'projects',
-        filter: `workspace_id=eq.${workspaceId}`
-      }, (payload: SupabasePayload) => {
-        if (payload.new) {
-          callback(payload.new as Project);
-        } else if (payload.old) {
-          callback(payload.old as Project);
-        }
-      })
-      .subscribe();
+    const channelName = `projects_realtime_${workspaceId}`;
+    const channel = getOrCreateChannel(channelName);
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'projects',
+      filter: `workspace_id=eq.${workspaceId}`
+    }, (payload: SupabasePayload) => {
+      if (payload.new) {
+        callback(payload.new as Project);
+      } else if (payload.old) {
+        callback(payload.old as Project);
+      }
+    });
+    channel.subscribe();
+    // Retourne un objet avec unsubscribe qui nettoie aussi le channel
+    return {
+      unsubscribe: () => {
+        channel.unsubscribe();
+        removeChannel(channelName);
+      }
+    } as SupabaseSubscription;
   },
 
   async getProjects(supabase: SupabaseClient) {

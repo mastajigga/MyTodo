@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { Entry, CreateEntryData, UpdateEntryData } from '@/@types/entry'
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
-import { supabaseRealtime } from '@/lib/supabase/realtime-client'
+import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
 
 export const EntryService = {
   async getWorkspaceEntries(supabase: SupabaseClient, workspaceId: string): Promise<Entry[]> {
@@ -53,20 +53,26 @@ export const EntryService = {
   },
 
   subscribeToEntries(supabase: SupabaseClient, workspaceId: string, callback: (entry: Entry) => void): SupabaseSubscription | undefined {
-    return supabaseRealtime
-      .channel(`entries_realtime_${workspaceId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'entries',
-        filter: `workspace_id=eq.${workspaceId}`
-      }, (payload: SupabasePayload) => {
-        if (payload.new) {
-          callback(payload.new as Entry)
-        } else if (payload.old) {
-          callback(payload.old as Entry)
-        }
-      })
-      .subscribe()
+    const channelName = `entries_realtime_${workspaceId}`;
+    const channel = getOrCreateChannel(channelName);
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'entries',
+      filter: `workspace_id=eq.${workspaceId}`
+    }, (payload: SupabasePayload) => {
+      if (payload.new) {
+        callback(payload.new as Entry)
+      } else if (payload.old) {
+        callback(payload.old as Entry)
+      }
+    });
+    channel.subscribe();
+    return {
+      unsubscribe: () => {
+        channel.unsubscribe();
+        removeChannel(channelName);
+      }
+    } as SupabaseSubscription;
   }
 } 

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
-import { supabaseRealtime } from '@/lib/supabase/realtime-client'
+import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
 
 export const notificationService = {
   async getNotifications(supabase: SupabaseClient, userId: string): Promise<Notification[]> {
@@ -62,21 +62,27 @@ export const notificationService = {
     userId: string,
     callback: (notification: Notification) => void
   ): SupabaseSubscription | undefined {
-    return supabaseRealtime
-      .channel(`notifications_realtime_${userId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`
-      }, (payload: SupabasePayload) => {
-        if (payload.new) {
-          callback(payload.new as Notification)
-        } else if (payload.old) {
-          callback(payload.old as Notification)
-        }
-      })
-      .subscribe()
+    const channelName = `notifications_realtime_${userId}`;
+    const channel = getOrCreateChannel(channelName);
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'notifications',
+      filter: `user_id=eq.${userId}`
+    }, (payload: SupabasePayload) => {
+      if (payload.new) {
+        callback(payload.new as Notification)
+      } else if (payload.old) {
+        callback(payload.old as Notification)
+      }
+    });
+    channel.subscribe();
+    return {
+      unsubscribe: () => {
+        channel.unsubscribe();
+        removeChannel(channelName);
+      }
+    } as SupabaseSubscription;
   }
 } 
 //comment
