@@ -11,13 +11,15 @@ import { toast } from 'sonner';
 import { Task } from '@/types/task';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { projectService } from '@/lib/services/projectService';
+import { useSupabase } from '@/lib/supabase/useSupabase';
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams() as { projectId: string };
+  const { supabase } = useSupabase();
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
-    queryFn: () => projectService.getProject(projectId as string),
+    queryFn: () => projectService.getProject(supabase, projectId as string),
   });
 
   const { data: rawTasks = [], isLoading: isLoadingTasks } = useQuery<Task[]>({
