@@ -18,6 +18,7 @@ export const DASHBOARD_CONFIG = {
   },
   
   // Messages d'erreur
+  //push forced
   errorMessages: {
     loadingFailed: 'Une erreur est survenue lors du chargement du tableau de bord.',
     authError: 'Erreur d\'authentification. Veuillez vous reconnecter.',
