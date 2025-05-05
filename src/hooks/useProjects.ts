@@ -71,7 +71,7 @@ export function useProjects(workspaceId: string) {
       subscriptionRef.current = null
     }
     console.debug('[useProjects] Nouvelle souscription realtime pour workspaceId', workspaceId)
-    subscriptionRef.current = ProjectService.subscribeToProjects(workspaceId, () => {
+    subscriptionRef.current = ProjectService.subscribeToProjects(supabase, workspaceId, () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
     })
     return () => {

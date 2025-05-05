@@ -76,7 +76,9 @@ export function LoginForm() {
   }
 
   useEffect(() => {
+    console.debug('[LoginForm] useEffect user:', user);
     if (user) {
+      console.debug('[LoginForm] Redirection vers /dashboard car user détecté');
       router.push('/dashboard');
     }
   }, [user, router]);

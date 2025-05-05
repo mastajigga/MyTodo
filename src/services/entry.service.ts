@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { Entry, CreateEntryData, UpdateEntryData } from '@/@types/entry'
 import { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
-import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
+import { getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
 
 export const EntryService = {
   async getWorkspaceEntries(supabase: SupabaseClient, workspaceId: string): Promise<Entry[]> {
@@ -60,7 +60,7 @@ export const EntryService = {
       table: 'entries',
       filter: `workspace_id=eq.${workspaceId}`
     };
-    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
+    const channel = getOrCreateChannel(supabase, channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Entry)
       } else if (payload.old) {
@@ -69,7 +69,7 @@ export const EntryService = {
     });
     return {
       unsubscribe: () => {
-        removeChannel(channelName);
+        removeChannel(supabase, channelName);
       }
     } as SupabaseSubscription;
   }

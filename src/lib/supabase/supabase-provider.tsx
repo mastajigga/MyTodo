@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { Database } from '../database.types'
 import type { User } from '@supabase/auth-helpers-nextjs'
+import { v4 as uuidv4 } from 'uuid'
 
 type SupabaseContext = {
   supabase: ReturnType<typeof createClientComponentClient<Database>>
@@ -23,9 +24,10 @@ export default function SupabaseProvider({
   // Créer une seule instance du client Supabase
   const supabase = useMemo(() => createClientComponentClient<Database>(), [])
   const [user, setUser] = useState<User | null>(null)
+  const [mountId] = useState(() => uuidv4())
 
   useEffect(() => {
-    console.log('[DEBUG] Initialisation du provider Supabase');
+    console.log(`[DEBUG] Initialisation du provider Supabase (mountId: ${mountId})`);
     let mounted = true;
 
     const fetchUser = async () => {
@@ -42,9 +44,9 @@ export default function SupabaseProvider({
 
         const { data: { user }, error } = await supabase.auth.getUser();
         if (!mounted) return;
-        
         if (error) throw error;
         setUser(user);
+        console.debug('[SupabaseProvider] fetchUser - user:', user);
       } catch (error) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', error);
         if (mounted) {
@@ -58,8 +60,8 @@ export default function SupabaseProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[DEBUG] Changement d\'état d\'authentification:', event);
-      
+      console.log(`[DEBUG] (mountId: ${mountId}) Changement d'état d'authentification:`, event);
+      console.log(`[DEBUG] (mountId: ${mountId}) Session reçue:`, session);
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (!session) {
           console.log('[CLIENT] Session invalide après connexion');
@@ -69,14 +71,23 @@ export default function SupabaseProvider({
           }
           return;
         }
-
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (!mounted) return;
-
-        if (!error && user) {
-          setUser(user);
-          router.refresh();
-        }
+        const sessionCheck = await supabase.auth.getSession();
+        console.log(`[DEBUG] (mountId: ${mountId}) getSession après SIGNED_IN:`, sessionCheck);
+        setTimeout(async () => {
+          console.log(`[DEBUG] (mountId: ${mountId}) Avant setTimeout getUser`);
+          try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            console.log(`[DEBUG] (mountId: ${mountId}) getUser après délai SIGNED_IN:`, user, error);
+            if (!mounted) return;
+            if (!error && user) {
+              setUser(user);
+              console.debug('[SupabaseProvider] onAuthStateChange - user:', user);
+              router.refresh();
+            }
+          } catch (err) {
+            console.error(`[DEBUG] (mountId: ${mountId}) Erreur dans setTimeout getUser:`, err);
+          }
+        }, 300);
       } else if (event === 'SIGNED_OUT') {
         if (mounted) {
           setUser(null);
@@ -89,7 +100,7 @@ export default function SupabaseProvider({
       mounted = false;
       subscription.unsubscribe();
     }
-  }, [router, supabase]) // supabase est maintenant stable grâce à useMemo
+  }, [router, supabase, mountId])
 
   // Forcer une récupération de session après 2 secondes si user est toujours null
   useEffect(() => {
@@ -108,8 +119,10 @@ export default function SupabaseProvider({
         id: user.id,
         email: user.email
       });
+      console.debug('[SupabaseProvider] useEffect user:', user);
     } else {
       console.log('[DEBUG] Utilisateur dans le provider : null');
+      console.debug('[SupabaseProvider] useEffect user: null');
     }
   }, [user]);
 
