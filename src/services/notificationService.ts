@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client'
 import { Notification, CreateNotificationData, UpdateNotificationData } from '@/@types/notification'
-import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
+import { getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client'
 
 export const notificationService = {
   async getNotifications(supabase: SupabaseClient, userId: string): Promise<Notification[]> {
@@ -69,7 +69,7 @@ export const notificationService = {
       table: 'notifications',
       filter: `user_id=eq.${userId}`
     };
-    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
+    const channel = getOrCreateChannel(supabase, channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Notification)
       } else if (payload.old) {
@@ -78,7 +78,7 @@ export const notificationService = {
     });
     return {
       unsubscribe: () => {
-        removeChannel(channelName);
+        removeChannel(supabase, channelName);
       }
     } as SupabaseSubscription;
   }
