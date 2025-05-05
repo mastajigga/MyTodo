@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 import type { SupabasePayload, SupabaseSubscription } from '@/lib/supabase/client';
-import { supabaseRealtime, getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client';
+import { getOrCreateChannel, removeChannel } from '@/lib/supabase/realtime-client';
 
 export const ProjectService = {
   async createProject(data: CreateProjectData, supabase: SupabaseClient): Promise<Project> {
@@ -94,7 +94,7 @@ export const ProjectService = {
     if (error) throw error;
   },
 
-  subscribeToProjects(workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
+  subscribeToProjects(supabase: SupabaseClient, workspaceId: string, callback: (project: Project) => void): SupabaseSubscription | undefined {
     const channelName = `projects_realtime_${workspaceId}`;
     const onConfig = {
       event: '*',
@@ -102,7 +102,7 @@ export const ProjectService = {
       table: 'projects',
       filter: `workspace_id=eq.${workspaceId}`
     };
-    const channel = getOrCreateChannel(channelName, onConfig, (payload: SupabasePayload) => {
+    const channel = getOrCreateChannel(supabase, channelName, onConfig, (payload: SupabasePayload) => {
       if (payload.new) {
         callback(payload.new as Project);
       } else if (payload.old) {
@@ -112,7 +112,7 @@ export const ProjectService = {
     // Retourne un objet avec unsubscribe qui nettoie aussi le channel
     return {
       unsubscribe: () => {
-        removeChannel(channelName);
+        removeChannel(supabase, channelName);
       }
     } as SupabaseSubscription;
   },
